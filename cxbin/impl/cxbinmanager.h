@@ -9,6 +9,7 @@
 #include "cxbin/plugin/pluginply.h"
 #include "cxbin/plugin/pluginobj.h"
 #include "cxbin/plugin/pluginoff.h"
+#include "cxbin/plugin/plugin3ds.h"
 
 namespace ccglobal
 {
@@ -35,6 +36,8 @@ namespace cxbin
 		PlyLoader m_plyLoader;
 		ObjLoader m_objLoader;
 		OffLoader m_offLoader;
+		_3dsLoader m_3dsLoader;
+
 	};
 
 	extern CXBinManager cxmanager;
