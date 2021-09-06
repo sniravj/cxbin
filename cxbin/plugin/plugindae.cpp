@@ -14,7 +14,7 @@ namespace cxbin
 
 	}
 
-	static bool IsDaeFile(FILE* f, unsigned int fileSize) {
+	bool IsDaeFile(FILE* f, unsigned int fileSize) {
 
 		return true;
 	}

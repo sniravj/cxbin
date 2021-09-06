@@ -31,10 +31,18 @@ namespace cxbin
 
 		Lib3MF::PWrapper wrapper = Lib3MF::CWrapper::loadLibrary();
 		Lib3MF::PModel model = wrapper->CreateModel();
-		Lib3MF::PReader reader = model->QueryReader("3mf");
-		reader->ReadFromBuffer(Ibuffer);
-		Lib3MF::PMeshObjectIterator pmeshdata = model->GetMeshObjects();
+		try
+		{
+			Lib3MF::PReader reader = model->QueryReader("3mf");
+			reader->ReadFromBuffer(Ibuffer);
+		}
+		catch (const Lib3MF::ELib3MFException& exception)
+		{
+			delete[]buffer;
+			return false;
+		}
 
+		Lib3MF::PMeshObjectIterator pmeshdata = model->GetMeshObjects();
 		bool have3Mf = pmeshdata->Count() > 0;
 		delete []buffer;
 
