@@ -14,7 +14,38 @@ namespace cxbin
 
 	}
 
-	bool IsDaeFile(FILE* f, unsigned int fileSize) {
+	const TiXmlNode* findNode(const TiXmlNode* node, std::string strNode)
+	{
+		if (node == nullptr)
+			return nullptr;
+		for (const TiXmlNode* sub_node = node->FirstChild(); sub_node; sub_node = sub_node->NextSibling())
+		{
+			if (sub_node->Type() == TiXmlNode::TINYXML_ELEMENT)
+			{
+				const TiXmlElement* sub_element = (const TiXmlElement*)sub_node;
+				if (!strcmp(sub_element->Value(), strNode.c_str()))
+				{
+					return  sub_node;
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	bool IsDaeFile(FILE* f, unsigned int fileSize) 
+	{
+		TiXmlDocument doc;
+		if (!doc.LoadFile(f))
+		{
+			return false;
+		}
+
+		const TiXmlElement* root = doc.RootElement();
+
+		if (nullptr == findNode(root, "library_geometries"))
+		{
+			return false;
+		}
 
 		return true;
 	}
@@ -85,24 +116,6 @@ namespace cxbin
 		return;
 	}
 
-	const TiXmlNode* findNode(const TiXmlNode* node, std::string strNode)
-	{
-		if (node == nullptr)
-			return nullptr;
-		for (const TiXmlNode* sub_node = node->FirstChild(); sub_node; sub_node = sub_node->NextSibling())
-		{
-			if (sub_node->Type() == TiXmlNode::TINYXML_ELEMENT)
-			{
-				const TiXmlElement* sub_element = (const TiXmlElement*)sub_node;
-				if (!strcmp(sub_element->Value(), strNode.c_str()))
-				{
-					return  sub_node;
-				}
-			}
-		}
-		return nullptr;
-	}
-
 	void addVertices(trimesh::TriMesh* mesh, const std::string& str, int& count)
 	{
 		//218.608183 65.943044 844.069388 155.932865
@@ -170,10 +183,6 @@ namespace cxbin
 
 	bool DaeLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
-		//std::vector<trimesh::TriMesh*> meshs;
-		//trimesh::TriMesh* model = new trimesh::TriMesh();
-		//out.push_back(model);
-
 		bool success = false;
 
 		TiXmlDocument doc;
