@@ -137,7 +137,6 @@ namespace cxbin
 		trimesh::TriMesh* model = new trimesh::TriMesh();
 		out.push_back(model);
 
-
 		// Skip until we find vertices
 		int skip1 = 0;
 		while (!LINE_IS("end_header") && !LINE_IS("element vertex")) {

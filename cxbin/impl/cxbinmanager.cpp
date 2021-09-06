@@ -11,6 +11,7 @@ namespace cxbin
 	{
 		registerLoaderImpl(&m_stlLoader);
 		registerLoaderImpl(&m_plyLoader);
+		registerLoaderImpl(&m_objLoader);
 	}
 
 	CXBinManager::~CXBinManager()
