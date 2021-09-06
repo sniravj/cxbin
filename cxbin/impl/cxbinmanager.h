@@ -8,6 +8,7 @@
 #include "cxbin/plugin/pluginstl.h"
 #include "cxbin/plugin/pluginply.h"
 #include "cxbin/plugin/pluginobj.h"
+#include "cxbin/plugin/pluginoff.h"
 
 namespace ccglobal
 {
@@ -33,7 +34,7 @@ namespace cxbin
 		StlLoader m_stlLoader;
 		PlyLoader m_plyLoader;
 		ObjLoader m_objLoader;
-
+		OffLoader m_offLoader;
 	};
 
 	extern CXBinManager cxmanager;
