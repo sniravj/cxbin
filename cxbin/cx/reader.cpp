@@ -21,21 +21,23 @@ namespace cxbin
 		unsigned char* cdata = new unsigned char[compressNum];
 
 		uLong uTotalNum = totalNum;
-		if (fread(cdata, 1, compressNum, f)
-			&& (uncompress(data, &uTotalNum, cdata, compressNum) == Z_OK))
+		if (fread(cdata, 1, compressNum, f))
 		{
-			if (vertNum > 0)
+			if (uncompress(data, &uTotalNum, cdata, compressNum) == Z_OK)
 			{
-				out.vertices.resize(vertNum);
-				memcpy(&out.vertices.at(0), data, vertNum * sizeof(trimesh::vec3));
-			}
-			if (faceNum > 0)
-			{
-				out.faces.resize(faceNum);
-				memcpy(&out.faces.at(0), data + vertNum * sizeof(trimesh::vec3),  faceNum * sizeof(trimesh::ivec3));
-			}
+				if (vertNum > 0)
+				{
+					out.vertices.resize(vertNum);
+					memcpy(&out.vertices.at(0), data, vertNum * sizeof(trimesh::vec3));
+				}
+				if (faceNum > 0)
+				{
+					out.faces.resize(faceNum);
+					memcpy(&out.faces.at(0), data + vertNum * sizeof(trimesh::vec3), faceNum * sizeof(trimesh::ivec3));
+				}
 
-			success = true;
+				success = true;
+			}
 		}
 
 		delete[]data;

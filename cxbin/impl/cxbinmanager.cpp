@@ -176,6 +176,8 @@ namespace cxbin
 			tracer->progress(1.0f);
 			tracer->success();
 		}
+
+		fclose(f);
 	}
 
 	void registerLoaderImpl(LoaderImpl* impl)
