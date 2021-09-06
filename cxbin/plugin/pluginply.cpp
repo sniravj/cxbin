@@ -131,7 +131,7 @@ namespace cxbin
 		int vert_color = -1, vert_conf = -1;
 		int face_len = 0, face_count = -1, face_idx = -1;
 
-		if (parsePlyFormat(f, binary, need_swap))
+		if (!parsePlyFormat(f, binary, need_swap))
 			return false;
 
 		trimesh::TriMesh* model = new trimesh::TriMesh();

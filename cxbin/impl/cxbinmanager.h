@@ -6,6 +6,7 @@
 #include <cstdio>
 
 #include "cxbin/plugin/pluginstl.h"
+#include "cxbin/plugin/pluginply.h"
 
 namespace ccglobal
 {
@@ -29,7 +30,7 @@ namespace cxbin
 		std::map<std::string, LoaderImpl*> m_loaders;
 
 		StlLoader m_stlLoader;
-
+		PlyLoader m_plyLoader;
 
 	};
 
