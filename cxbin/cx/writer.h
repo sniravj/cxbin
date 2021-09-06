@@ -1,0 +1,9 @@
+#ifndef CXBIN_WRITER_1630913098880_H
+#define CXBIN_WRITER_1630913098880_H
+
+namespace cxbin
+{
+
+}
+
+#endif // CXBIN_WRITER_1630913098880_H

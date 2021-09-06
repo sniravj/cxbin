@@ -1,0 +1,9 @@
+#ifndef CXBIN_READER_1630913098880_H
+#define CXBIN_READER_1630913098880_H
+
+namespace cxbin
+{
+
+}
+
+#endif // CXBIN_READER_1630913098880_H
