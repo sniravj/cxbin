@@ -32,6 +32,14 @@ set(SRCS cxbin/interface.h
 set(LIBS trimesh2 stringutil)
 set(DEFS)
 
+if(TARGET lib3MF)
+	list(APPEND LIBS lib3MF)
+	list(APPEND SRCS cxbin/plugin/plugin3mf.h
+					 cxbin/plugin/plugin3mf.cpp
+					 )
+endif()
+
+
 if(BUILD_CXBIN_STATIC)
 	__add_real_target(cxbin lib SOURCE ${SRCS}
 								LIB ${LIBS}
