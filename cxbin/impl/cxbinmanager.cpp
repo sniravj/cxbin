@@ -17,6 +17,8 @@ namespace cxbin
 		registerLoaderImpl(&m_wrlLoader);
 		registerLoaderImpl(&m_3mfLoader);
 		registerLoaderImpl(&m_daeLoader);
+
+		registerSaverImpl(&m_cxbinSaver);
 	}
 
 	CXBinManager::~CXBinManager()
@@ -52,7 +54,35 @@ namespace cxbin
 				break;
 			}
 		}
+	}
 
+	void CXBinManager::addSaver(SaverImpl* impl)
+	{
+		if (!impl)
+			return;
+
+		std::string extension = impl->expectExtension();
+		std::map<std::string, SaverImpl*>::iterator it = m_savers.find(extension);
+		if (it != m_savers.end())
+			return;
+
+		m_savers.insert(std::pair<std::string, SaverImpl*>(extension, impl));
+	}
+
+	void CXBinManager::removeSaver(SaverImpl* impl)
+	{
+		if (!impl)
+			return;
+
+		for (std::map<std::string, SaverImpl*>::iterator it = m_savers.begin();
+			it != m_savers.end(); ++it)
+		{
+			if ((*it).second == impl)
+			{
+				m_savers.erase(it);
+				break;
+			}
+		}
 	}
 
 	std::vector<trimesh::TriMesh*> CXBinManager::load(FILE* f, const std::string& extension,
@@ -109,6 +139,36 @@ namespace cxbin
 		return models;
 	}
 
+	void CXBinManager::save(trimesh::TriMesh* mesh, const std::string& fileName, const std::string& extension, ccglobal::Tracer* tracer)
+	{
+		if (!mesh && tracer)
+		{
+			tracer->failed("");
+			return;
+		}
+
+		SaverImpl* saver = nullptr;
+		if (extension.size() > 0)
+		{
+			std::map<std::string, SaverImpl*>::iterator it = m_savers.find(extension);
+			if (it != m_savers.end())
+				saver = it->second;
+		}
+
+		std::string realFileName = fileName;
+		if (!saver)
+		{
+			saver = &m_cxbinSaver;
+			realFileName += ".";
+			realFileName += extension;
+		}
+		if (saver->save(mesh, fileName, tracer) && tracer)
+		{
+			tracer->progress(1.0f);
+			tracer->success();
+		}
+	}
+
 	void registerLoaderImpl(LoaderImpl* impl)
 	{
 		cxmanager.addLoader(impl);
@@ -117,5 +177,15 @@ namespace cxbin
 	void unRegisterLoaderImpl(LoaderImpl* impl)
 	{
 		cxmanager.removeLoader(impl);
+	}
+
+	void registerSaverImpl(SaverImpl* impl)
+	{
+		cxmanager.addSaver(impl);
+	}
+
+	void unRegisterSaverImpl(SaverImpl* impl)
+	{
+		cxmanager.removeSaver(impl);
 	}
 }

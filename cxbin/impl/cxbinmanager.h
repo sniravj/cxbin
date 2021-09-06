@@ -13,6 +13,7 @@
 #include "cxbin/plugin/pluginwrl.h"
 #include "cxbin/plugin/plugin3mf.h"
 #include "cxbin/plugin/plugindae.h"
+#include "cxbin/plugin/plugincxbin.h"
 
 namespace ccglobal
 {
@@ -30,10 +31,14 @@ namespace cxbin
 
 		void addLoader(LoaderImpl* impl);
 		void removeLoader(LoaderImpl* impl);
+		void addSaver(SaverImpl* impl);
+		void removeSaver(SaverImpl* impl);
 
 		std::vector<trimesh::TriMesh*> load(FILE* f, const std::string& extension, ccglobal::Tracer* tracer);
+		void save(trimesh::TriMesh* mesh, const std::string& fileName, const std::string& extension, ccglobal::Tracer* tracer);
 	protected:
 		std::map<std::string, LoaderImpl*> m_loaders;
+		std::map<std::string, SaverImpl*> m_savers;
 
 		StlLoader m_stlLoader;
 		PlyLoader m_plyLoader;
@@ -43,6 +48,8 @@ namespace cxbin
 		WrlLoader m_wrlLoader;
 		_3mfLoader m_3mfLoader;
 		DaeLoader m_daeLoader;
+
+		CXBinSaver m_cxbinSaver;
 	};
 
 	extern CXBinManager cxmanager;
