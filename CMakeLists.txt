@@ -24,7 +24,9 @@ set(SRCS cxbin/interface.h
 		 cxbin/plugin/plugin3ds.h
 		 cxbin/plugin/plugin3ds.cpp
 		 cxbin/plugin/pluginoff.h
-		 cxbin/plugin/pluginoff.cpp			 
+		 cxbin/plugin/pluginoff.cpp	
+		 cxbin/plugin/pluginwrl.h
+		 cxbin/plugin/pluginwrl.cpp
 		 )
 		 
 set(LIBS trimesh2 stringutil)

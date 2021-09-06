@@ -10,6 +10,7 @@
 #include "cxbin/plugin/pluginobj.h"
 #include "cxbin/plugin/pluginoff.h"
 #include "cxbin/plugin/plugin3ds.h"
+#include "cxbin/plugin/pluginwrl.h"
 
 namespace ccglobal
 {
@@ -37,7 +38,7 @@ namespace cxbin
 		ObjLoader m_objLoader;
 		OffLoader m_offLoader;
 		_3dsLoader m_3dsLoader;
-
+		WrlLoader m_wrlLoader;
 	};
 
 	extern CXBinManager cxmanager;
