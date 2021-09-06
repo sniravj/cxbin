@@ -21,7 +21,7 @@ namespace cxbin
 		virtual ~SaverImpl() {}
 
 		virtual std::string expectExtension() = 0;
-		virtual bool save(trimesh::TriMesh* mesh, const std::string& fileName, ccglobal::Tracer* tracer) = 0;
+		virtual bool save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer) = 0;
 	};
 
 	CXBIN_API void registerSaverImpl(SaverImpl* impl);

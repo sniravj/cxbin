@@ -1,6 +1,7 @@
 #include "pluginply.h"
 #include "trimesh2/endianutil.h"
 #include "trimesh2/TriMesh.h"
+#include "trimesh2/Color.h"
 
 #include "cxbin/convert.h"
 #include "stringutil/filenameutil.h"
@@ -8,6 +9,275 @@
 
 namespace cxbin
 {
+	PlySaver::PlySaver()
+	{
+
+	}
+
+	PlySaver::~PlySaver()
+	{
+
+	}
+
+	std::string PlySaver::expectExtension()
+	{
+		return "ply";
+	}
+
+	// Convert colors float -> uchar
+	unsigned char color2uchar(float p)
+	{
+		return std::min(std::max(int(255.0f * p + 0.5f), 0), 255);
+	}
+
+	bool write_ply_header(trimesh::TriMesh* mesh, FILE* f, const char* format,
+		bool write_grid, bool write_tstrips,
+		bool write_norm, bool float_color)
+	{
+		FPRINTF(f, "ply\nformat %s 1.0\n", format);
+		if (write_grid) {
+			FPRINTF(f, "obj_info num_cols %d\n", mesh->grid_width);
+			FPRINTF(f, "obj_info num_rows %d\n", mesh->grid_height);
+		}
+		FPRINTF(f, "element vertex %lu\n",
+			(unsigned long)mesh->vertices.size());
+		FPRINTF(f, "property float x\n");
+		FPRINTF(f, "property float y\n");
+		FPRINTF(f, "property float z\n");
+		if (write_norm && !mesh->normals.empty()) {
+			FPRINTF(f, "property float nx\n");
+			FPRINTF(f, "property float ny\n");
+			FPRINTF(f, "property float nz\n");
+		}
+		if (!mesh->colors.empty() && float_color) {
+			FPRINTF(f, "property float diffuse_red\n");
+			FPRINTF(f, "property float diffuse_green\n");
+			FPRINTF(f, "property float diffuse_blue\n");
+		}
+		if (!mesh->colors.empty() && !float_color) {
+			FPRINTF(f, "property uchar diffuse_red\n");
+			FPRINTF(f, "property uchar diffuse_green\n");
+			FPRINTF(f, "property uchar diffuse_blue\n");
+		}
+		if (!mesh->confidences.empty()) {
+			FPRINTF(f, "property float confidence\n");
+		}
+		if (write_grid) {
+			int ngrid = mesh->grid_width * mesh->grid_height;
+			FPRINTF(f, "element range_grid %d\n", ngrid);
+			FPRINTF(f, "property list uchar int vertex_indices\n");
+		}
+		else if (write_tstrips) {
+			FPRINTF(f, "element tristrips 1\n");
+			FPRINTF(f, "property list int int vertex_indices\n");
+		}
+		else {
+			mesh->need_faces();
+			if (!mesh->faces.empty()) {
+				FPRINTF(f, "element face %lu\n",
+					(unsigned long)mesh->faces.size());
+				FPRINTF(f, "property list uchar int vertex_indices\n");
+			}
+		}
+		FPRINTF(f, "end_header\n");
+		return true;
+	}
+
+	// Helper for write_verts_bin: actually does the writing.
+	bool write_verts_bin_helper(trimesh::TriMesh* mesh, FILE* f,
+		bool write_norm, bool write_color,
+		bool float_color, bool write_conf)
+	{
+		if ((mesh->normals.empty() || !write_norm) &&
+			(mesh->colors.empty() || !write_color) &&
+			(mesh->confidences.empty() || !write_conf)) {
+			// Optimized vertex-only code
+			FWRITE(&(mesh->vertices[0][0]), 12 * mesh->vertices.size(), 1, f);
+		}
+		else {
+			// Generic code
+			for (size_t i = 0; i < mesh->vertices.size(); i++) {
+				FWRITE(&(mesh->vertices[i][0]), 12, 1, f);
+				if (!mesh->normals.empty() && write_norm)
+					FWRITE(&(mesh->normals[i][0]), 12, 1, f);
+				if (!mesh->colors.empty() && write_color && float_color)
+					FWRITE(&(mesh->colors[i][0]), 12, 1, f);
+				if (!mesh->colors.empty() && write_color && !float_color) {
+					unsigned char c[3] = {
+						color2uchar(mesh->colors[i][0]),
+						color2uchar(mesh->colors[i][1]),
+						color2uchar(mesh->colors[i][2]) };
+					FWRITE(&c, 3, 1, f);
+				}
+				if (!mesh->confidences.empty() && write_conf)
+					FWRITE(&(mesh->confidences[i]), 4, 1, f);
+			}
+		}
+		return true;
+	}
+
+	// Byte-swap vertex properties
+	void swap_vert_props(trimesh::TriMesh* mesh, bool swap_color)
+	{
+		for (size_t i = 0; i < mesh->vertices.size(); i++) {
+			trimesh::swap_float(mesh->vertices[i][0]);
+			trimesh::swap_float(mesh->vertices[i][1]);
+			trimesh::swap_float(mesh->vertices[i][2]);
+		}
+		if (!mesh->normals.empty()) {
+			for (size_t i = 0; i < mesh->normals.size(); i++) {
+				trimesh::swap_float(mesh->normals[i][0]);
+				trimesh::swap_float(mesh->normals[i][1]);
+				trimesh::swap_float(mesh->normals[i][2]);
+			}
+		}
+		if (!mesh->colors.empty() && swap_color) {
+			for (size_t i = 0; i < mesh->normals.size(); i++) {
+				trimesh::swap_float(mesh->colors[i][0]);
+				trimesh::swap_float(mesh->colors[i][1]);
+				trimesh::swap_float(mesh->colors[i][2]);
+			}
+		}
+		if (!mesh->confidences.empty()) {
+			for (size_t i = 0; i < mesh->confidences.size(); i++)
+				trimesh::swap_float(mesh->confidences[i]);
+		}
+	}
+
+	// Write a bunch of vertices to a binary file
+	bool write_verts_bin(trimesh::TriMesh* mesh, FILE* f, bool need_swap,
+		bool write_norm, bool write_color,
+		bool float_color, bool write_conf)
+	{
+		if (need_swap)
+			swap_vert_props(mesh, float_color);
+		bool ok = write_verts_bin_helper(mesh, f, write_norm, write_color,
+			float_color, write_conf);
+		if (need_swap)
+			swap_vert_props(mesh, float_color);
+		return ok;
+	}
+
+	// Write tstrips to a binary file
+	bool write_strips_bin(trimesh::TriMesh* mesh, FILE* f, bool need_swap)
+	{
+		if (need_swap) {
+			for (size_t i = 0; i < mesh->tstrips.size(); i++)
+				trimesh::swap_int(mesh->tstrips[i]);
+		}
+		bool ok = (fwrite(&(mesh->tstrips[0]), 4 * mesh->tstrips.size(), 1, f) == 1);
+		if (need_swap) {
+			for (size_t i = 0; i < mesh->tstrips.size(); i++)
+				trimesh::swap_int(mesh->tstrips[i]);
+		}
+		return ok;
+	}
+
+	// Write range grid to a binary file
+	bool write_grid_bin(trimesh::TriMesh* mesh, FILE* f, bool need_swap)
+	{
+		unsigned char zero = 0;
+		unsigned char one = 1;
+		for (size_t i = 0; i < mesh->grid.size(); i++) {
+			if (mesh->grid[i] < 0) {
+				FWRITE(&zero, 1, 1, f);
+			}
+			else {
+				FWRITE(&one, 1, 1, f);
+				int g = mesh->grid[i];
+				if (need_swap)
+					trimesh::swap_int(g);
+				FWRITE(&g, 4, 1, f);
+			}
+		}
+		return true;
+	}
+
+	// Write a bunch of faces to a binary file
+	bool write_faces_bin(trimesh::TriMesh* mesh, FILE* f, bool need_swap,
+		int before_face_len, const char* before_face,
+		int after_face_len, const char* after_face)
+	{
+		mesh->need_faces();
+		if (need_swap) {
+			for (size_t i = 0; i < mesh->faces.size(); i++) {
+				trimesh::swap_int(mesh->faces[i][0]);
+				trimesh::swap_int(mesh->faces[i][1]);
+				trimesh::swap_int(mesh->faces[i][2]);
+			}
+		}
+		bool ok = true;
+		for (size_t i = 0; i < mesh->faces.size(); i++) {
+			if (before_face_len) {
+				if (fwrite(before_face, before_face_len, 1, f) != 1) {
+					ok = false;
+					goto out;
+				}
+			}
+			if (fwrite(&(mesh->faces[i][0]), 12, 1, f) != 1) {
+				ok = false;
+				goto out;
+			}
+			if (after_face_len) {
+				if (fwrite(after_face, after_face_len, 1, f) != 1) {
+					ok = false;
+					goto out;
+				}
+			}
+		}
+	out:
+		if (need_swap) {
+			for (size_t i = 0; i < mesh->faces.size(); i++) {
+				trimesh::swap_int(mesh->faces[i][0]);
+				trimesh::swap_int(mesh->faces[i][1]);
+				trimesh::swap_int(mesh->faces[i][2]);
+			}
+		}
+		return ok;
+	}
+
+	bool write_ply_binary(trimesh::TriMesh* mesh, FILE* f,
+		bool little_endian, bool write_norm, bool write_grid, bool float_color)
+	{
+		// Write a binary ply file
+		if (write_norm)
+			mesh->need_normals();
+		
+		bool write_tstrips = !write_grid && !mesh->tstrips.empty();
+		bool need_swap = little_endian ^ trimesh::we_are_little_endian();
+		
+		const char* format = little_endian ?
+			"binary_little_endian" : "binary_big_endian";
+		if (!write_ply_header(mesh, f, format, write_grid, write_tstrips,
+			write_norm, float_color))
+			return false;
+		if (!write_verts_bin(mesh, f, need_swap, write_norm, true,
+			float_color, true))
+			return false;
+		if (write_grid) {
+			return write_grid_bin(mesh, f, need_swap);
+		}
+		else if (write_tstrips) {
+			int s = mesh->tstrips.size();
+			if (need_swap)
+				trimesh::swap_int(s);
+			FWRITE(&s, 4, 1, f);
+			mesh->convert_strips(trimesh::TriMesh::TSTRIP_TERM);
+			bool ok = write_strips_bin(mesh, f, need_swap);
+			mesh->convert_strips(trimesh::TriMesh::TSTRIP_LENGTH);
+			return ok;
+		}
+		// else write faces
+		char buf[1] = { 3 };
+		return write_faces_bin(mesh, f, need_swap, 1, buf, 0, 0);
+	}
+
+	bool PlySaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer)
+	{
+		return write_ply_binary(out, f, trimesh::we_are_little_endian() ? true : false, 
+			false, false, false);
+	}
+
 	PlyLoader::PlyLoader()
 	{
 

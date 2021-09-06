@@ -23,14 +23,9 @@ namespace cxbin
 		return "cxbin";
 	}
 
-	bool CXBinSaver::save(trimesh::TriMesh* mesh, const std::string& fileName, ccglobal::Tracer* tracer)
+	bool CXBinSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer)
 	{
-		std::fstream out(fileName, std::ios::out | std::ios::binary);
-		bool saveOK = false;
-		if (out.is_open())
-			saveOK = writeCXBin(out, mesh, tracer);
-		out.close();
-		return saveOK;
+		return writeCXBin(f, out, tracer);
 	}
 
 	CXBinLoader::CXBinLoader()

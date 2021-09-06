@@ -20,6 +20,7 @@ namespace cxbin
 		registerLoaderImpl(&m_cxbinLoader);
 
 		registerSaverImpl(&m_cxbinSaver);
+		registerSaverImpl(&m_plySaver);
 	}
 
 	CXBinManager::~CXBinManager()
@@ -163,7 +164,14 @@ namespace cxbin
 			realFileName += ".";
 			realFileName += extension;
 		}
-		if (saver->save(mesh, fileName, tracer) && tracer)
+
+		FILE* f = fopen(realFileName.c_str(), "wb");
+		if (!f) {
+			//LOGI("Error opening [%s] for writing: %s.\n", filename, strerror(errno));
+			return;
+		}
+
+		if (saver->save(f, mesh, tracer) && tracer)
 		{
 			tracer->progress(1.0f);
 			tracer->success();

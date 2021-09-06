@@ -6,16 +6,16 @@
 #include <zlib.h>
 namespace cxbin
 {
-	bool writeCXBin0(std::fstream& out, trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+	bool writeCXBin0(FILE* out, trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
 		bool success = false;
 		int vertNum = mesh->vertices.size();
 		int faceNum = mesh->faces.size();
 
 		int totalNum = vertNum * sizeof(trimesh::vec3) + faceNum * sizeof(trimesh::ivec3);
-		out.write((const char*)&totalNum, sizeof(int));
-		out.write((const char*)&vertNum, sizeof(int));
-		out.write((const char*)&faceNum, sizeof(int));
+		fwrite((const char*)&totalNum, sizeof(int), 1, out);
+		fwrite((const char*)&vertNum, sizeof(int), 1, out);
+		fwrite((const char*)&faceNum, sizeof(int), 1, out);
 		uLong compressNum = compressBound(totalNum);
 		unsigned char* data = new unsigned char[totalNum];
 		unsigned char* cdata = new unsigned char[compressNum];
@@ -26,8 +26,8 @@ namespace cxbin
 			memcpy(data + vertNum * sizeof(trimesh::vec3), &mesh->faces.at(0), faceNum * sizeof(trimesh::ivec3));
 		if (compress(cdata, &compressNum, data, totalNum) == Z_OK)
 		{
-			out.write((const char*)&compressNum, sizeof(uLong));
-			out.write((const char*)cdata, compressNum);
+			fwrite((const char*)&compressNum, sizeof(uLong), 1, out);
+			fwrite((const char*)cdata, 1, compressNum, out);
 			success = true;
 		}
 		delete[]data;
@@ -35,12 +35,11 @@ namespace cxbin
 		return success;
 	}
 
-	bool writeCXBin(std::fstream& out, trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
+	bool writeCXBin(FILE* out, trimesh::TriMesh* mesh, ccglobal::Tracer* tracer)
 	{
-		out.write((const char*)&version, sizeof(int));
-
+		fwrite((const char*)&version, sizeof(int), 1, out);
 		char data[12] = "\niwlskdfjad";
-		out.write(data, 12);
+		fwrite(data, 1, 12, out);
 		if(version == 0)
 			return writeCXBin0(out, mesh, tracer);
 		return false;

@@ -14,7 +14,7 @@ namespace ccglobal
 
 namespace cxbin
 {
-	bool writeCXBin(std::fstream& out, trimesh::TriMesh* mesh, ccglobal::Tracer* tracer);
+	bool writeCXBin(FILE* out, trimesh::TriMesh* mesh, ccglobal::Tracer* tracer);
 }
 
 #endif // CXBIN_WRITER_1630913098880_H

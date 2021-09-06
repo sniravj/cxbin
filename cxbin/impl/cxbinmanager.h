@@ -51,6 +51,7 @@ namespace cxbin
 		CXBinLoader m_cxbinLoader;
 
 		CXBinSaver m_cxbinSaver;
+		PlySaver m_plySaver;
 	};
 
 	extern CXBinManager cxmanager;
