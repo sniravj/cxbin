@@ -2,6 +2,8 @@
 #include "cxbin/loaderimpl.h"
 #include "trimesh2/TriMesh.h"
 
+#include "ccglobal/tracer.h"
+
 namespace cxbin
 {
 	CXBinManager cxmanager;
@@ -91,6 +93,12 @@ namespace cxbin
 			for (trimesh::TriMesh* model : models)
 				delete model;
 			models.clear();
+		}
+
+		if (tracer && loadSuccess && models.size() > 0)
+		{
+			tracer->progress(1.0f);
+			tracer->success();
 		}
 		return models;
 	}
