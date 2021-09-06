@@ -10,19 +10,19 @@ namespace cxbin
 		int vertNum = 0;
 		int faceNum = 0;
 		int totalNum = 0;
-		uLong compressNum = compressBound(totalNum);
+		uLong compressNum = 0;
 
+		fread(&totalNum, sizeof(int), 1, f);
 		fread(&vertNum, sizeof(int), 1, f);
 		fread(&faceNum, sizeof(int), 1, f);
-		fread(&totalNum, sizeof(int), 1, f);
 		fread(&compressNum, sizeof(uLong), 1, f);
 
 		unsigned char* data = new unsigned char[totalNum];
 		unsigned char* cdata = new unsigned char[compressNum];
 
-		uLong uTotalNum = 0;
-		if ((fread(cdata, 1, compressNum, f) != -1)
-			&& (uncompress(data, &uTotalNum, cdata, compressNum) != Z_OK))
+		uLong uTotalNum = totalNum;
+		if (fread(cdata, 1, compressNum, f)
+			&& (uncompress(data, &uTotalNum, cdata, compressNum) == Z_OK))
 		{
 			if (vertNum > 0)
 			{

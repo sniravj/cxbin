@@ -17,7 +17,6 @@ namespace cxbin
 		out.write((const char*)&vertNum, sizeof(int));
 		out.write((const char*)&faceNum, sizeof(int));
 		uLong compressNum = compressBound(totalNum);
-		out.write((const char*)&compressNum, sizeof(uLong));
 		unsigned char* data = new unsigned char[totalNum];
 		unsigned char* cdata = new unsigned char[compressNum];
 
@@ -25,8 +24,9 @@ namespace cxbin
 			memcpy(data, &mesh->vertices.at(0), vertNum * sizeof(trimesh::vec3));
 		if (faceNum > 0)
 			memcpy(data + vertNum * sizeof(trimesh::vec3), &mesh->faces.at(0), faceNum * sizeof(trimesh::ivec3));
-		if (compress(cdata, &compressNum, data, totalNum))
+		if (compress(cdata, &compressNum, data, totalNum) == Z_OK)
 		{
+			out.write((const char*)&compressNum, sizeof(uLong));
 			out.write((const char*)cdata, compressNum);
 			success = true;
 		}
@@ -42,7 +42,7 @@ namespace cxbin
 		char data[12] = "\niwlskdfjad";
 		out.write(data, 12);
 		if(version == 0)
-			writeCXBin0(out, mesh, tracer);
+			return writeCXBin0(out, mesh, tracer);
 		return false;
 	}
 }

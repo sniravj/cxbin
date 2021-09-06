@@ -48,6 +48,7 @@ namespace cxbin
 		WrlLoader m_wrlLoader;
 		_3mfLoader m_3mfLoader;
 		DaeLoader m_daeLoader;
+		CXBinLoader m_cxbinLoader;
 
 		CXBinSaver m_cxbinSaver;
 	};

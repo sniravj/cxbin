@@ -21,9 +21,9 @@ namespace cxbin
 		CXBinLoader();
 		virtual ~CXBinLoader();
 
-		virtual std::string expectExtension() = 0;
-		virtual bool tryLoad(FILE* f, unsigned fileSize) = 0;
-		virtual bool load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) = 0;
+		virtual std::string expectExtension() override;
+		virtual bool tryLoad(FILE* f, unsigned fileSize) override;
+		virtual bool load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) override;
 
 	};
 }

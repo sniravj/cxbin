@@ -17,6 +17,7 @@ namespace cxbin
 		registerLoaderImpl(&m_wrlLoader);
 		registerLoaderImpl(&m_3mfLoader);
 		registerLoaderImpl(&m_daeLoader);
+		registerLoaderImpl(&m_cxbinLoader);
 
 		registerSaverImpl(&m_cxbinSaver);
 	}
