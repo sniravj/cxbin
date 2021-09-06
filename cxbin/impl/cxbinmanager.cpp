@@ -16,6 +16,7 @@ namespace cxbin
 		registerLoaderImpl(&m_3dsLoader);
 		registerLoaderImpl(&m_wrlLoader);
 		registerLoaderImpl(&m_3mfLoader);
+		registerLoaderImpl(&m_daeLoader);
 	}
 
 	CXBinManager::~CXBinManager()

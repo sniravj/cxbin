@@ -27,9 +27,12 @@ set(SRCS cxbin/interface.h
 		 cxbin/plugin/pluginoff.cpp	
 		 cxbin/plugin/pluginwrl.h
 		 cxbin/plugin/pluginwrl.cpp
+		 cxbin/plugin/pluginoff.cpp
+		 cxbin/plugin/plugindae.h
+		 cxbin/plugin/plugindae.cpp
 		 )
 		 
-set(LIBS trimesh2 stringutil)
+set(LIBS trimesh2 stringutil tinyxml)
 set(DEFS)
 
 if(TARGET lib3MF)

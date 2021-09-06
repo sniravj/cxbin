@@ -12,6 +12,7 @@
 #include "cxbin/plugin/plugin3ds.h"
 #include "cxbin/plugin/pluginwrl.h"
 #include "cxbin/plugin/plugin3mf.h"
+#include "cxbin/plugin/plugindae.h"
 
 namespace ccglobal
 {
@@ -41,6 +42,7 @@ namespace cxbin
 		_3dsLoader m_3dsLoader;
 		WrlLoader m_wrlLoader;
 		_3mfLoader m_3mfLoader;
+		DaeLoader m_daeLoader;
 	};
 
 	extern CXBinManager cxmanager;
