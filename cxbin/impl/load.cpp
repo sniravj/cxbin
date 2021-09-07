@@ -21,7 +21,7 @@ namespace cxbin
 
 	std::vector<trimesh::TriMesh*> loadT(int fd, ccglobal::Tracer* tracer)
 	{
-		FILE* f = _fdopen(fd, "rb");       /*文件描述符转换为文件指针*/
+		FILE* f = fdopen(fd, "rb");       /*文件描述符转换为文件指针*/
 		return cxmanager.load(f, "", tracer);
 	}
 }
