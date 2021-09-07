@@ -1,6 +1,7 @@
 #include "reader.h"
 #include <zlib.h>
 #include "trimesh2/TriMesh.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -42,6 +43,21 @@ namespace cxbin
 
 		delete[]data;
 		delete[]cdata;
+
+		if (true == success)
+		{
+			if (tracer)
+			{
+				tracer->success();
+			}
+		}
+		else
+		{
+			if (tracer)
+			{
+				tracer->failed("file read failed");
+			}
+		}
 		return success;
 	}
 

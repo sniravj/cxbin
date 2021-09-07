@@ -3,6 +3,7 @@
 #include "stringutil/filenameutil.h"
 #include "trimesh2/TriMesh.h"
 #include "cxbin/convert.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -56,6 +57,9 @@ namespace cxbin
 
 		std::vector<int> thisface;
 		while (1) {
+			if (tracer && tracer->interrupt())
+				return false;
+
 			stringutil::skip_comments(f);
 			if (feof(f))
 				break;
@@ -80,6 +84,9 @@ namespace cxbin
 				thisface.clear();
 				char* c = buf;
 				while (1) {
+					if (tracer && tracer->interrupt())
+						return false;
+
 					while (*c && *c != '\n' && !isspace(*c))
 						c++;
 					while (*c && isspace(*c))
@@ -105,6 +112,10 @@ namespace cxbin
 		if (model->vertices.size() != model->normals.size())
 			model->normals.clear();
 
+		if (tracer)
+		{
+			tracer->success();
+		}
 		return true;
 	}
 }

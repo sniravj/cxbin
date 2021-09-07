@@ -1,6 +1,7 @@
 #include "plugindae.h"
 #include "tinyxml/tinyxml.h"
 #include "trimesh2/TriMesh.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -188,6 +189,10 @@ namespace cxbin
 		TiXmlDocument doc;
 		if (!doc.LoadFile(f))
 		{
+			if (tracer)
+			{
+				tracer->failed("Xml File open failed");
+			}
 			return success;
 		}
 
@@ -199,10 +204,21 @@ namespace cxbin
 
 		for (const TiXmlNode* geometry : geometries)
 		{
+			if (tracer && tracer->interrupt())
+				return false;
+
 			std::vector<const TiXmlNode*> meshes;
 			findNodes(geometry, meshes, "mesh");
+
+			int size = meshes.size();
+			int curSize = 0;
 			for (const TiXmlNode* mesh : meshes)
 			{
+				if (tracer)
+				{
+					tracer->progress((float)curSize++ / (float)size);
+				}
+
 				int positioncount = 0;
 				int normalcount = 0;
 				const char* position = nullptr;
@@ -297,6 +313,10 @@ namespace cxbin
 					out.push_back(mesh);
 				}
 			}
+		}
+		if (tracer)
+		{
+			tracer->success();
 		}
 		return !success;
 	}

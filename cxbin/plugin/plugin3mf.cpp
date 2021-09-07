@@ -2,6 +2,7 @@
 
 #include "lib3mf_implicit.hpp"
 #include "trimesh2/TriMesh.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -52,7 +53,13 @@ namespace cxbin
 	bool _3mfLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		if (fileSize == 0)
+		{
+			if (tracer)
+			{
+				tracer->failed("File is empty");
+			}
 			return false;
+		}
 
 		unsigned char* buffer = new unsigned char[fileSize];
 		Lib3MF::CInputVector<Lib3MF_uint8> Ibuffer(buffer, fileSize);
@@ -66,6 +73,9 @@ namespace cxbin
 
 		while (pmeshdata->MoveNext())
 		{
+			if (tracer && tracer->interrupt())
+				return false;
+
 			Lib3MF::PMeshObject obj = pmeshdata->GetCurrentMeshObject();
 			int faceCount = obj->GetTriangleCount();
 			
@@ -74,8 +84,17 @@ namespace cxbin
 
 			mesh->faces.reserve(faceCount);
 			mesh->vertices.reserve(3 * faceCount);
+
+			int nfacets = faceCount;
 			for (int nIdx = 0; nIdx < faceCount; nIdx++)
 			{
+				if (tracer)
+				{
+					tracer->progress((float)nIdx / (float)nfacets);
+				}
+				if (tracer && tracer->interrupt())
+					return false;
+
 				Lib3MF::sTriangle faceIndex = obj->GetTriangle(nIdx);
 				Lib3MF::sPosition point1 = obj->GetVertex(faceIndex.m_Indices[0]);
 				Lib3MF::sPosition point2 = obj->GetVertex(faceIndex.m_Indices[1]);
@@ -90,6 +109,11 @@ namespace cxbin
 		}
 
 		delete[]buffer;
+
+		if (tracer)
+		{
+			tracer->success();
+		}
 		return true;
 	}
 }

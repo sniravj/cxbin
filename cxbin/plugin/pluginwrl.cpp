@@ -2,6 +2,7 @@
 
 #include "stringutil/filenameutil.h"
 #include "trimesh2/TriMesh.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -61,6 +62,9 @@ namespace cxbin
 		std::vector<std::vector<int>> polygons_Index;
 		while (!feof(f))
 		{
+			if (tracer && tracer->interrupt())
+				return false;
+
 			ch = fgetc(f);
 			while (ch)
 			{
@@ -187,15 +191,32 @@ namespace cxbin
 			}
 		}
 
+		int nfacetss = facess.size();
 		for (int n = 0; n < facess.size(); n++)
 		{
+			if (tracer)
+			{
+				tracer->progress((float)n / (float)nfacetss);
+			}
+			if (tracer && tracer->interrupt())
+				return false;
+
 			int faceCount = facess[n].size();
 
 			trimesh::TriMesh* mesh = new trimesh::TriMesh();
 			mesh->faces.reserve(faceCount);
 			mesh->vertices.reserve(3 * faceCount);
+
+			int nfacets = facess[n].size();
 			for (int nIdx = 0; nIdx < facess[n].size(); nIdx++)
 			{
+				if (tracer)
+				{
+					tracer->progress((float)nIdx / (float)nfacets);
+				}
+				if (tracer && tracer->interrupt())
+					return false;
+
 				trimesh::point vertex0 = pointss[n][facess[n][nIdx].vertexIndex[0]];
 				trimesh::point vertex1 = pointss[n][facess[n][nIdx].vertexIndex[1]];
 				trimesh::point vertex2 = pointss[n][facess[n][nIdx].vertexIndex[2]];
@@ -222,6 +243,10 @@ namespace cxbin
 			out.push_back(mesh);
 		}
 
+		if (tracer)
+		{
+			tracer->success();
+		}
 		return true;
 	}
 
