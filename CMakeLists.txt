@@ -30,7 +30,8 @@ set(SRCS cxbin/interface.h
 		 cxbin/plugin/pluginoff.cpp
 		 cxbin/plugin/plugindae.h
 		 cxbin/plugin/plugindae.cpp
-		 
+		 cxbin/plugin/plugin3mf.h
+		 cxbin/plugin/plugin3mf.cpp
 		 cxbin/cx/writer.h
 		 cxbin/cx/writer.cpp
 		 cxbin/cx/reader.h
