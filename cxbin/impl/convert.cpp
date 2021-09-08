@@ -45,4 +45,61 @@ namespace cxbin
 				thisface[i - 1],
 				thisface[i]));
 	}
+
+
+	TTracer::TTracer(ccglobal::Tracer* __tracer)
+		:pass(false)
+		, _tracer(__tracer)
+	{
+
+	}
+
+	TTracer::~TTracer()
+	{
+
+	}
+
+	void TTracer::progress(float r)
+	{
+		if (_tracer)
+			_tracer->progress(r);
+	}
+
+	bool TTracer::interrupt()
+	{
+		if (_tracer)
+			return _tracer->interrupt();
+		return false;
+	}
+
+	void TTracer::message(const char* msg)
+	{
+		if (_tracer)
+			return _tracer->message(msg);
+	}
+
+	void TTracer::failed(const char* msg)
+	{
+		if (_tracer)
+			return _tracer->failed(msg);
+		pass = false;
+	}
+
+	void TTracer::success()
+	{
+		pass = true;
+	}
+
+	void formartPrint(ccglobal::Tracer* tracer, const char* format, ...)
+	{
+		if (!tracer)
+			return;
+
+		char buf[1024] = { 0 };
+		va_list args;
+		va_start(args, format);
+		vsprintf(buf, format, args);
+		tracer->message(buf);
+		va_end(args);
+	}
 }

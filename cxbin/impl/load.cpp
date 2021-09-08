@@ -4,16 +4,34 @@
 
 #include "cxbin/impl/cxbinmanager.h"
 #include "stringutil/filenameutil.h"
+#include "cxbin/impl/inner.h"
 
 namespace cxbin
 {
 	std::vector<trimesh::TriMesh*> loadT(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
+		std::vector<trimesh::TriMesh*> models;
 		FILE* f = fopen(fileName.c_str(), "rb");
 
-		std::string extension = stringutil::extensionFromFileName(fileName, true);
+		formartPrint(tracer, "loadT : load file %s", fileName.c_str());
+		
+		if (!f)
+		{
+			if(tracer)
+				tracer->failed("loadT : load file error.");
 
-		std::vector<trimesh::TriMesh*> models = cxmanager.load(f, extension, tracer);
+			return models;
+		}
+
+		std::string extension = stringutil::extensionFromFileName(fileName, true);
+		models = cxmanager.load(f, extension, tracer);
+
+		if (tracer && models.size() > 0)
+		{
+			tracer->progress(1.0f);
+			tracer->success();
+		}
+
 		if(f)
 			fclose(f);
 		return models;

@@ -1,5 +1,6 @@
 #include "writer.h"
 #include "cxutil.h"
+#include "cxbin/convert.h"
 
 #include "trimesh2/TriMesh.h"
 
@@ -26,10 +27,13 @@ namespace cxbin
 			memcpy(data + vertNum * sizeof(trimesh::vec3), &mesh->faces.at(0), faceNum * sizeof(trimesh::ivec3));
 		if (compress(cdata, &compressNum, data, totalNum) == Z_OK)
 		{
-			fwrite((const char*)&compressNum, sizeof(uLong), 1, out);
+			formartPrint(tracer, "writeCXBin0 write %d %d %d %d.", totalNum, (int)compressNum, vertNum, faceNum);
+
+			fwrite((const char*)&compressNum, sizeof(uLong), 1, out); 
 			fwrite((const char*)cdata, 1, compressNum, out);
 			success = true;
 		}
+
 		delete[]data;
 		delete[]cdata;
 		return success;

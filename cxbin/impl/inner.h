@@ -1,6 +1,7 @@
 #ifndef CXBIN_INNER_1630864500772_H
 #define CXBIN_INNER_1630864500772_H
 #include "trimesh2/TriMesh.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {

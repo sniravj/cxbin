@@ -1,5 +1,7 @@
 #include "cxbinmanager.h"
 #include "cxbin/loaderimpl.h"
+#include "cxbin/convert.h"
+
 #include "trimesh2/TriMesh.h"
 
 #include "ccglobal/tracer.h"
@@ -104,7 +106,10 @@ namespace cxbin
 			{
 				std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(extension);
 				if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
+				{
 					loader = it->second;
+					formartPrint(tracer, "CXBinManager::load : use plugin %s", it->first.c_str());
+				}
 			}
 
 			if (!loader)
@@ -116,6 +121,8 @@ namespace cxbin
 					if (it->second->tryLoad(f, fileSize))
 					{
 						loader = it->second;
+
+						formartPrint(tracer, "CXBinManager::load : searched plugin %s", it->first.c_str());
 						break;
 					}
 				}
@@ -124,6 +131,8 @@ namespace cxbin
 
 			if (loader)
 				loadSuccess = loader->load(f, fileSize, models, tracer);
+			else if (tracer)
+				tracer->failed("CXBinManager::load . can't find a plugin.");
 		} while (0);
 		
 		if (!loadSuccess)
@@ -133,11 +142,6 @@ namespace cxbin
 			models.clear();
 		}
 
-		if (tracer && loadSuccess && models.size() > 0)
-		{
-			tracer->progress(1.0f);
-			tracer->success();
-		}
 		return models;
 	}
 
@@ -145,7 +149,7 @@ namespace cxbin
 	{
 		if (!mesh && tracer)
 		{
-			tracer->failed("");
+			tracer->failed("CXBinManager::save. save empty mesh.");
 			return;
 		}
 
@@ -154,7 +158,10 @@ namespace cxbin
 		{
 			std::map<std::string, SaverImpl*>::iterator it = m_savers.find(extension);
 			if (it != m_savers.end())
+			{
 				saver = it->second;
+				formartPrint(tracer, "CXBinManager::save. use plugin %s", it->first.c_str());
+			}
 		}
 
 		std::string realFileName = fileName;
@@ -162,12 +169,20 @@ namespace cxbin
 		{
 			saver = &m_cxbinSaver;
 			realFileName += ".";
-			realFileName += extension;
+			realFileName += "cxbin";
+
+			formartPrint(tracer, "CXBinManager::save. use cxbin extension.");
 		}
 
 		FILE* f = fopen(realFileName.c_str(), "wb");
+
+		formartPrint(tracer, "CXBinManager::save. save file %s.", realFileName.c_str());
 		if (!f) {
-			//LOGI("Error opening [%s] for writing: %s.\n", filename, strerror(errno));
+			if (tracer)
+			{
+				tracer->failed("CXBinManager::save.  open file failed.");
+				return;
+			}
 			return;
 		}
 
