@@ -3,6 +3,7 @@
 #include "stringutil/filenameutil.h"
 #include "trimesh2/TriMesh.h"
 #include "cxbin/impl/inner.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -55,9 +56,17 @@ namespace cxbin
 
 		if (!read_verts_asc(f, model, nverts, 3, 0, -1, -1, false, -1))
 			return false;
+
+		if (tracer && tracer->interrupt())
+			return false;
+
 		if (!read_faces_asc(f, model, nfaces, 1, 0, 1, true))
 			return false;
 
+		if (tracer)
+		{
+			tracer->success();
+		}
 		return true;
 	}
 }

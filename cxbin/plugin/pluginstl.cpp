@@ -218,6 +218,11 @@ namespace cxbin
 			return read_stl_text(f, fileSize, *out[0], tracer);
 		else if (IsBinarySTL(f, fileSize))
 			return read_stl_binary(f, fileSize, *out[0], tracer);
+
+		if (tracer)
+		{
+			tracer->success();
+		}
 		return success;
 	}
 }

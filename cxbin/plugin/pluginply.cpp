@@ -6,6 +6,7 @@
 #include "cxbin/convert.h"
 #include "stringutil/filenameutil.h"
 #include "cxbin/impl/inner.h"
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {
@@ -410,6 +411,9 @@ namespace cxbin
 		// Skip until we find vertices
 		int skip1 = 0;
 		while (!LINE_IS("end_header") && !LINE_IS("element vertex")) {
+			if (tracer && tracer->interrupt())
+				return false;
+
 			char elem_name[1024];
 			int nelem = 0, elem_len = 0;
 			sscanf(buf, "element %s %d", elem_name, &nelem);
@@ -431,6 +435,9 @@ namespace cxbin
 		// Parse vertex properties
 		GET_LINE();
 		while (LINE_IS("property")) {
+			if (tracer && tracer->interrupt())
+				return false;
+
 			if (LINE_IS("property float x") ||
 				LINE_IS("property float32 x"))
 				vert_pos = vert_len;
@@ -461,6 +468,9 @@ namespace cxbin
 		int skip2 = 0;
 		while (!LINE_IS("end_header") && !LINE_IS("element face") &&
 			!LINE_IS("element tristrips") && !LINE_IS("element range_grid")) {
+			if (tracer && tracer->interrupt())
+				return false;
+
 			char elem_name[1024];
 			int nelem = 0, elem_len = 0;
 			sscanf(buf, "element %s %d", elem_name, &nelem);
@@ -476,6 +486,9 @@ namespace cxbin
 
 		// Look for faces, tristrips, or range grid
 		if (LINE_IS("element face")) {
+			if (tracer && tracer->interrupt())
+				return false;
+
 			if (sscanf(buf, "element face %d\n", &nfaces) != 1)
 				return false;
 			GET_LINE();
@@ -594,7 +607,10 @@ namespace cxbin
 					return false;
 			}
 		}
-
+		if (tracer)
+		{
+			tracer->success();
+		}
 		return true;
 	}
 }

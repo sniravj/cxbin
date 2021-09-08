@@ -4,6 +4,7 @@
 #include "trimesh2/endianutil.h"
 #include "stringutil/filenameutil.h"
 #include "cxbin/impl/inner.h"
+#include "ccglobal/tracer.h"
 
 #define CHUNK_3DS_MAIN  0x4D4Du
 #define CHUNK_3DS_MODEL 0x3D3Du
@@ -56,6 +57,9 @@ namespace cxbin
 		out.push_back(model);
 
 		while (1) {
+			if (tracer && tracer->interrupt())
+				return false;
+
 			unsigned short chunkid;
 			unsigned chunklen;
 			if (!fread(&chunkid, 2, 1, f) ||
@@ -101,8 +105,18 @@ namespace cxbin
 				//dprintf("\n  Reading %d faces... ", nfaces);
 				int old_nfaces = model->faces.size();
 				int new_nfaces = old_nfaces + nfaces;
+
+				int nfacets = new_nfaces;
 				model->faces.resize(new_nfaces);
 				for (int i = old_nfaces; i < new_nfaces; i++) {
+
+					if (tracer )
+					{
+						tracer->progress((float)i / (float)nfacets);
+					}
+					if (tracer && tracer->interrupt())
+						return false;
+
 					unsigned short buf[4];
 					COND_READ(true, buf[0], 8);
 					if (need_swap) {
@@ -121,6 +135,11 @@ namespace cxbin
 				fseek(f, chunklen - 6, SEEK_CUR);
 			}
 			}
+		}
+
+		if (tracer)
+		{
+			tracer->success();
 		}
 		return true;
 	}
