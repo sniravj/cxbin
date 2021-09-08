@@ -25,7 +25,7 @@ namespace cxbin
 		formartPrint(tracer, "loadCXBin0 load %d %d %d %d.", totalNum, (int)compressNum, vertNum, faceNum);
 
 		uLong uTotalNum = totalNum;
-		if (fread(data, 1, totalNum, f))
+		if (fread(cdata, 1, compressNum, f))
 		{
 			if (uncompress(data, &uTotalNum, cdata, compressNum) == Z_OK)
 			{
