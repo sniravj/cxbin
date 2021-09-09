@@ -68,6 +68,8 @@ namespace cxbin
 			if (LINE_IS("v ") || LINE_IS("v\t")) {
 				float x, y, z;
 				if (sscanf(buf + 1, "%f %f %f", &x, &y, &z) != 3) {
+					if (tracer)
+						tracer->failed("sscanf failed");
 					return false;
 				}
 				model->vertices.push_back(trimesh::point(x, y, z));
@@ -75,6 +77,8 @@ namespace cxbin
 			else if (LINE_IS("vn ") || LINE_IS("vn\t")) {
 				float x, y, z;
 				if (sscanf(buf + 2, "%f %f %f", &x, &y, &z) != 3) {
+					if (tracer)
+						tracer->failed("sscanf failed");
 					return false;
 				}
 				model->normals.push_back(trimesh::vec(x, y, z));

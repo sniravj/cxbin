@@ -89,7 +89,11 @@ namespace cxbin
 			case CHUNK_3DS_VERT: {
 				unsigned short nverts;
 				if (!fread(&nverts, 2, 1, f))
+				{
+					if (tracer)
+						tracer->failed("fread failed");
 					return false;
+				}
 				if (need_swap)
 					trimesh::swap_ushort(nverts);
 				read_verts_bin(f, model, need_swap,
@@ -99,7 +103,11 @@ namespace cxbin
 			case CHUNK_3DS_FACE: {
 				unsigned short nfaces;
 				if (!fread(&nfaces, 2, 1, f))
+				{
+					if (tracer)
+						tracer->failed("fread failed");
 					return false;
+				}
 				if (need_swap)
 					trimesh::swap_ushort(nfaces);
 				//dprintf("\n  Reading %d faces... ", nfaces);

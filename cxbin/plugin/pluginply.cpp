@@ -403,7 +403,11 @@ namespace cxbin
 		int face_len = 0, face_count = -1, face_idx = -1;
 
 		if (!parsePlyFormat(f, binary, need_swap))
+		{
+			if (tracer)
+				tracer->failed("Format failed");
 			return false;
+		}
 
 		trimesh::TriMesh* model = new trimesh::TriMesh();
 		out.push_back(model);
@@ -420,7 +424,11 @@ namespace cxbin
 			GET_LINE();
 			while (LINE_IS("property")) {
 				if (!ply_property(buf, elem_len, binary))
+				{
+					if (tracer)
+						tracer->failed("Format failed");
 					return false;
+				}
 				GET_LINE();
 			}
 			skip1 += nelem * elem_len;
@@ -429,6 +437,8 @@ namespace cxbin
 		// Find number of vertices
 		result = sscanf(buf, "element vertex %d\n", &nverts);
 		if (result != 1) {
+			if (tracer)
+				tracer->failed("vertex failed");
 			return false;
 		}
 
@@ -459,7 +469,11 @@ namespace cxbin
 				vert_conf = vert_len;
 
 			if (!ply_property(buf, vert_len, binary))
+			{
+				if (tracer)
+					tracer->failed("property failed");
 				return false;
+			}
 
 			GET_LINE();
 		}
@@ -490,7 +504,11 @@ namespace cxbin
 				return false;
 
 			if (sscanf(buf, "element face %d\n", &nfaces) != 1)
+			{
+				if (tracer)
+					tracer->failed("nfaces failed");
 				return false;
+			}
 			GET_LINE();
 			while (LINE_IS("property")) {
 				char count_type[256], ind_type[256];
@@ -505,7 +523,11 @@ namespace cxbin
 					}
 				}
 				else if (!ply_property(buf, face_len, binary))
+				{
+					if (tracer)
+						tracer->failed("property failed");
 					return false;
+				}
 				GET_LINE();
 			}
 		}
@@ -514,13 +536,23 @@ namespace cxbin
 			GET_LINE();
 			if (!LINE_IS("property list int int vertex_ind") &&
 				!LINE_IS("property list int32 int32 vertex_ind"))
+			{
+				if (tracer)
+					tracer->failed("property list failed");
 				return false;
+			}
 			GET_LINE();
 		}
 		else if (LINE_IS("element range_grid")) {
 			if (sscanf(buf, "element range_grid %d\n", &ngrid) != 1)
+			{
+				if (tracer)
+					tracer->failed("element range_grid failed");
 				return false;
+			}
 			if (ngrid != model->grid_width * model->grid_height) {
+				if (tracer)
+					tracer->failed("ngrid failed");
 				return false;
 			}
 			GET_LINE();
@@ -528,13 +560,21 @@ namespace cxbin
 				!LINE_IS("property list uint8 int32 vertex_ind") &&
 				!LINE_IS("property list char int vertex_ind") &&
 				!LINE_IS("property list int8 int32 vertex_ind"))
+			{
+				if (tracer)
+					tracer->failed("property list unit failed");
 				return false;
+			}
 			GET_LINE();
 		}
 
 		while (LINE_IS("property")) {
 			if (!ply_property(buf, face_len, binary))
+			{
+				if (tracer)
+					tracer->failed("property failed");
 				return false;
+			}
 			GET_LINE();
 		}
 
@@ -557,13 +597,21 @@ namespace cxbin
 			if (!read_verts_bin(f, model, need_swap, nverts, vert_len,
 				vert_pos, vert_norm, vert_color,
 				float_color, vert_conf))
+			{
+				if (tracer)
+					tracer->failed("read verts bin failed");
 				return false;
+			}
 		}
 		else {
 			if (!read_verts_asc(f, model, nverts, vert_len,
 				vert_pos, vert_norm, vert_color,
 				float_color, vert_conf))
+			{
+				if (tracer)
+					tracer->failed("read verts asc failed");
 				return false;
+			}
 		}
 
 		if (skip2) {
@@ -577,21 +625,37 @@ namespace cxbin
 		if (ngrid) {
 			if (binary) {
 				if (!read_grid_bin(f, model, need_swap))
+				{
+					if (tracer)
+						tracer->failed("read grid bin failed");
 					return false;
+				}
 			}
 			else {
 				if (!read_grid_asc(f, model))
+				{
+					if (tracer)
+						tracer->failed("read grid asc failed");
 					return false;
+				}
 			}
 		}
 		else if (nstrips) {
 			if (binary) {
 				if (!read_strips_bin(f, model, need_swap))
+				{
+					if (tracer)
+						tracer->failed("read strips bin failed");
 					return false;
+				}
 			}
 			else {
 				if (!read_strips_asc(f, model))
+				{
+					if (tracer)
+						tracer->failed("read strips asc failed");
 					return false;
+				}
 			}
 			model->convert_strips(trimesh::TriMesh::TSTRIP_LENGTH);
 		}
@@ -599,12 +663,20 @@ namespace cxbin
 			if (binary) {
 				if (!read_faces_bin(f, model, need_swap, nfaces,
 					face_len, face_count, face_idx))
+				{
+					if (tracer)
+						tracer->failed("read faces bin failed");
 					return false;
+				}
 			}
 			else {
 				if (!read_faces_asc(f, model, nfaces,
 					face_len, face_count, face_idx, false))
+				{
+					if (tracer)
+						tracer->failed("read faces asc failed");
 					return false;
+				}
 			}
 		}
 		if (tracer)

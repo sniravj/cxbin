@@ -55,13 +55,21 @@ namespace cxbin
 		out.push_back(model);
 
 		if (!read_verts_asc(f, model, nverts, 3, 0, -1, -1, false, -1))
+		{
+			if (tracer)
+				tracer->failed("read verts asc failed");
 			return false;
+		}
 
 		if (tracer && tracer->interrupt())
 			return false;
 
 		if (!read_faces_asc(f, model, nfaces, 1, 0, 1, true))
+		{
+			if (tracer)
+				tracer->failed("read faces asc failed");
 			return false;
+		}
 
 		if (tracer)
 		{
