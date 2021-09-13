@@ -86,9 +86,12 @@ namespace cxbin
 			mesh->vertices.reserve(3 * faceCount);
 
 			int nfacets = faceCount;
+			int calltime = nfacets / 10;
+			if (calltime <= 0)
+				calltime = nfacets;
 			for (int nIdx = 0; nIdx < faceCount; nIdx++)
 			{
-				if (tracer)
+				if (tracer && nIdx % calltime == 1)
 				{
 					tracer->progress((float)nIdx / (float)nfacets);
 				}

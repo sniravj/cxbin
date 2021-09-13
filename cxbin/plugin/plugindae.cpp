@@ -214,11 +214,6 @@ namespace cxbin
 			int curSize = 0;
 			for (const TiXmlNode* mesh : meshes)
 			{
-				if (tracer)
-				{
-					tracer->progress((float)curSize++ / (float)size);
-				}
-
 				int positioncount = 0;
 				int normalcount = 0;
 				const char* position = nullptr;
@@ -244,6 +239,10 @@ namespace cxbin
 						normal = floatarry->GetText();
 						//addNormals(mesh, sub_val->GetText(), icount);
 					}
+				}
+				if (tracer)
+				{
+					tracer->progress((float)curSize++ / (float)size*3);
 				}
 
 				std::vector<const TiXmlNode*> polylists;
@@ -279,7 +278,10 @@ namespace cxbin
 					addFaces(mesh, vcount->GetText(), p->GetText(), vertexOffset, normalOffset);
 					out.push_back(mesh);
 				}
-
+				if (tracer)
+				{
+					tracer->progress((float)curSize++ / (float)size * 3);
+				}
 
 				std::vector<const TiXmlNode*> triangles;
 				findNodes(mesh, triangles, "triangles");
@@ -311,6 +313,10 @@ namespace cxbin
 					const TiXmlElement* p = (const TiXmlElement*)_p;
 					addFaces(mesh, p->GetText(), vertexOffset, normalOffset);
 					out.push_back(mesh);
+				}
+				if (tracer)
+				{
+					tracer->progress((float)curSize++ / (float)size * 3);
 				}
 			}
 		}

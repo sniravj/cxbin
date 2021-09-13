@@ -578,6 +578,11 @@ namespace cxbin
 			GET_LINE();
 		}
 
+		if (tracer)
+		{
+			tracer->progress(0.1f);
+		}
+
 		// Skip to the end of the header
 		while (!LINE_IS("end_header"))
 			GET_LINE();
@@ -612,6 +617,11 @@ namespace cxbin
 					tracer->failed("read verts asc failed");
 				return false;
 			}
+		}
+
+		if (tracer)
+		{
+			tracer->progress(0.5f);
 		}
 
 		if (skip2) {
@@ -681,6 +691,7 @@ namespace cxbin
 		}
 		if (tracer)
 		{
+			tracer->progress(0.9f);
 			tracer->success();
 		}
 		return true;
