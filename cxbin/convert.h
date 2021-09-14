@@ -24,8 +24,8 @@ namespace cxbin
 		void progress(float r) override;
 		bool interrupt() override;
 
-		void message(const char* msg, const char* fileName = nullptr, int line = 0) override;
-		void failed(const char* msg, const char* fileName = nullptr, int line = 0) override;
+		void message(const char* msg) override;
+		void failed(const char* msg) override;
 		void success() override;
 
 		bool pass;
