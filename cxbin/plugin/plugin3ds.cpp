@@ -112,13 +112,15 @@ namespace cxbin
 					trimesh::swap_ushort(nfaces);
 				//dprintf("\n  Reading %d faces... ", nfaces);
 				int old_nfaces = model->faces.size();
-				int new_nfaces = old_nfaces + nfaces;
+				int nfacets = old_nfaces + nfaces;
 
-				int nfacets = new_nfaces;
-				model->faces.resize(new_nfaces);
-				for (int i = old_nfaces; i < new_nfaces; i++) {
+				int calltime = nfacets / 10;
+				if (calltime <= 0)
+					calltime = nfacets;
+				model->faces.resize(nfacets);
+				for (int i = old_nfaces; i < nfacets; i++) {
 
-					if (tracer )
+					if (tracer && i % calltime == 1)
 					{
 						tracer->progress((float)i / (float)nfacets);
 					}
