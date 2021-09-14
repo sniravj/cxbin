@@ -77,16 +77,13 @@ namespace cxbin
 		fseek(f, 0L, SEEK_SET);
 		char line[1024] = { '\0' };
 
-		int face = 0;
-		int n = 0;
-
 		size_t curSize = 0;
 		size_t deltaSize = fileSize / 10;
 		size_t nextSize = 0;
 
 		size_t interSize = fileSize / 100;
 		size_t iNextSize = 0;
-
+		
 		while (!feof(f))
 		{
 			fgets(line, 1024, f);
@@ -112,22 +109,18 @@ namespace cxbin
 
 				iNextSize += interSize;
 			}
-
-			sourceLine = stringutil::trimHeadTail(sourceLine);
-
-			std::vector<std::string> segs = stringutil::splitString(sourceLine, " ");
-
-			if (segs.size() == 4 && !strcmp(segs.at(0).c_str(), "vertex"))
+			
+			if (sourceLine.find("vertex") != std::string::npos)
 			{
+				sourceLine = stringutil::trimHeadTail(sourceLine);
+				std::vector<std::string> segs = stringutil::splitString(sourceLine, " ");
 				float x = atof(segs.at(1).c_str());
 				float y = atof(segs.at(2).c_str());
 				float z = atof(segs.at(3).c_str());
 				out.vertices.push_back(trimesh::vec3(x, y, z));
-				++n;
 			}
 		}
-
-		face = n / 3;
+		int face = out.vertices.size() / 3;
 		out.faces.resize(face);
 		for (int i = 0; i < face; ++i)
 		{
