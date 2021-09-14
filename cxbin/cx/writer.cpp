@@ -29,7 +29,8 @@ namespace cxbin
 		{
 			formartPrint(tracer, "writeCXBin0 write %d %d %d %d.", totalNum, (int)compressNum, vertNum, faceNum);
 
-			fwrite((const char*)&compressNum, sizeof(uLong), 1, out); 
+			int iCompressNum = (int)compressNum;
+			fwrite((const char*)&iCompressNum, sizeof(int), 1, out);
 			fwrite((const char*)cdata, 1, compressNum, out);
 			success = true;
 		}
