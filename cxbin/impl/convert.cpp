@@ -72,13 +72,13 @@ namespace cxbin
 		return false;
 	}
 
-	void TTracer::message(const char* msg)
+	void TTracer::message(const char* msg, const char* fileName , int line)
 	{
 		if (_tracer)
 			return _tracer->message(msg);
 	}
 
-	void TTracer::failed(const char* msg)
+	void TTracer::failed(const char* msg, const char* fileName, int line)
 	{
 		if (_tracer)
 			return _tracer->failed(msg);
