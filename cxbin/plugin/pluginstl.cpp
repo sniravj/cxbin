@@ -1,6 +1,7 @@
 #include "pluginstl.h"
 #include "ccglobal/log.h"
 #include "ccglobal/tracer.h"
+#include "ccglobal/spycc.h"
 
 #include "stringutil/util.h"
 #include "stringutil/filenameutil.h"
@@ -102,6 +103,7 @@ namespace cxbin
 					tracer->progress((float)curSize / (float)fileSize);
 				}
 
+				SESSION_TICK("text-stl")
 				nextSize += deltaSize;
 			}
 
@@ -136,6 +138,8 @@ namespace cxbin
 			tri.y = 3 * i + 1;
 			tri.z = 3 * i + 2;
 		}
+		SESSION_TICK("text-stl")
+
 		return true;
 	}
 
@@ -164,6 +168,7 @@ namespace cxbin
 			if (tracer && i % calltime == 1)
 			{
 				tracer->progress((float)i / (float)nfacets);
+				SESSION_TICK("binary-stl")
 			}
 			if (tracer && i % interTimes == 1 && tracer->interrupt())
 				return false;
@@ -183,6 +188,7 @@ namespace cxbin
 			COND_READ(true, att, 2);
 		}
 
+		SESSION_TICK("binary-stl")
 		LOGI("parse binary stl success...\n");
 		return true;
 	}
