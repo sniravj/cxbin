@@ -41,7 +41,7 @@ set(SRCS cxbin/interface.h
 		 )
 		 
 set(LIBS trimesh2 stringutil tinyxml zlib)
-set(DEFS)
+set(DEFS TIXML_USE_STL)
 
 if(TARGET lib3MF)
 	list(APPEND LIBS lib3MF)
