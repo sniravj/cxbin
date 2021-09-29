@@ -54,7 +54,9 @@ namespace cxbin
 	{
 		trimesh::TriMesh* model = new trimesh::TriMesh();
 		out.push_back(model);
-
+		unsigned count = 0;
+		unsigned calltime = fileSize / 10;
+		int num = 0;
 		std::vector<int> thisface;
 		while (1) {
 			if (tracer && tracer->interrupt())
@@ -65,6 +67,16 @@ namespace cxbin
 				break;
 			char buf[1024];
 			GET_LINE();
+
+			std::string str = buf;
+			count += str.length();
+			if (tracer && count >= calltime)
+			{
+				count = 0;
+				num++;
+				tracer->progress((float)num / 10.0);
+			}
+			
 			if (LINE_IS("v ") || LINE_IS("v\t")) {
 				float x, y, z;
 				if (sscanf(buf + 1, "%f %f %f", &x, &y, &z) != 3) {

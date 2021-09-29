@@ -191,12 +191,24 @@ namespace cxbin
 			}
 		}
 
+		if (tracer)
+		{
+			tracer->progress(0.5f);
+		}
+
 		int nfacetss = facess.size();
+		int calltime = nfacetss / 10;
+		if (calltime <= 0)
+			calltime = nfacetss;
 		for (int n = 0; n < facess.size(); n++)
 		{
 			if (tracer)
 			{
 				tracer->progress((float)n / (float)nfacetss);
+			}
+			if (tracer && n % calltime == 1)
+			{
+				tracer->progress(0.5f+(float)n / ((float)nfacetss * 2));
 			}
 			if (tracer && tracer->interrupt())
 				return false;

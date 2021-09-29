@@ -17,9 +17,7 @@ namespace cxbin
 		
 		if (!f)
 		{
-			if(tracer)
-				tracer->failed("loadT : load file error.");
-
+			formartPrint(tracer, "load T : load file error for [%s]", strerror(errno));
 			return models;
 		}
 

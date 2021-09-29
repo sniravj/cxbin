@@ -5,6 +5,7 @@
 #include "cxbin/cx/reader.h"
 
 #include "trimesh2/TriMesh.h"
+#include "trimesh2/endianutil.h"
 
 namespace cxbin
 {
@@ -47,6 +48,10 @@ namespace cxbin
 	{
 		int _version = -1;
 		fread(&_version, sizeof(int), 1, f);
+
+		bool need_swap = trimesh::we_are_big_endian();
+		if (need_swap)
+			trimesh::swap_int(_version);
 		if (_version < 0)
 			return false;
 

@@ -4,6 +4,7 @@
 
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
+#include "trimesh2/endianutil.h"
 
 namespace cxbin
 {
@@ -13,18 +14,25 @@ namespace cxbin
 		int vertNum = 0;
 		int faceNum = 0;
 		int totalNum = 0;
-		uLong compressNum = 0;
+		int compressNum = 0;
 
+		bool need_swap = trimesh::we_are_big_endian();
 		fread(&totalNum, sizeof(int), 1, f);
 		fread(&vertNum, sizeof(int), 1, f);
 		fread(&faceNum, sizeof(int), 1, f);
-		fread(&compressNum, sizeof(uLong), 1, f);
-
+		fread(&compressNum, sizeof(int), 1, f);
+		if (need_swap)
+		{
+			trimesh::swap_int(totalNum);
+			trimesh::swap_int(vertNum);
+			trimesh::swap_int(faceNum);
+			trimesh::swap_int(compressNum);
+		}
 		unsigned char* data = new unsigned char[totalNum];
 		unsigned char* cdata = new unsigned char[compressNum];
 		formartPrint(tracer, "loadCXBin0 load %d %d %d %d.", totalNum, (int)compressNum, vertNum, faceNum);
 
-		uLong uTotalNum = totalNum;
+		uLong uTotalNum = (uLong)totalNum;
 		if (fread(cdata, 1, compressNum, f))
 		{
 			if (uncompress(data, &uTotalNum, cdata, compressNum) == Z_OK)
@@ -68,6 +76,11 @@ namespace cxbin
 	{
 		int version = -1;
 		fread(&version, sizeof(int), 1, f);
+
+		bool need_swap = trimesh::we_are_big_endian();
+		if (need_swap)
+			trimesh::swap_int(version);
+
 		char data[12] = "";
 		fread(data, 1, 12, f);
 		if (version == 0)

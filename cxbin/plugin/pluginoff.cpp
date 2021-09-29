@@ -61,6 +61,11 @@ namespace cxbin
 			return false;
 		}
 
+		if (tracer)
+		{
+			tracer->progress(0.5f);
+		}
+
 		if (tracer && tracer->interrupt())
 			return false;
 
@@ -69,6 +74,11 @@ namespace cxbin
 			if (tracer)
 				tracer->failed("read faces asc failed");
 			return false;
+		}
+
+		if (tracer)
+		{
+			tracer->progress(0.9f);
 		}
 
 		if (tracer)

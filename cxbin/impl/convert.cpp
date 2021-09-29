@@ -61,8 +61,8 @@ namespace cxbin
 
 	void TTracer::progress(float r)
 	{
-		if (_tracer)
-			_tracer->progress(r);
+		//if (_tracer)
+		//	_tracer->progress(r);
 	}
 
 	bool TTracer::interrupt()
