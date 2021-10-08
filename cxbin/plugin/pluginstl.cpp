@@ -158,12 +158,12 @@ namespace cxbin
 			calltime = nfacets;
 		for (int i = 0; i < nfacets; i++) {
 
-			if (tracer && calltime >10 && i % calltime == 1)
+			if (tracer && nfacets >10 && i % calltime == 1)
 			{
 				tracer->progress((float)i / (float)nfacets);
 				SESSION_TICK("binary-stl")
 			}
-			if (tracer && interTimes >100 &&  i % interTimes == 1 && tracer->interrupt())
+			if (tracer && nfacets >100 &&  i % interTimes == 1 && tracer->interrupt())
 				return false;
 
 			float fbuf[12];
