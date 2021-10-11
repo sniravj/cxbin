@@ -34,6 +34,9 @@ namespace cxbin
 
 		if(f)
 			fclose(f);
+
+		if (tracer && models.size() == 0)
+			tracer->failed("Parse File Error.");
 		return models;
 	}
 
