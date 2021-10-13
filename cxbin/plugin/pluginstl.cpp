@@ -1,6 +1,7 @@
 #include "pluginstl.h"
 #include "ccglobal/log.h"
 #include "ccglobal/tracer.h"
+#include "ccglobal/spycc.h"
 
 #include "stringutil/util.h"
 #include "stringutil/filenameutil.h"
@@ -54,7 +55,7 @@ namespace cxbin
 			isASCII = true;
 
 		fseek(f, 0L, SEEK_SET);
-		char b[1];
+		unsigned char b[1];
 		if (isASCII) {
 			// A lot of importers are write solid even if the file is binary. So we have to check for ASCII-characters.
 			if (fileSize >= 500) {
@@ -84,6 +85,7 @@ namespace cxbin
 		size_t interSize = fileSize / 100;
 		size_t iNextSize = 0;
 		
+		bool parseError = false;
 		while (!feof(f))
 		{
 			fgets(line, 1024, f);
@@ -99,6 +101,7 @@ namespace cxbin
 					tracer->progress((float)curSize / (float)fileSize);
 				}
 
+				SESSION_TICK("text-stl")
 				nextSize += deltaSize;
 			}
 
@@ -114,14 +117,23 @@ namespace cxbin
 			{
 				sourceLine = stringutil::trimHeadTail(sourceLine);
 				std::vector<std::string> segs = stringutil::splitString(sourceLine, " ");
+				if (segs.size() != 4)
+				{
+					parseError = true;
+					break;
+				}
 				float x = atof(segs.at(1).c_str());
 				float y = atof(segs.at(2).c_str());
 				float z = atof(segs.at(3).c_str());
 				out.vertices.push_back(trimesh::vec3(x, y, z));
 			}
 		}
+
+		if (parseError)
+			out.vertices.clear();
 		int face = out.vertices.size() / 3;
-		out.faces.resize(face);
+		if(face > 0)
+			out.faces.resize(face);
 		for (int i = 0; i < face; ++i)
 		{
 			trimesh::ivec3& tri = out.faces.at(i);
@@ -129,7 +141,9 @@ namespace cxbin
 			tri.y = 3 * i + 1;
 			tri.z = 3 * i + 2;
 		}
-		return true;
+		SESSION_TICK("text-stl")
+
+		return face > 0;
 	}
 
 	// Read a binary STL file
@@ -154,11 +168,12 @@ namespace cxbin
 			calltime = nfacets;
 		for (int i = 0; i < nfacets; i++) {
 
-			if (tracer && i % calltime == 1)
+			if (tracer && nfacets >10 && i % calltime == 1)
 			{
 				tracer->progress((float)i / (float)nfacets);
+				SESSION_TICK("binary-stl")
 			}
-			if (tracer && i % interTimes == 1 && tracer->interrupt())
+			if (tracer && nfacets >100 &&  i % interTimes == 1 && tracer->interrupt())
 				return false;
 
 			float fbuf[12];
@@ -176,8 +191,9 @@ namespace cxbin
 			COND_READ(true, att, 2);
 		}
 
+		SESSION_TICK("binary-stl")
 		LOGI("parse binary stl success...\n");
-		return true;
+		return nfacets > 0;
 	}
 
 
