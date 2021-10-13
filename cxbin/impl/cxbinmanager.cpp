@@ -1,10 +1,12 @@
 #include "cxbinmanager.h"
 #include "cxbin/loaderimpl.h"
 #include "cxbin/convert.h"
+#include "stringutil/filenameutil.h"
 
 #include "trimesh2/TriMesh.h"
 
 #include "ccglobal/tracer.h"
+#include "ccglobal/log.h"
 
 namespace cxbin
 {
@@ -87,6 +89,51 @@ namespace cxbin
 				break;
 			}
 		}
+	}
+
+	std::string CXBinManager::testFormat(const std::string& fileName)
+	{
+		FILE* f = fopen(fileName.c_str(), "rb");
+		std::string extension = stringutil::extensionFromFileName(fileName, true);
+
+		if(!f)
+		{
+			LOGI("open file [%s] failed.", fileName.c_str());
+			return "";
+		}
+
+		unsigned fileSize = 0;
+		fseek(f, 0L, SEEK_END);
+		fileSize = ftell(f);
+		fseek(f, 0L, SEEK_SET);
+
+		LoaderImpl* loader = nullptr;
+		if (extension.size() > 0)
+		{
+			std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(extension);
+			if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
+			{
+				loader = it->second;
+			}
+		}
+
+		if (!loader)
+		{
+			extension = "";
+			for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
+				 it != m_loaders.end(); ++it)
+			{
+				fseek(f, 0L, SEEK_SET);
+				if (it->second->tryLoad(f, fileSize))
+				{
+					loader = it->second;
+					extension = it->first;
+					break;
+				}
+			}
+		}
+
+		return extension;
 	}
 
 	std::vector<trimesh::TriMesh*> CXBinManager::load(FILE* f, const std::string& extension,

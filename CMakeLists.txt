@@ -6,6 +6,7 @@ set(SRCS cxbin/interface.h
 		 cxbin/convert.h
 		 cxbin/loaderimpl.h
 		 cxbin/saverimpl.h
+		 cxbin/format.h
 		 cxbin/impl/load.cpp
 		 cxbin/impl/save.cpp
 		 cxbin/impl/convert.cpp
@@ -13,6 +14,7 @@ set(SRCS cxbin/interface.h
 		 cxbin/impl/cxbinmanager.cpp
 		 cxbin/impl/inner.h
 		 cxbin/impl/inner.cpp
+		 cxbin/impl/format.cpp
 		 cxbin/plugin/pluginstl.h
 		 cxbin/plugin/pluginstl.cpp
 		 cxbin/plugin/pluginply.h
