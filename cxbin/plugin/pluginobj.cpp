@@ -95,6 +95,13 @@ namespace cxbin
 				}
 				model->normals.push_back(trimesh::vec(x, y, z));
 			}
+            else if (LINE_IS("vt") || LINE_IS("vt\t")) {
+                float x, y;
+                if (sscanf(buf+2, "%f %f", &x, &y) != 2) {
+                    return false;
+                }
+                model->cornerareas.push_back(trimesh::vec(x, y, 0.0));
+            }
 			else if (LINE_IS("f ") || LINE_IS("f\t") ||
 				LINE_IS("t ") || LINE_IS("t\t")) {
 				thisface.clear();
