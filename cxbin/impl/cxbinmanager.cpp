@@ -192,12 +192,12 @@ namespace cxbin
 		return models;
 	}
 
-	void CXBinManager::save(trimesh::TriMesh* mesh, const std::string& fileName, const std::string& extension, ccglobal::Tracer* tracer)
+	bool CXBinManager::save(trimesh::TriMesh* mesh, const std::string& fileName, const std::string& extension, ccglobal::Tracer* tracer)
 	{
 		if (!mesh && tracer)
 		{
 			tracer->failed("CXBinManager::save. save empty mesh.");
-			return;
+			return false;
 		}
 
 		SaverImpl* saver = nullptr;
@@ -228,18 +228,21 @@ namespace cxbin
 			if (tracer)
 			{
 				tracer->failed("CXBinManager::save.  open file failed.");
-				return;
+				return false;
 			}
-			return;
+			return false;
 		}
 
-		if (saver->save(f, mesh, tracer) && tracer)
+		bool success = false;
+		if ((success = saver->save(f, mesh, tracer)) && tracer)
 		{
 			tracer->progress(1.0f);
 			tracer->success();
+			success = true;
 		}
 
 		fclose(f);
+		return success;
 	}
 
 	void registerLoaderImpl(LoaderImpl* impl)

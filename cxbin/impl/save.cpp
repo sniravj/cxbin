@@ -6,9 +6,9 @@
 
 namespace cxbin
 {
-	void save(const std::string& fileName, trimesh::TriMesh* model, ccglobal::Tracer* tracer)
+	bool save(const std::string& fileName, trimesh::TriMesh* model, ccglobal::Tracer* tracer)
 	{
 		std::string extension = stringutil::extensionFromFileName(fileName, true);
-		cxmanager.save(model, fileName, extension, tracer);
+		return cxmanager.save(model, fileName, extension, tracer);
 	}
 }

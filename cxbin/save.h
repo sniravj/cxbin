@@ -15,6 +15,6 @@ namespace trimesh
 
 namespace cxbin
 {
-	CXBIN_API void save(const std::string& fileName, trimesh::TriMesh* model, ccglobal::Tracer* tracer);
+	CXBIN_API bool save(const std::string& fileName, trimesh::TriMesh* model, ccglobal::Tracer* tracer);
 }
 #endif // CXBIN_SAVE_1630734417276_H
