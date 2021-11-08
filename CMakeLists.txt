@@ -46,7 +46,7 @@ set(LIBS trimesh2 stringutil tinyxml zlib)
 set(DEFS TIXML_USE_STL)
 
 if(TARGET lib3MF)
-	list(APPEND LIBS lib3MF)
+	list(APPEND LIBS lib3MF zip)
 	list(APPEND SRCS cxbin/plugin/plugin3mf.h
 					 cxbin/plugin/plugin3mf.cpp
 					 )
