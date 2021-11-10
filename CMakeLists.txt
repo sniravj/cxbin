@@ -77,3 +77,7 @@ else()
 	endif()
 endif()
 
+if(CC_INSTALL_CXBIN)
+	__install_directory_specif(${CMAKE_CURRENT_SOURCE_DIR}/ cxbin)
+endif()
+
