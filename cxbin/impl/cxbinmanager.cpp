@@ -133,6 +133,7 @@ namespace cxbin
 			}
 		}
 
+		fclose(f);
 		return extension;
 	}
 
