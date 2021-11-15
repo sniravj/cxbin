@@ -72,7 +72,7 @@ namespace cxbin
 				if (ch == '{')//排除纹理顶点数据
 				{
 					fseek(f, -29, SEEK_CUR);
-					char* buf2 = new char[29 + 1];
+					char buf2[29 + 1] = { 0 };
 					buf2[29] = 0;
 					fread(buf2, 1, 29, f);
 					std::string  strtemp = buf2;
@@ -86,7 +86,7 @@ namespace cxbin
 				if (ch == '[')//排除纹理索引数据
 				{
 					fseek(f, -15, SEEK_CUR);
-					char* buf3 = new char[15 + 1];
+					char buf3[15 + 1] = { 0 };
 					buf3[15] = 0;
 					fread(buf3, 1, 15, f);
 					std::string  strtemp = buf3;
@@ -102,7 +102,7 @@ namespace cxbin
 				if (ch == '[')
 				{
 					fseek(f, -9, SEEK_CUR);
-					char* buf = new char[9 + 1];
+					char buf[9 + 1] = { 0 };
 					buf[9] = 0;
 					fread(buf, 1, 9, f);
 					std::string  strtemp = buf;
