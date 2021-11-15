@@ -60,6 +60,7 @@ namespace cxbin
 		int u;
 		trimesh::point apoint;
 		std::vector<std::vector<int>> polygons_Index;
+		bool bHavePoint=false;
 		while (!feof(f))
 		{
 			if (tracer && tracer->interrupt())
@@ -70,10 +71,10 @@ namespace cxbin
 			{
 				if (ch == '{')//排除纹理顶点数据
 				{
-					fseek(f, -19, SEEK_CUR);
-					char* buf2 = new char[19 + 1];
-					buf2[13] = 0;
-					fread(buf2, 1, 19, f);
+					fseek(f, -29, SEEK_CUR);
+					char* buf2 = new char[29 + 1];
+					buf2[29] = 0;
+					fread(buf2, 1, 29, f);
 					std::string  strtemp = buf2;
 					if (strtemp.find("TextureCoordinate") != std::string::npos)
 					{
@@ -119,10 +120,11 @@ namespace cxbin
 						} while (ch != ']');
 
 						pointss.push_back(points);
+						bHavePoint = true;
 						points.clear();
 					}
 
-					if (strtemp.find("Index") != std::string::npos)
+					if (strtemp.find("Index") != std::string::npos && bHavePoint)
 					{
 						std::vector<int> index;
 						ch = fgetc(f);
@@ -185,6 +187,7 @@ namespace cxbin
 						faces.clear();
 						polygons_Indexx.push_back(polygons_Index);
 						polygons_Index.clear();
+						bHavePoint = false;
 					}
 				}
 				break;
