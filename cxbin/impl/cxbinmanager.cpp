@@ -165,6 +165,7 @@ namespace cxbin
 				for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
 					it != m_loaders.end(); ++it)
 				{
+					formartPrint(tracer, "CXBinManager::load : try plugin [%s]", it->first.c_str());
 					fseek(f, 0L, SEEK_SET);
 					if (it->second->tryLoad(f, fileSize))
 					{
