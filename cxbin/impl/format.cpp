@@ -1,5 +1,6 @@
 #include "cxbin/format.h"
 #include "cxbin/impl/cxbinmanager.h"
+#include<string.h>
 
 namespace cxbin
 {
