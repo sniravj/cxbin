@@ -253,8 +253,10 @@ namespace cxbin
 					int normalOffset = 0;
 
 					trimesh::TriMesh* mesh = new trimesh::TriMesh();
-					addVertices(mesh, position, positioncount);
-					addNormals(mesh, normal, normalcount);
+					if (position != nullptr)
+						addVertices(mesh, position, positioncount);
+					if (normal != nullptr)
+						addNormals(mesh, normal, normalcount);
 
 					std::vector<const TiXmlNode*> inputs;
 					findNodes(polylist, inputs, "input");
@@ -291,8 +293,10 @@ namespace cxbin
 					int normalOffset = 0;
 
 					trimesh::TriMesh* mesh = new trimesh::TriMesh();
-					addVertices(mesh, position, positioncount);
-					addNormals(mesh, normal, normalcount);
+					if (position != nullptr)
+						addVertices(mesh, position, positioncount);
+					if (normal != nullptr)
+						addNormals(mesh, normal, normalcount);
 
 					std::vector<const TiXmlNode*> inputs;
 					findNodes(triangle, inputs, "input");
