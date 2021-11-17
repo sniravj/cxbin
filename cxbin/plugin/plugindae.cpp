@@ -202,16 +202,24 @@ namespace cxbin
 		std::vector<const TiXmlNode*> geometries;
 		findNodes(_geometries, geometries, "geometry");
 
+		float spareTime = 1.0f;
+		float perTime = geometries.size() > 0 ? spareTime / geometries.size() : 1.0f;
+		float curTime = 0.0f;
 		for (const TiXmlNode* geometry : geometries)
 		{
+			//curTime > 0 ? curTime += perTime : curTime;
+
 			if (tracer && tracer->interrupt())
 				return false;
-
+			
 			std::vector<const TiXmlNode*> meshes;
 			findNodes(geometry, meshes, "mesh");
 
 			int size = meshes.size();
 			int curSize = 0;
+
+			float perTime1 = meshes.size() > 0 ? perTime / meshes.size() : perTime;
+			float curTime1 = curTime;
 			for (const TiXmlNode* mesh : meshes)
 			{
 				int positioncount = 0;
@@ -242,7 +250,9 @@ namespace cxbin
 				}
 				if (tracer)
 				{
-					tracer->progress((float)curSize++ / (float)size*3);
+					curTime1 = curTime1 + perTime1 / 3.0;
+					curTime1 = curTime1 > 1.0 ? 1.0f : curTime1;
+					tracer->progress(curTime1);
 				}
 
 				std::vector<const TiXmlNode*> polylists;
@@ -282,7 +292,9 @@ namespace cxbin
 				}
 				if (tracer)
 				{
-					tracer->progress((float)curSize++ / (float)size * 3);
+					curTime1 = curTime1 + perTime1 / 3.0;
+					curTime1 = curTime1 > 1.0 ? 1.0f : curTime1;
+					tracer->progress(curTime1);
 				}
 
 				std::vector<const TiXmlNode*> triangles;
@@ -323,8 +335,11 @@ namespace cxbin
 				}
 				if (tracer)
 				{
-					tracer->progress((float)curSize++ / (float)size * 3);
+					curTime1 = curTime1 + perTime1 / 3.0;
+					curTime1 = curTime1 > 1.0 ? 1.0f : curTime1;
+					tracer->progress(curTime1);
 				}
+				curTime = curTime1;
 			}
 		}
 		if (tracer)
