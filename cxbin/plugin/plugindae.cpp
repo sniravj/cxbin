@@ -139,15 +139,15 @@ namespace cxbin
 		}
 	}
 
-	void addFaces(trimesh::TriMesh* mesh, const std::string& str, const int& vffset, const int& nffset)
+	void addFaces(trimesh::TriMesh* mesh, const std::string& str, const int& count, const int& vffset, const int& nffset)
 	{
 		std::vector<int> p = splitInt(str, " ");
-		for (int i = 0; i < p.size() && (i + vffset + 6) < p.size(); i = i + 9)
+		for (int i = 0; i < p.size() && (i + vffset + count * 2) < p.size(); i = i + count * 3)
 		{
 			trimesh::TriMesh::Face tface;
 			tface[0] = p[i + vffset];
-			tface[1] = p[i + vffset + 3];
-			tface[2] = p[i + vffset + 6];
+			tface[1] = p[i + vffset + count];
+			tface[2] = p[i + vffset + count*2];
 			mesh->faces.push_back(tface);
 		}
 	}
@@ -315,7 +315,10 @@ namespace cxbin
 
 					const TiXmlNode* _p = findNode(triangle, "p");
 					const TiXmlElement* p = (const TiXmlElement*)_p;
-					addFaces(mesh, p->GetText(), vertexOffset, normalOffset);
+					if (inputs.size() > 0 )
+					{
+						addFaces(mesh, p->GetText(), inputs.size(), vertexOffset, normalOffset);
+					}
 					out.push_back(mesh);
 				}
 				if (tracer)
