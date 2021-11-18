@@ -2,6 +2,7 @@
 #include "tinyxml/tinyxml.h"
 #include "trimesh2/TriMesh.h"
 #include "ccglobal/tracer.h"
+#include <map>
 
 namespace cxbin
 {
@@ -14,6 +15,12 @@ namespace cxbin
 	{
 
 	}
+
+	typedef struct SOURCEGROUP
+	{
+		std::string position;
+		int count;
+	}sourceGroup;
 
 	const TiXmlNode* findNode(const TiXmlNode* node, std::string strNode)
 	{
@@ -224,35 +231,63 @@ namespace cxbin
 			{
 				int positioncount = 0;
 				int normalcount = 0;
-				const char* position = nullptr;
-				const char* normal = nullptr;
+				//const char* position = nullptr;
+				//const char* normal = nullptr;
+				std::map<std::string, sourceGroup> sourceGroupMap;
 
 				std::vector<const TiXmlNode*> sources;
 				findNodes(mesh, sources, "source");
 				for (const TiXmlNode* source : sources)
 				{
-					const TiXmlNode* _floatarry = findNode(source, "float_array");
-					const TiXmlElement* floatarry = (const TiXmlElement*)_floatarry;
+					const TiXmlElement* floatarryid = (const TiXmlElement*)source;
+					std::string strid = floatarryid->Attribute("id");
 
-					std::string strid = floatarry->Attribute("id");
-					if (strid.find("position") != std::string::npos)
+					const TiXmlNode* _floatarry = findNode(source, "float_array");
+					const TiXmlElement* floatarry = (const TiXmlElement*)_floatarry;				
+
+					sourceGroup _sourceGroup;
+					floatarry->Attribute("count", &_sourceGroup.count);
+					const char* floatarrydata = floatarry->GetText();
+					if (floatarrydata != nullptr)
 					{
-						floatarry->Attribute("count", &positioncount);
-						position = floatarry->GetText();
-						//addVertices(mesh, sub_val->GetText(), icount);
-					}
-					else if (strid.find("normal") != std::string::npos)
-					{
-						floatarry->Attribute("count", &normalcount);
-						normal = floatarry->GetText();
-						//addNormals(mesh, sub_val->GetText(), icount);
-					}
+						_sourceGroup.position = floatarrydata;
+						sourceGroupMap.insert(std::pair<std::string, sourceGroup>(strid, _sourceGroup));
+					}			
 				}
 				if (tracer)
 				{
 					curTime1 = curTime1 + perTime1 / 3.0;
 					curTime1 = curTime1 > 1.0 ? 1.0f : curTime1;
 					tracer->progress(curTime1);
+				}
+
+				std::vector<const TiXmlNode*> vertices;
+				findNodes(mesh, vertices, "vertices");
+				for (const TiXmlNode* vertice : vertices)
+				{
+					const TiXmlElement* floatarry = (const TiXmlElement*)vertice;
+					std::string strid = floatarry->Attribute("id");
+
+					std::vector<const TiXmlNode*> inputs;
+					findNodes(vertice, inputs, "input");
+					for (const TiXmlNode* node : inputs)
+					{
+						const TiXmlElement* sub_ele = (const TiXmlElement*)node;
+						std::string source = sub_ele->Attribute("source");
+						if (source.length() > 1)
+						{
+							if (source.at(0) == '#')
+							{
+								source = source.substr(1, source.length()-1);
+								auto iter = sourceGroupMap.find(source);
+								if (iter != sourceGroupMap.end())
+								{
+									sourceGroupMap.insert(std::pair<std::string, sourceGroup>(strid, iter->second));
+								}
+							}
+						}
+					}
+
 				}
 
 				std::vector<const TiXmlNode*> polylists;
@@ -263,10 +298,6 @@ namespace cxbin
 					int normalOffset = 0;
 
 					trimesh::TriMesh* mesh = new trimesh::TriMesh();
-					if (position != nullptr)
-						addVertices(mesh, position, positioncount);
-					if (normal != nullptr)
-						addNormals(mesh, normal, normalcount);
 
 					std::vector<const TiXmlNode*> inputs;
 					findNodes(polylist, inputs, "input");
@@ -276,10 +307,20 @@ namespace cxbin
 						if (!strcmp(sub_ele->Attribute("semantic"), "VERTEX"))
 						{
 							sub_ele->Attribute("offset", &vertexOffset);
-						}
-						if (!strcmp(sub_ele->Attribute("semantic"), "NORMAL"))
-						{
-							sub_ele->Attribute("offset", &normalOffset);
+							std::string sourceid = sub_ele->Attribute("source");
+							if (sourceid.length() > 1)
+							{
+								if (sourceid.at(0) == '#')
+								{
+									sourceid = sourceid.substr(1, sourceid.length() - 1);
+									auto iter = sourceGroupMap.find(sourceid);
+									if (iter != sourceGroupMap.end())
+									{
+										addVertices(mesh, iter->second.position, iter->second.count);
+									}
+								}
+							}
+
 						}
 					}
 
@@ -287,7 +328,12 @@ namespace cxbin
 					const TiXmlElement* vcount = (const TiXmlElement*)_vcount;
 					const TiXmlNode* _p = findNode(polylist, "p");
 					const TiXmlElement* p = (const TiXmlElement*)_p;
-					addFaces(mesh, vcount->GetText(), p->GetText(), vertexOffset, normalOffset);
+					const char* vcountdata = vcount->GetText();
+					const char* pdata = p->GetText();
+					if (vcountdata != nullptr && pdata != nullptr)
+					{
+						addFaces(mesh, vcount->GetText(), p->GetText(), vertexOffset, normalOffset);
+					}
 					out.push_back(mesh);
 				}
 				if (tracer)
@@ -305,10 +351,6 @@ namespace cxbin
 					int normalOffset = 0;
 
 					trimesh::TriMesh* mesh = new trimesh::TriMesh();
-					if (position != nullptr)
-						addVertices(mesh, position, positioncount);
-					if (normal != nullptr)
-						addNormals(mesh, normal, normalcount);
 
 					std::vector<const TiXmlNode*> inputs;
 					findNodes(triangle, inputs, "input");
@@ -318,20 +360,36 @@ namespace cxbin
 						if (!strcmp(sub_ele->Attribute("semantic"), "VERTEX"))
 						{
 							sub_ele->Attribute("offset", &vertexOffset);
+							std::string sourceid = sub_ele->Attribute("source");
+							if (sourceid.length() > 1)
+							{
+								if (sourceid.at(0) == '#')
+								{
+									sourceid = sourceid.substr(1, sourceid.length() - 1);
+									auto iter = sourceGroupMap.find(sourceid);
+									if (iter != sourceGroupMap.end())
+									{
+										addVertices(mesh, iter->second.position, iter->second.count);
+									}
+								}
+							}
 						}
 						if (!strcmp(sub_ele->Attribute("semantic"), "NORMAL"))
 						{
 							sub_ele->Attribute("offset", &normalOffset);
 						}
 					}
-
 					const TiXmlNode* _p = findNode(triangle, "p");
 					const TiXmlElement* p = (const TiXmlElement*)_p;
-					if (inputs.size() > 0 )
+					if (inputs.size() > 0 && p != nullptr)
 					{
-						addFaces(mesh, p->GetText(), inputs.size(), vertexOffset, normalOffset);
+						const char* data = p->GetText();
+						if (data != nullptr)
+						{
+							addFaces(mesh, data, inputs.size(), vertexOffset, normalOffset);
+							out.push_back(mesh);
+						}
 					}
-					out.push_back(mesh);
 				}
 				if (tracer)
 				{
