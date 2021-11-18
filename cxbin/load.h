@@ -17,6 +17,7 @@ namespace trimesh
 namespace cxbin
 {
 	CXBIN_API std::vector<trimesh::TriMesh*> loadT(const std::string& fileName, ccglobal::Tracer* tracer);
+	CXBIN_API trimesh::TriMesh* loadAll(const std::string& fileName, ccglobal::Tracer* tracer);
 	CXBIN_API std::vector<trimesh::TriMesh*> loadT(int fd, ccglobal::Tracer* tracer);
 }
 
