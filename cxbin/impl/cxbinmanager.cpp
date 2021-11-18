@@ -184,6 +184,28 @@ namespace cxbin
 				tracer->failed("CXBinManager::load . can't find a plugin.");
 		} while (0);
 		
+		if (loadSuccess)
+		{//check
+			for (trimesh::TriMesh* model : models)
+			{
+				int vertexSize = (int)model->vertices.size();
+				int faceSize = model->faces.size();
+				for (int i = 0; i <faceSize; ++i)
+				{
+					trimesh::TriMesh::Face& face = model->faces[i];
+					if (face.x < 0 || face.x >= vertexSize ||
+						face.y < 0 || face.y >= vertexSize ||
+						face.z < 0 || face.z >= vertexSize)
+					{
+						if (tracer)
+							tracer->failed("CXBinManager::load . Model FaceIndex is Invalid.");
+						loadSuccess = false;
+						break;
+					}
+				}
+			}
+		}
+
 		if (!loadSuccess)
 		{
 			for (trimesh::TriMesh* model : models)
