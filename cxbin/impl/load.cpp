@@ -15,6 +15,7 @@ namespace cxbin
 	trimesh::TriMesh* loadAll(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models = loadT(fileName, tracer);
+		if (models.size() <= 0) return nullptr;
 		trimesh::TriMesh* outMesh = new trimesh::TriMesh();
 		mergeTriMesh(outMesh, models);
 		for (auto& mesh : models)
