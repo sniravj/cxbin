@@ -88,6 +88,34 @@ namespace cxbin
 						break;
 					}
 				}
+
+				if (isASCII == false)
+				{
+					fseek(f, 0L, SEEK_SET);
+					char line[1024] = { '\0' };
+					bool findEndfacet = false;
+					bool findVertex = false;
+					for (int i = 0; i < 20; ++i)
+					{
+						if (findEndfacet && findVertex)
+						{
+							isASCII = true;
+							break;
+						}
+						fgets(line, 1024, f);
+						std::string sourceLine(line);
+						if (sourceLine.find("endfacet") != std::string::npos)
+						{
+							findEndfacet = true;
+							continue;
+						}
+						if (sourceLine.find("vertex") != std::string::npos)
+						{
+							findVertex = true;
+							continue;
+						}
+					}
+				}
 			}
 		}
 		return isASCII;
