@@ -10,6 +10,26 @@
 
 namespace cxbin
 {
+	StlSaver::StlSaver()
+	{
+
+	}
+
+	StlSaver::~StlSaver()
+	{
+
+	}
+
+	std::string StlSaver::expectExtension()
+	{
+		return "stl";
+	}
+
+	bool StlSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer)
+	{
+		return false;
+	}
+
 	// A valid binary STL buffer should consist of the following elements, in order:
 	// 1) 80 byte header
 	// 2) 4 byte face count
