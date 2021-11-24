@@ -62,12 +62,35 @@ namespace cxbin
 		std::vector<std::vector<int>> polygons_Index;
 		bool bHavePoint=false;
 
-		int fileCallTime = 5;
+		int fileCallTime = 20;
 		int faceCallCount = fileSize / fileCallTime;
+		int readCount = 0;
+		int nextReportCount = 0;
+		auto report = [&nextReportCount, &readCount, &faceCallCount, &fileSize, &tracer](int step)->bool {
+			readCount += step;
+
+			if (readCount > nextReportCount)
+			{
+				if (tracer)
+				{
+					float r = (float)readCount / (float)fileSize;
+					if (r > 1.0f)
+						r = 1.0f;
+
+					tracer->progress(0.7f * r);
+				}
+				
+				nextReportCount += faceCallCount;
+			}
+
+			return true;
+		};
 
 		while (!feof(f))
 		{
 			ch = fgetc(f);
+
+			report(1);
 			while (ch)
 			{
 				if (ch == '{')//排除纹理顶点数据
@@ -81,6 +104,7 @@ namespace cxbin
 					{
 						do {
 							ch = fgetc(f);
+							report(1);
 						} while (ch != '}');
 					}
 				}
@@ -95,6 +119,7 @@ namespace cxbin
 					{
 						do {
 							ch = fgetc(f);
+							report(1);
 						} while (ch != ']');
 					}
 				}
@@ -112,12 +137,15 @@ namespace cxbin
 						do
 						{
 							ch = fgetc(f);
+							report(1);
 						} while (ch == ' ' || ch == '\n');
 						fseek(f, -1, SEEK_CUR);
 						do {
 							fscanf(f, "%f%f%f", &apoint.x, &apoint.y, &apoint.z);
 							points.push_back(apoint);
 							ch = fgetc(f);
+
+							report(30);
 						} while (ch != ']');
 
 						pointss.push_back(points);
@@ -183,6 +211,8 @@ namespace cxbin
 							}
 
 							ch = fgetc(f);
+
+							report(8);
 						}
 						facess.push_back(faces);
 						faces.clear();
@@ -195,9 +225,9 @@ namespace cxbin
 			}
 		}
 
-		float start = 0.3f;
+		float start = 0.7f;
 		int nfacetss = facess.size();
-		float deltaFace = 0.7f / (float)nfacetss;
+		float deltaFace = 0.3f / (float)nfacetss;
 		for (int n = 0; n < facess.size(); n++)
 		{
 			float fStart = start + (float)n * deltaFace;
