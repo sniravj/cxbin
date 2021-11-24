@@ -61,11 +61,12 @@ namespace cxbin
 		trimesh::point apoint;
 		std::vector<std::vector<int>> polygons_Index;
 		bool bHavePoint=false;
+
+		int fileCallTime = 5;
+		int faceCallCount = fileSize / fileCallTime;
+
 		while (!feof(f))
 		{
-			if (tracer && tracer->interrupt())
-				return false;
-
 			ch = fgetc(f);
 			while (ch)
 			{
@@ -194,43 +195,28 @@ namespace cxbin
 			}
 		}
 
-		if (tracer)
-		{
-			tracer->progress(0.5f);
-		}
-
+		float start = 0.3f;
 		int nfacetss = facess.size();
-		int calltime = nfacetss / 10;
-		if (calltime <= 0)
-			calltime = nfacetss;
+		float deltaFace = 0.7f / (float)nfacetss;
 		for (int n = 0; n < facess.size(); n++)
 		{
-			if (tracer)
-			{
-				tracer->progress((float)n / (float)nfacetss);
-			}
-			if (tracer && n % calltime == 1)
-			{
-				tracer->progress(0.5f+(float)n / ((float)nfacetss * 2));
-			}
-			if (tracer && tracer->interrupt())
-				return false;
-
+			float fStart = start + (float)n * deltaFace;
+			int callTimes = 5;
 			int faceCount = facess[n].size();
-
+			int callCount = faceCount / callTimes;
+			
 			trimesh::TriMesh* mesh = new trimesh::TriMesh();
 			mesh->faces.reserve(faceCount);
 			mesh->vertices.reserve(3 * faceCount);
 
-			int nfacets = facess[n].size();
-			for (int nIdx = 0; nIdx < facess[n].size(); nIdx++)
+			for (int nIdx = 0; nIdx < faceCount; nIdx++)
 			{
-				if (tracer)
+				if (tracer && callCount >= 1 && nIdx % callCount == 1)
 				{
-					tracer->progress((float)nIdx / (float)nfacets);
+					tracer->progress(fStart + deltaFace * (float)nIdx / (float)faceCount);
+					if (tracer->interrupt())
+						return false;
 				}
-				if (tracer && tracer->interrupt())
-					return false;
 
 				trimesh::point vertex0 = pointss[n][facess[n][nIdx].vertexIndex[0]];
 				trimesh::point vertex1 = pointss[n][facess[n][nIdx].vertexIndex[1]];
