@@ -27,6 +27,13 @@ namespace cxbin
         std::string name;
     }DaeImage;
 
+    typedef struct Instancegeometry {
+        std::string id;
+        std::string url;
+        std::string symbol;
+        std::string target;
+    }Instancegeometry;
+
     const TiXmlNode* findNode(const TiXmlNode* node, std::string strNode)
     {
         if (node == nullptr)
@@ -301,7 +308,7 @@ namespace cxbin
         {
             int vertexOffset = 0;
             int uvOffset = 0;
-            
+            int maxOffset = 0;
             trimesh::TriMesh* mesh = new trimesh::TriMesh();
 
             std::vector<const TiXmlNode*> inputs;
@@ -309,9 +316,13 @@ namespace cxbin
             for (const TiXmlNode* node : inputs)
             {
                 const TiXmlElement* sub_ele = (const TiXmlElement*)node;
+                int tmpOffset = 0;
+                sub_ele->Attribute("offset", &tmpOffset);
+                maxOffset = std::max(maxOffset, tmpOffset);
+                
                 if (!strcmp(sub_ele->Attribute("semantic"), "VERTEX"))
                 {
-                    sub_ele->Attribute("offset", &vertexOffset);
+                    vertexOffset = tmpOffset;
                     std::string sourceid = sub_ele->Attribute("source");
                     if (sourceid.length() > 1)
                     {
@@ -330,7 +341,7 @@ namespace cxbin
                 
                 if (!strcmp(sub_ele->Attribute("semantic"), "TEXCOORD"))
                 {
-                    sub_ele->Attribute("offset", &uvOffset);
+                    uvOffset = tmpOffset;
                     std::string sourceid = sub_ele->Attribute("source");
                     if (sourceid.length() > 1)
                     {
@@ -359,11 +370,11 @@ namespace cxbin
                 std::vector<int> ps = splitInt(pdata, " ");
                 
                 if (mesh->vertices.size()) {
-                    addFaces(vcounts, ps, (int)inputs.size(), vertexOffset, mesh->faces);
+                    addFaces(vcounts, ps, (maxOffset + 1), vertexOffset, mesh->faces);
                 }
                 
                 if (mesh->UVs.size()) {
-                    addFaces(vcounts, ps, (int)inputs.size(), uvOffset, mesh->faceUVs);
+                    addFaces(vcounts, ps, (maxOffset + 1), uvOffset, mesh->faceUVs);
                 }
             }
 
@@ -381,6 +392,7 @@ namespace cxbin
         {
             int vertexOffset = 0;
             int uvOffset = 0;
+            int maxOffset = 0;
             int count = 0;
             ((const TiXmlElement *)triangle)->Attribute("count", &count);
             
@@ -388,17 +400,19 @@ namespace cxbin
 
             std::vector<const TiXmlNode*> inputs;
             findNodes(triangle, inputs, "input");
+            
             for (int idx = 0; idx < inputs.size(); idx++)
             {
                 const TiXmlNode* node = inputs[idx];
-                
                 const TiXmlElement* sub_ele = (const TiXmlElement*)node;
+                int tmpOffset = 0;
+                sub_ele->Attribute("offset", &tmpOffset);
+                maxOffset = std::max(maxOffset, tmpOffset);
+                
                 if (!strcmp(sub_ele->Attribute("semantic"), "VERTEX"))
                 {
-                    sub_ele->Attribute("offset", &vertexOffset);
-                    
                     //offset
-                    
+                    vertexOffset = tmpOffset;
                     std::string sourceid = sub_ele->Attribute("source");
                     if (sourceid.length() > 1)
                     {
@@ -417,10 +431,7 @@ namespace cxbin
                 
                 if (!strcmp(sub_ele->Attribute("semantic"), "TEXCOORD"))
                 {
-                    sub_ele->Attribute("offset", &uvOffset);
-                    if (uvOffset == 0) {
-                        uvOffset = idx;
-                    }
+                    uvOffset = tmpOffset;
                     std::string sourceid = sub_ele->Attribute("source");
                     if (sourceid.length() > 1)
                     {
@@ -443,8 +454,7 @@ namespace cxbin
                 }
             }
             
-            const TiXmlNode* _p = findNode(triangle, "p");
-            const TiXmlElement* p = (const TiXmlElement*)_p;
+            const TiXmlElement* p = (const TiXmlElement*)findNode(triangle, "p");
             if (inputs.size() > 0 && p != nullptr)
             {
                 const char* data = p->GetText();
@@ -453,9 +463,11 @@ namespace cxbin
                     
                     std::vector<int> ps = splitInt(data, " ");
                     
-                    addFacesOfTriangle(count, ps, (int)inputs.size(), vertexOffset, mesh->faces);
+                    if (mesh->vertices.size()) {
+                        addFacesOfTriangle(count, ps, (maxOffset + 1), vertexOffset, mesh->faces);
+                    }
                     if (mesh->UVs.size()) {
-                        addFacesOfTriangle(count, ps, (int)inputs.size(), uvOffset, mesh->faces);
+                        addFacesOfTriangle(count, ps, (maxOffset + 1), uvOffset, mesh->faceUVs);
                     }
                     
                     
@@ -720,6 +732,72 @@ namespace cxbin
         }
     }
 
+    void parseVisualGeometries(const TiXmlNode* vsRoot, std::vector<Instancegeometry>& out)
+    {
+        for (const TiXmlNode* sub_node = vsRoot->FirstChild(); sub_node; sub_node = sub_node->NextSibling())
+        {
+            if (sub_node->Type() == TiXmlNode::TINYXML_ELEMENT)
+            {
+                const TiXmlElement* sub_element = (const TiXmlElement*)sub_node;
+                
+                const TiXmlNode* node = findNode(sub_element, "instance_geometry");
+                if (node) {
+                    //
+                    Instancegeometry inst;
+                    inst.id = sub_element->Attribute("id");
+                    std::string url = ((TiXmlElement*)node)->Attribute("url");
+                    if (url.length()) {
+                        inst.url = url.substr(1, url.length()-1);
+                    }
+                    
+                    TiXmlElement* bind_material = (TiXmlElement*)findNode(node, "bind_material");
+                    if (bind_material) {
+                        TiXmlElement* technique_common = (TiXmlElement*)findNode(bind_material, "technique_common");
+                        if (technique_common) {
+                            TiXmlElement* instance_material = (TiXmlElement*)findNode(technique_common, "instance_material");
+                            if (instance_material) {
+                                inst.symbol = instance_material->Attribute("symbol");
+                                std::string target = instance_material->Attribute("target");
+                                if (target.length()) {
+                                    inst.target = target.substr(1, target.length()-1);
+                                }
+                            }
+                        }
+                    }
+                    
+                    out.push_back(inst);
+                } else {
+
+                    const TiXmlElement *instance_controller = sub_element->FirstChildElement("instance_controller");
+                    if (instance_controller) {
+                        const TiXmlElement *bind_material = instance_controller->FirstChildElement("bind_material");
+                        if (bind_material) {
+                            const TiXmlElement *technique_common = bind_material->FirstChildElement("technique_common");
+                            if (technique_common) {
+                                const TiXmlElement *instance_material = technique_common->FirstChildElement("instance_material");
+                                if (instance_material) {
+                                    
+                                    std::string symbol = instance_material->Attribute("symbol");
+                                    std::string target = instance_material->Attribute("target");
+                                    if (target.length()) {
+                                        target = target.substr(1, target.length()-1);
+                                    }
+                                    
+                                    Instancegeometry inst;
+                                    inst.symbol = symbol;
+                                    inst.target = target;
+                                    out.push_back(inst);
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+                
+            }
+        }
+    }
+
     bool DaeLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
     {
         bool success = false;
@@ -736,6 +814,23 @@ namespace cxbin
 
         //root
         const TiXmlElement* root = doc.RootElement();
+        
+        const TiXmlNode *visualScenes = findNode(root, "library_visual_scenes");
+        const TiXmlNode *visual_scene = findNode(visualScenes, "visual_scene");
+        
+        std::vector<Instancegeometry> instanceGeo;
+        parseVisualGeometries(visual_scene, instanceGeo);
+        
+//        if (instanceGeo.size()) {
+//
+//
+//
+//        } else {
+//
+//
+//
+//        }
+        
         const TiXmlNode* _geometries = findNode(root, "library_geometries");
         
         std::vector<std::string> meshOfMaterialNames;
@@ -745,10 +840,18 @@ namespace cxbin
         }
         
         for (int i = 0; i<meshOfMaterialNames.size(); i++) {
-            const std::string sub = meshOfMaterialNames[i];
+            std::string& sub = meshOfMaterialNames[i];
+
             if (sub.length()) {
                 trimesh::Material m;
                 parseMaterial(root, sub, m);
+                
+                if (m.diffuse.size() == 0 || m.name.size() == 0) {
+                    if (instanceGeo.size() > i) {
+                        parseMaterial(root, instanceGeo[i].target, m);
+                    }
+                }
+                
                 if (i < out.size()) {
                     trimesh::TriMesh*mesh = out[i];
                     mesh->material = m;

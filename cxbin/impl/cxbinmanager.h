@@ -34,7 +34,7 @@ namespace cxbin
 		void addSaver(SaverImpl* impl);
 		void removeSaver(SaverImpl* impl);
 
-		std::vector<trimesh::TriMesh*> load(FILE* f, const std::string& extension, ccglobal::Tracer* tracer);
+		std::vector<trimesh::TriMesh*> load(FILE* f, const std::string& extension, ccglobal::Tracer* tracer, const std::string& fileName);
 		bool save(trimesh::TriMesh* mesh, const std::string& fileName, const std::string& extension, ccglobal::Tracer* tracer);
 		std::string testFormat(const std::string& fileName);
 	protected:

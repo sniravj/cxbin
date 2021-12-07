@@ -138,7 +138,7 @@ namespace cxbin
 	}
 
 	std::vector<trimesh::TriMesh*> CXBinManager::load(FILE* f, const std::string& extension,
-		ccglobal::Tracer* tracer)
+		ccglobal::Tracer* tracer, const std::string& fileName)
 	{
 		std::vector<trimesh::TriMesh*> models;
 		bool loadSuccess = true;
@@ -178,8 +178,11 @@ namespace cxbin
 			}
 			fseek(f, 0L, SEEK_SET);
 
-			if (loader)
+            if (loader) {
+                loader->modelPath = fileName;
 				loadSuccess = loader->load(f, fileSize, models, tracer);
+                loader->modelPath.erase();
+            }
 			else if (tracer)
 				tracer->failed("CXBinManager::load . can't find a plugin.");
 		} while (0);

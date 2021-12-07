@@ -102,15 +102,19 @@ namespace cxbin
         std::vector<trimesh::vec3> tmp_vertices;
         std::vector<trimesh::vec2> tmp_UVs;
         
+        std::vector<trimesh::Material> mates;
+        
 		while (1) {
 			if (tracer && tracer->interrupt())
 				return false;
 
-			stringutil::skip_comments(f);
+//			stringutil::skip_comments(f);
+            
 			if (feof(f))
 				break;
-			char buf[1024];
-			GET_LINE();
+            char buf[1024];
+//            GET_LINE();
+            fgets(buf, 1024, f);
 
 			std::string str = buf;
 			count += str.length();
@@ -141,7 +145,7 @@ namespace cxbin
 			}
             else if (LINE_IS("vt") || LINE_IS("vt\t")) {
                 float x, y;
-                if (sscanf(buf+2, "%f %f", &x, &y) != 2) {
+                if (sscanf(buf + 2, "%f %f", &x, &y) != 2) {
                     return false;
                 }
                 tmp_UVs.push_back(trimesh::vec2(x, y));
@@ -251,8 +255,8 @@ namespace cxbin
                             std::vector<std::string> thirdAttributeOut;
                             componentsSeparatedByString(thirdStrOfPoint, '/', thirdAttributeOut);
                             
-                            int idx2 = atoi(thirdAttributeOut[0].c_str());
-                            int uvidx2 = atoi(thirdAttributeOut[1].c_str());
+                            int idx2 = atoi(thirdAttributeOut[0].c_str()) - 1;
+                            int uvidx2 = atoi(thirdAttributeOut[1].c_str()) - 1;
                             
                             model->faces.push_back(trimesh::TriMesh::Face(idx0, idx1, idx2));
                             model->faceUVs.push_back(trimesh::TriMesh::Face(uvidx0, uvidx1, uvidx2));
@@ -266,28 +270,50 @@ namespace cxbin
                 }
 			} else if (LINE_IS("g ") || LINE_IS("o ")) {
                 //结束上一个部件
-                if (model->vertices.size() > 0) {
-                    model = new trimesh::TriMesh();
-                    out.push_back(model);
-                }
-                
-                //开始下一个部件
-                std::string name = str.substr(2, str.length()-2);
-                name = trimStr(name);
+//                if (model->faces.size() > 0) {
+//                    model = new trimesh::TriMesh();
+//                    out.push_back(model);
+//                }
+//
+//                //开始下一个部件
+//                std::string name = str.substr(2, str.length()-2);
+//                name = trimStr(name);
                 
             } else if (LINE_IS("mtllib ")) {
                 std::string name = str.substr(7, str.length()-7);
                 name = trimStr(name);
                 //mtl文件名
                 
+                size_t loc = modelPath.find_last_of("/");
+                if (loc != std::string::npos) {
+                    
+                    const std::string full = modelPath.substr(0, loc) + "/" + name;
+                    printf("[mtl]: %s\n", full.c_str());
+                    
+                    loadMtl(full, mates);
+                }
                 
-//                loadMtl(<#const std::string &fileName#>, <#std::vector<trimesh::Material *> &out#>)
                 
             } else if (LINE_IS("usemtl ")) {
+                
+                //"usemtl"指定了材质之后，以后的面都是使用这一材质，直到遇到下一个"usemtl"来指定新的材质。
+                
+                //结束上一个部件
+                if (model->faces.size() > 0) {
+                    model = new trimesh::TriMesh();
+                    out.push_back(model);
+                }
+                
                 std::string name = str.substr(7, str.length()-7);
                 name = trimStr(name);
-                //材质
-                //"usemtl"指定了材质之后，以后的面都是使用这一材质，直到遇到下一个"usemtl"来指定新的材质。
+                
+                for (trimesh::Material mat : mates) {
+                    if (mat.name == name) {
+                        model->material = mat;
+                        break;
+                    }
+                }
+                
                 
             }
         }
@@ -318,7 +344,7 @@ namespace cxbin
         if (!f)
             return false;
         
-        trimesh::Material mate;
+        trimesh::Material *matePtr = nullptr;
         bool isValid = false;
         while (1) {
             stringutil::skip_comments(f);
@@ -329,17 +355,14 @@ namespace cxbin
             std::string str = buf;
             if (LINE_IS("newmtl ")) {
                 
-                if (isValid) {
-                    mate = trimesh::Material();
-                    out.push_back(mate);
-                } else {
-                    isValid = true;
-                    out.push_back(mate);
-                }
+                trimesh::Material newmat;
+                out.push_back(newmat);
                 
+                matePtr = &out[out.size()-1];
                 std::string name = str.substr(7, str.length()-7);
-                mate.name = trimStr(name);
+                matePtr->name = trimStr(name);
                 
+                isValid = true;
             } else if (LINE_IS("Ka ")) {
                 
                 if (!isValid) continue;
@@ -349,7 +372,7 @@ namespace cxbin
                     fclose(f);
                     return false;
                 }
-                mate.ambient = trimesh::vec3(x, y, z);
+                matePtr->ambient = trimesh::vec3(x, y, z);
                 
             } else if (LINE_IS("Kd ")) {
                 
@@ -360,7 +383,7 @@ namespace cxbin
                     fclose(f);
                     return false;
                 }
-                mate.diffuse = trimesh::vec3(x, y, z);
+                matePtr->diffuse = trimesh::vec3(x, y, z);
                 
             } else if (LINE_IS("Ks ")) {
                 
@@ -371,7 +394,7 @@ namespace cxbin
                     fclose(f);
                     return false;
                 }
-                mate.specular = trimesh::vec3(x, y, z);
+                matePtr->specular = trimesh::vec3(x, y, z);
                 
             } else if (LINE_IS("Ke ")) {
                 
@@ -382,7 +405,7 @@ namespace cxbin
                     fclose(f);
                     return false;
                 }
-                mate.emission = trimesh::vec3(x, y, z);
+                matePtr->emission = trimesh::vec3(x, y, z);
                 
             } else if (LINE_IS("Ns ")) {
                 
@@ -393,7 +416,7 @@ namespace cxbin
                     fclose(f);
                     return false;
                 }
-                mate.shiness = x;
+                matePtr->shiness = x;
                 
             } else if (LINE_IS("map_Ka ")) {
                 
@@ -404,7 +427,7 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    mate.ambientMap = strs[strs.size()-1];
+                    matePtr->ambientMap = strs[strs.size()-1];
                 }
                 
             } else if (LINE_IS("map_Kd ")) {
@@ -416,7 +439,7 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    mate.diffuseMap = strs[strs.size()-1];
+                    matePtr->diffuseMap = strs[strs.size()-1];
                 }
                 
             } else if (LINE_IS("map_Ks ")) {
@@ -428,7 +451,7 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    mate.specularMap = strs[strs.size()-1];
+                    matePtr->specularMap = strs[strs.size()-1];
                 }
                 
             } else if (LINE_IS("map_bump ")) {
@@ -441,7 +464,7 @@ namespace cxbin
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
                     std::vector<std::string>::iterator it = strs.end()-1;
-                    mate.normalMap = *it;
+                    matePtr->normalMap = *it;
                 }
                 
             }

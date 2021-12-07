@@ -40,7 +40,7 @@ namespace cxbin
 		}
 
 		std::string extension = stringutil::extensionFromFileName(fileName, true);
-		models = cxmanager.load(f, extension, tracer);
+		models = cxmanager.load(f, extension, tracer, fileName);
 
 		if (tracer && models.size() > 0)
 		{
@@ -59,7 +59,7 @@ namespace cxbin
 	std::vector<trimesh::TriMesh*> loadT(int fd, ccglobal::Tracer* tracer)
 	{
 		FILE* f = fdopen(fd, "rb");       /*文件描述符转换为文件指针*/
-		return cxmanager.load(f, "", tracer);
+		return cxmanager.load(f, "", tracer, "");
 	}
 
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan)

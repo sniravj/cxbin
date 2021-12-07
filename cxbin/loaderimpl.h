@@ -18,6 +18,9 @@ namespace cxbin
 {
 	class LoaderImpl
 	{
+    public:
+        std::string modelPath;
+        
 	public:
 		virtual ~LoaderImpl() {}
 
