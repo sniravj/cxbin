@@ -149,7 +149,7 @@ namespace cxbin
 					tracer->progress((float)curSize / (float)fileSize);
 				}
 
-				SESSION_TICK("text-stl")
+				SESSION_TICK("text-stl");
 				nextSize += deltaSize;
 			}
 
@@ -189,7 +189,7 @@ namespace cxbin
 			tri.y = 3 * i + 1;
 			tri.z = 3 * i + 2;
 		}
-		SESSION_TICK("text-stl")
+		SESSION_TICK("text-stl");
 
 		return face > 0;
 	}
@@ -219,7 +219,7 @@ namespace cxbin
 			if (tracer && nfacets >10 && i % calltime == 1)
 			{
 				tracer->progress((float)i / (float)nfacets);
-				SESSION_TICK("binary-stl")
+				SESSION_TICK("binary-stl");
 			}
 			if (tracer && nfacets >100 &&  i % interTimes == 1 && tracer->interrupt())
 				return false;
@@ -239,7 +239,7 @@ namespace cxbin
 			COND_READ(true, att, 2);
 		}
 
-		SESSION_TICK("binary-stl")
+		SESSION_TICK("binary-stl");
 		LOGI("parse binary stl success...\n");
 		return nfacets > 0;
 	}
