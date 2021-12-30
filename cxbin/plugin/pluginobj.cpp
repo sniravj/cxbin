@@ -298,22 +298,46 @@ namespace cxbin
                 
                 //"usemtl"指定了材质之后，以后的面都是使用这一材质，直到遇到下一个"usemtl"来指定新的材质。
                 
-                //结束上一个部件
-                if (model->faces.size() > 0) {
-                    model = new trimesh::TriMesh();
-                    out.push_back(model);
-                }
-                
                 std::string name = str.substr(7, str.length()-7);
                 name = trimStr(name);
                 
-                for (trimesh::Material mat : mates) {
-                    if (mat.name == name) {
-                        model->material = mat;
-                        break;
-                    }
+                if (name.empty()) {
+                    continue;
                 }
                 
+                //结束上一个部件
+                if (model->faces.size() > 0) {
+                    trimesh::TriMesh *sameNameModel = nullptr;
+                    
+                    for (int i = 0; i < out.size(); i++) {
+                        trimesh::TriMesh *sub = out[i];
+                        if (sub->material.name == name) {
+                            sameNameModel = sub;
+                            break;
+                        }
+                    }
+                    
+                    if (sameNameModel) {
+                        
+                        model = sameNameModel;
+                        
+                    } else {
+                        model = new trimesh::TriMesh();
+                        out.push_back(model);
+                    }
+                    
+                }
+                
+                if (mates.size()) {
+                    for (trimesh::Material mat : mates) {
+                        if (mat.name == name) {
+                            model->material = mat;
+                            break;
+                        }
+                    }
+                } else {
+                    model->material.name = name;
+                }
                 
             }
         }
