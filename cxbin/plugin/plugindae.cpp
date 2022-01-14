@@ -647,6 +647,9 @@ namespace cxbin
                     std::string strid = floatarryid->Attribute("id");
 
                     const TiXmlNode* _floatarry = findNode(source, "float_array");
+                    if (_floatarry == nullptr) {
+                        continue;
+                    }
                     const TiXmlElement* floatarry = (const TiXmlElement*)_floatarry;
 
                     sourceGroup _sourceGroup;
