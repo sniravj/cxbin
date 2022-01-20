@@ -118,6 +118,22 @@ namespace cxbin
         return result;
     }
 
+    const char* safeAttribute(const TiXmlElement *from, const char* name )
+    {
+        const char* v = from->Attribute(name);
+        return v ? v : "";
+    }
+    
+    const char* safeAttribute(const TiXmlElement *from, const std::string& name )
+    {
+        const std::string* v = from->Attribute(name);
+        if (v) {
+            return v->c_str();
+        }
+        
+        return "";
+    }
+
     void findNodes(const TiXmlNode* node, std::vector<const TiXmlNode*>& out, std::string strNode)
     {
         if (node == nullptr)
@@ -291,7 +307,7 @@ namespace cxbin
             findNodes(node, images, "image");
             for (const TiXmlNode* image : images) {
                 
-                std::string id = ((TiXmlElement*)image)->Attribute("id");
+                std::string id = safeAttribute((TiXmlElement*)image, "id");
                 const TiXmlElement* ifm = (const TiXmlElement*)findNode(image, "init_from");
                 std::string name = ifm->GetText();
                 DaeImage i;
@@ -320,10 +336,12 @@ namespace cxbin
                 sub_ele->Attribute("offset", &tmpOffset);
                 maxOffset = std::max(maxOffset, tmpOffset);
                 
-                if (!strcmp(sub_ele->Attribute("semantic"), "VERTEX"))
+                const char* semantic = safeAttribute(sub_ele, "semantic");
+                
+                if (!strcmp(semantic, "VERTEX"))
                 {
                     vertexOffset = tmpOffset;
-                    std::string sourceid = sub_ele->Attribute("source");
+                    std::string sourceid = safeAttribute(sub_ele, "source");
                     if (sourceid.length() > 1)
                     {
                         if (sourceid.at(0) == '#')
@@ -339,10 +357,10 @@ namespace cxbin
 
                 }
                 
-                if (!strcmp(sub_ele->Attribute("semantic"), "TEXCOORD"))
+                if (!strcmp(semantic, "TEXCOORD"))
                 {
                     uvOffset = tmpOffset;
-                    std::string sourceid = sub_ele->Attribute("source");
+                    std::string sourceid = safeAttribute(sub_ele, "source");
                     if (sourceid.length() > 1)
                     {
                         if (sourceid.at(0) == '#')
@@ -380,7 +398,7 @@ namespace cxbin
 
             outMesh.push_back(mesh);
             
-            std::string mat = ((const TiXmlElement *)polylist)->Attribute("material");
+            std::string mat = safeAttribute((const TiXmlElement *)polylist, "material");
             outMeshMaterials.push_back(mat);
         }
     }
@@ -409,11 +427,13 @@ namespace cxbin
                 sub_ele->Attribute("offset", &tmpOffset);
                 maxOffset = std::max(maxOffset, tmpOffset);
                 
-                if (!strcmp(sub_ele->Attribute("semantic"), "VERTEX"))
+                const char *semantic = safeAttribute(sub_ele, "semantic");
+                
+                if (!strcmp(semantic, "VERTEX"))
                 {
                     //offset
                     vertexOffset = tmpOffset;
-                    std::string sourceid = sub_ele->Attribute("source");
+                    std::string sourceid = safeAttribute(sub_ele, "source");
                     if (sourceid.length() > 1)
                     {
                         if (sourceid.at(0) == '#')
@@ -429,10 +449,10 @@ namespace cxbin
                     continue;
                 }
                 
-                if (!strcmp(sub_ele->Attribute("semantic"), "TEXCOORD"))
+                if (!strcmp(semantic, "TEXCOORD"))
                 {
                     uvOffset = tmpOffset;
-                    std::string sourceid = sub_ele->Attribute("source");
+                    std::string sourceid = safeAttribute(sub_ele, "source");
                     if (sourceid.length() > 1)
                     {
                         if (sourceid.at(0) == '#')
@@ -448,7 +468,7 @@ namespace cxbin
                     continue;
                 }
                 
-                if (!strcmp(sub_ele->Attribute("semantic"), "NORMAL")) {
+                if (!strcmp(semantic, "NORMAL")) {
                     
                     continue;
                 }
@@ -472,7 +492,7 @@ namespace cxbin
                     
                     
                     outMesh.push_back(mesh);
-                    std::string mat = ((const TiXmlElement *)triangle)->Attribute("material");
+                    std::string mat = safeAttribute((const TiXmlElement *)triangle, "material");
                     outMeshMaterials.push_back(mat);
                 }
             }
@@ -502,7 +522,7 @@ namespace cxbin
         }
         const TiXmlElement* instance_effect = (const TiXmlElement*)matout->FirstChild();
         if (instance_effect) {
-            materURL = instance_effect->Attribute("url");
+            materURL = safeAttribute(instance_effect, "url");
             materURL = materURL.substr(1, materURL.length()-1); //remove '#'
         }
         
@@ -574,7 +594,7 @@ namespace cxbin
                         const TiXmlElement *diffuse = phong->FirstChildElement("diffuse");
                         const TiXmlElement *texture = diffuse->FirstChildElement("texture");
                         if (texture) {
-                            const std::string diffText = texture->Attribute("texture");
+                            const std::string diffText = safeAttribute(texture, "texture");
                             if (diffText.size() > 0) {
                                 
                                 addChild(diffText);
@@ -644,7 +664,7 @@ namespace cxbin
                 for (const TiXmlNode* source : sources)
                 {
                     const TiXmlElement* floatarryid = (const TiXmlElement*)source;
-                    std::string strid = floatarryid->Attribute("id");
+                    std::string strid = safeAttribute(floatarryid, "id");
 
                     const TiXmlNode* _floatarry = findNode(source, "float_array");
                     if (_floatarry == nullptr) {
@@ -673,14 +693,14 @@ namespace cxbin
                 for (const TiXmlNode* vertice : vertices)
                 {
                     const TiXmlElement* floatarry = (const TiXmlElement*)vertice;
-                    std::string strid = floatarry->Attribute("id");
+                    std::string strid = safeAttribute(floatarry, "id");
 
                     std::vector<const TiXmlNode*> inputs;
                     findNodes(vertice, inputs, "input");
                     for (const TiXmlNode* node : inputs)
                     {
                         const TiXmlElement* sub_ele = (const TiXmlElement*)node;
-                        std::string source = sub_ele->Attribute("source");
+                        std::string source = safeAttribute(sub_ele, "source");
                         if (source.length() > 1)
                         {
                             if (source.at(0) == '#')
@@ -747,8 +767,8 @@ namespace cxbin
                 if (node) {
                     //
                     Instancegeometry inst;
-                    inst.id = sub_element->Attribute("id");
-                    std::string url = ((TiXmlElement*)node)->Attribute("url");
+                    inst.id = safeAttribute(sub_element, "id");
+                    std::string url = safeAttribute((TiXmlElement*)node, "url");
                     if (url.length()) {
                         inst.url = url.substr(1, url.length()-1);
                     }
@@ -759,8 +779,8 @@ namespace cxbin
                         if (technique_common) {
                             TiXmlElement* instance_material = (TiXmlElement*)findNode(technique_common, "instance_material");
                             if (instance_material) {
-                                inst.symbol = instance_material->Attribute("symbol");
-                                std::string target = instance_material->Attribute("target");
+                                inst.symbol = safeAttribute(instance_material, "symbol");
+                                std::string target = safeAttribute(instance_material, "target");
                                 if (target.length()) {
                                     inst.target = target.substr(1, target.length()-1);
                                 }
@@ -780,8 +800,8 @@ namespace cxbin
                                 const TiXmlElement *instance_material = technique_common->FirstChildElement("instance_material");
                                 if (instance_material) {
                                     
-                                    std::string symbol = instance_material->Attribute("symbol");
-                                    std::string target = instance_material->Attribute("target");
+                                    std::string symbol = safeAttribute(instance_material, "symbol");
+                                    std::string target = safeAttribute(instance_material, "target");
                                     if (target.length()) {
                                         target = target.substr(1, target.length()-1);
                                     }
