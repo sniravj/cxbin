@@ -20,6 +20,7 @@ namespace cxbin
     {
         std::string position;
         int count;
+        int stride;
     }sourceGroup;
 
     typedef struct DaeImage {
@@ -293,9 +294,20 @@ namespace cxbin
     void parseUVs(std::string& input, int count, int stride, std::vector<trimesh::vec2>& outUVs)
     {
         std::vector<float> vertices = split(input, " ");
-        for (int i = 0; i < count; i += stride)
+        
+        if (vertices.size() != count) {
+            return;
+        }
+        
+        if (stride == 0) {
+            return;
+        }
+        
+        int loopNum = count / stride;
+        
+        for (int i = 0; i < loopNum; i++)
         {
-            outUVs.push_back(trimesh::vec2(vertices[i], vertices[i + 1]));
+            outUVs.push_back(trimesh::vec2(vertices[i*stride], vertices[i*stride + 1]));
         }
         vertices.clear();
     }
@@ -369,7 +381,7 @@ namespace cxbin
                             auto iter = sourceGroupMap.find(sourceid);
                             if (iter != sourceGroupMap.end())
                             {
-                                parseUVs(iter->second.position, iter->second.count, 2, mesh->UVs);
+                                parseUVs(iter->second.position, iter->second.count, iter->second.stride, mesh->UVs);
                             }
                         }
                     }
@@ -461,7 +473,7 @@ namespace cxbin
                             auto iter = sourceGroupMap.find(sourceid);
                             if (iter != sourceGroupMap.end())
                             {
-                                parseUVs(iter->second.position, iter->second.count, 2, mesh->UVs);
+                                parseUVs(iter->second.position, iter->second.count, iter->second.stride, mesh->UVs);
                             }
                         }
                     }
@@ -661,6 +673,7 @@ namespace cxbin
 
                 std::vector<const TiXmlNode*> sources;
                 findNodes(mesh, sources, "source");
+                
                 for (const TiXmlNode* source : sources)
                 {
                     const TiXmlElement* floatarryid = (const TiXmlElement*)source;
@@ -670,16 +683,24 @@ namespace cxbin
                     if (_floatarry == nullptr) {
                         continue;
                     }
-                    const TiXmlElement* floatarry = (const TiXmlElement*)_floatarry;
 
+                    const TiXmlElement* floatarry = (const TiXmlElement*)_floatarry;
                     sourceGroup _sourceGroup;
                     floatarry->Attribute("count", &_sourceGroup.count);
+                    
+                    const TiXmlNode* technique_common = findNode(source, "technique_common");
+                    if (technique_common) {
+                        const TiXmlElement* accessor = (const TiXmlElement*)findNode(technique_common, "accessor");
+                        accessor->Attribute("stride", &_sourceGroup.stride);
+                    }
+                    
                     const char* floatarrydata = floatarry->GetText();
                     if (floatarrydata != nullptr)
                     {
                         _sourceGroup.position = floatarrydata;
                         sourceGroupMap.insert(std::pair<std::string, sourceGroup>(strid, _sourceGroup));
                     }
+                    
                 }
     //                if (tracer)
     //                {
@@ -844,16 +865,6 @@ namespace cxbin
         std::vector<Instancegeometry> instanceGeo;
         parseVisualGeometries(visual_scene, instanceGeo);
         
-//        if (instanceGeo.size()) {
-//
-//
-//
-//        } else {
-//
-//
-//
-//        }
-        
         const TiXmlNode* _geometries = findNode(root, "library_geometries");
         
         std::vector<std::string> meshOfMaterialNames;
@@ -881,6 +892,7 @@ namespace cxbin
                 }
             }
         }
+        
         if (tracer)
         {
             tracer->success();
