@@ -121,12 +121,19 @@ namespace cxbin
 
     const char* safeAttribute(const TiXmlElement *from, const char* name )
     {
+        if (from == nullptr) {
+            return "";
+        }
         const char* v = from->Attribute(name);
         return v ? v : "";
     }
     
     const char* safeAttribute(const TiXmlElement *from, const std::string& name )
     {
+        if (from == nullptr) {
+            return "";
+        }
+        
         const std::string* v = from->Attribute(name);
         if (v) {
             return v->c_str();
@@ -321,11 +328,13 @@ namespace cxbin
                 
                 std::string id = safeAttribute((TiXmlElement*)image, "id");
                 const TiXmlElement* ifm = (const TiXmlElement*)findNode(image, "init_from");
-                std::string name = ifm->GetText();
-                DaeImage i;
-                i.id = id;
-                i.name = name;
-                outImages.push_back(i);
+                if (ifm) {
+                    std::string name = ifm->GetText();
+                    DaeImage i;
+                    i.id = id;
+                    i.name = name;
+                    outImages.push_back(i);
+                }
             }
         }
     }
@@ -388,10 +397,11 @@ namespace cxbin
                 }
             }
 
-            const TiXmlNode* _vcount = findNode(polylist, "vcount");
-            const TiXmlElement* vcount = (const TiXmlElement*)_vcount;
-            const TiXmlNode* _p = findNode(polylist, "p");
-            const TiXmlElement* p = (const TiXmlElement*)_p;
+            const TiXmlElement* vcount = (const TiXmlElement*)findNode(polylist, "vcount");
+            const TiXmlElement* p = (const TiXmlElement*)findNode(polylist, "p");
+            if (vcount == nullptr || p == nullptr) {
+                continue;
+            }
             const char* vcountdata = vcount->GetText();
             const char* pdata = p->GetText();
             if (vcountdata != nullptr && pdata != nullptr)
@@ -522,6 +532,10 @@ namespace cxbin
 
     void parseMaterial(const TiXmlElement* root, const std::string name, trimesh::Material &mate)
     {
+        if (root == nullptr) {
+            return;
+        }
+        
         std::string id = "id";
         std::string materURL;
         const TiXmlNode *matout;
@@ -562,59 +576,65 @@ namespace cxbin
         if (materURL.length() > 0 && effectsNode) {
             
             const TiXmlNode *effect = findNodesWithAttribule(effectsNode, id, materURL);
-            const TiXmlElement *profile_COMMON = effect->FirstChildElement("profile_COMMON");
-            
-            
-            for (const TiXmlNode* sub_node = profile_COMMON->FirstChildElement(); sub_node; sub_node = sub_node->NextSibling()) {
-                
-                if (sub_node->ValueStr() == "newparam") {
+            if (effect) {
+                const TiXmlElement *profile_COMMON = effect->FirstChildElement("profile_COMMON");
+                if (profile_COMMON) {
                     
-                    const char *sid = ((const TiXmlElement *)sub_node)->Attribute("sid");
-                    if (sid) {
-                        addChild(sid);
-                    }
-                    
-                    const TiXmlElement *first = sub_node->FirstChildElement();
-                    if (first) {
-                        const TiXmlElement *second = first->FirstChildElement();
-                        if (second) {
-                            const std::string s = second->GetText();
-                            if (s.length() > 0) {
-                                addChild(s);
+                    for (const TiXmlNode* sub_node = profile_COMMON->FirstChildElement(); sub_node; sub_node = sub_node->NextSibling()) {
+                        
+                        if (sub_node->ValueStr() == "newparam") {
+                            
+                            const char *sid = ((const TiXmlElement *)sub_node)->Attribute("sid");
+                            if (sid) {
+                                addChild(sid);
                             }
+                            
+                            const TiXmlElement *first = sub_node->FirstChildElement();
+                            if (first) {
+                                const TiXmlElement *second = first->FirstChildElement();
+                                if (second) {
+                                    const std::string s = second->GetText();
+                                    if (s.length() > 0) {
+                                        addChild(s);
+                                    }
+                                }
+                            }
+                            
+                            continue;
                         }
-                    }
-                    
-                    continue;
-                }
-                
-                if (sub_node->ValueStr() == "technique") {
-                    
-                    const TiXmlElement *technique = (const TiXmlElement *)sub_node;
-                    const TiXmlElement *phong = technique->FirstChildElement("phong");
-                    
-                    if (phong == nullptr) {
-                        phong = technique->FirstChildElement("lambert");
-                    }
-                    
-                    if (phong == nullptr) {
-                        phong = technique->FirstChildElement("blinn");
-                    }
-                    
-                    if (phong) {
-                        std::string name = phong->ValueStr();
-                        const TiXmlElement *diffuse = phong->FirstChildElement("diffuse");
-                        const TiXmlElement *texture = diffuse->FirstChildElement("texture");
-                        if (texture) {
-                            const std::string diffText = safeAttribute(texture, "texture");
-                            if (diffText.size() > 0) {
+                        
+                        if (sub_node->ValueStr() == "technique") {
+                            
+                            const TiXmlElement *technique = (const TiXmlElement *)sub_node;
+                            const TiXmlElement *phong = technique->FirstChildElement("phong");
+                            
+                            if (phong == nullptr) {
+                                phong = technique->FirstChildElement("lambert");
+                            }
+                            
+                            if (phong == nullptr) {
+                                phong = technique->FirstChildElement("blinn");
+                            }
+                            
+                            if (phong) {
+                                std::string name = phong->ValueStr();
+                                const TiXmlElement *diffuse = phong->FirstChildElement("diffuse");
+                                if (diffuse) {
+                                    const TiXmlElement *texture = diffuse->FirstChildElement("texture");
+                                    if (texture) {
+                                        const std::string diffText = safeAttribute(texture, "texture");
+                                        if (diffText.size() > 0) {
+                                            addChild(diffText);
+                                        }
+                                    }
+                                }
                                 
-                                addChild(diffText);
                             }
+                            
+                            continue;
                         }
                     }
                     
-                    continue;
                 }
             }
         }
@@ -627,13 +647,14 @@ namespace cxbin
             const TiXmlNode *img = findNodesWithAttribule(imagesNode, "id", sub);
             if (img) {
                 const TiXmlElement *init_from = img->FirstChildElement("init_from");
-                std::string imgName = init_from->GetText();
-                
-                if (imgName.length()) {
-                    mate.diffuseMap = imgName;
-                    mate.diffuse = trimesh::vec3(0.9);
-                    mate.name = name;
-                    break;
+                if (init_from) {
+                    std::string imgName = init_from->GetText();
+                    if (imgName.length()) {
+                        mate.diffuseMap = imgName;
+                        mate.diffuse = trimesh::vec3(0.9);
+                        mate.name = name;
+                        break;
+                    }
                 }
             }
             
@@ -642,6 +663,10 @@ namespace cxbin
 
     void parseLibraryGeometries(const TiXmlNode* geoRoot, std::vector<trimesh::TriMesh*>& out, std::vector<std::string>& meshOfMaterialNames)
     {
+        if (geoRoot == nullptr) {
+            return;
+        }
+        
         std::vector<const TiXmlNode*> geometries;
         findNodes(geoRoot, geometries, "geometry");
 
@@ -691,7 +716,9 @@ namespace cxbin
                     const TiXmlNode* technique_common = findNode(source, "technique_common");
                     if (technique_common) {
                         const TiXmlElement* accessor = (const TiXmlElement*)findNode(technique_common, "accessor");
-                        accessor->Attribute("stride", &_sourceGroup.stride);
+                        if (accessor) {
+                            accessor->Attribute("stride", &_sourceGroup.stride);
+                        }
                     }
                     
                     const char* floatarrydata = floatarry->GetText();
@@ -778,6 +805,10 @@ namespace cxbin
 
     void parseVisualGeometries(const TiXmlNode* vsRoot, std::vector<Instancegeometry>& out)
     {
+        if (vsRoot == nullptr) {
+            return;
+        }
+        
         for (const TiXmlNode* sub_node = vsRoot->FirstChild(); sub_node; sub_node = sub_node->NextSibling())
         {
             if (sub_node->Type() == TiXmlNode::TINYXML_ELEMENT)
