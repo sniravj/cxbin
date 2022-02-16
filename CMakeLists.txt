@@ -69,12 +69,6 @@ else()
 								SOURCE_FOLDER
 								)
 								
-	if(INSTALL_CXBIN)
-		INSTALL(TARGETS cxbin
-				LIBRARY DESTINATION lib
-				ARCHIVE DESTINATION .
-				RUNTIME DESTINATION bin)
-	endif()
 endif()
 
 if(CC_INSTALL_CXBIN)
