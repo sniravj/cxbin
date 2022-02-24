@@ -73,7 +73,7 @@ namespace cxbin
 
     std::string DaeLoader::expectExtension()
     {
-        return "dae";
+        return "dae1";
     }
 
     bool DaeLoader::tryLoad(FILE* f, unsigned fileSize)

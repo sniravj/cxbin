@@ -30,19 +30,16 @@ set(SRCS cxbin/interface.h
 		 cxbin/plugin/pluginwrl.h
 		 cxbin/plugin/pluginwrl.cpp
 		 cxbin/plugin/pluginoff.cpp
-		 cxbin/plugin/plugindae.h
-		 cxbin/plugin/plugindae.cpp
-		 cxbin/plugin/plugin3mf.h
-		 cxbin/plugin/plugin3mf.cpp
 		 cxbin/cx/writer.h
 		 cxbin/cx/writer.cpp
 		 cxbin/cx/reader.h
 		 cxbin/cx/reader.cpp
 		 cxbin/cx/cxutil.h
 		 cxbin/cx/cxutil.cpp
+
 		 )
 		 
-set(LIBS trimesh2 stringutil tinyxml zlib)
+set(LIBS trimesh2 stringutil tinyxml zlib mmesh)
 set(DEFS TIXML_USE_STL Z_PREFIX)
 
 if(TARGET lib3MF)
@@ -52,6 +49,17 @@ if(TARGET lib3MF)
 					 )
 endif()
 
+if(TARGET collada-dom)
+	list(APPEND SRCS cxbin/plugin/plugindaedom.h
+					 cxbin/plugin/plugindaedom.cpp
+			)
+	list(APPEND LIBS collada-dom boost_file_system)
+	list(APPEND DEFS DAE_USE_COLLDADA_DOM)
+else()
+	list(APPEND SRCS cxbin/plugin/plugindae.h
+					 cxbin/plugin/plugindae.cpp
+			)
+endif()
 
 if(BUILD_CXBIN_STATIC)
 	__add_real_target(cxbin lib SOURCE ${SRCS}
@@ -74,4 +82,3 @@ endif()
 if(CC_INSTALL_CXBIN)
 	__install_directory_specif(${CMAKE_CURRENT_SOURCE_DIR}/ cxbin)
 endif()
-

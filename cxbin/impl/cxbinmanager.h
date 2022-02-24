@@ -14,6 +14,7 @@
 #include "cxbin/plugin/plugin3mf.h"
 #include "cxbin/plugin/plugindae.h"
 #include "cxbin/plugin/plugincxbin.h"
+#include "cxbin/plugin/plugindaedom.h"
 
 namespace ccglobal
 {
@@ -48,7 +49,12 @@ namespace cxbin
 		_3dsLoader m_3dsLoader;
 		WrlLoader m_wrlLoader;
 		_3mfLoader m_3mfLoader;
+
+#ifdef DAE_USE_COLLDADA_DOM
+		DaeDomLoader m_daeLoader;
+#else
 		DaeLoader m_daeLoader;
+#endif
 		CXBinLoader m_cxbinLoader;
 
 		CXBinSaver m_cxbinSaver;
