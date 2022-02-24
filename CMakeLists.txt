@@ -39,7 +39,7 @@ set(SRCS cxbin/interface.h
 
 		 )
 		 
-set(LIBS trimesh2 stringutil tinyxml zlib mmesh)
+set(LIBS trimesh2 stringutil tinyxml zlib)
 set(DEFS TIXML_USE_STL Z_PREFIX)
 
 if(TARGET lib3MF)

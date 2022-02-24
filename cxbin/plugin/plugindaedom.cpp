@@ -5,7 +5,7 @@
 #include <map>
 
 #include "trimesh2/TriMesh.h"
-#include "mmesh/trimesh/trimeshutil.h"
+//#include "mmesh/trimesh/trimeshutil.h"
 
 #include <dae.h>
 #include <dom/domConstants.h>
