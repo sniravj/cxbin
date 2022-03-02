@@ -295,7 +295,7 @@ namespace cxbin
                 
                 
             } else if (LINE_IS("usemtl ")) {
-                
+                continue;
                 //"usemtl"指定了材质之后，以后的面都是使用这一材质，直到遇到下一个"usemtl"来指定新的材质。
                 
                 std::string name = str.substr(7, str.length()-7);
