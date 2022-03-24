@@ -149,10 +149,15 @@ namespace cxbin
 			fileSize = ftell(f);
 			fseek(f, 0L, SEEK_SET);
 
+			std::string use_ext = extension;
+			if (use_ext.size() > 0) {
+				std::transform(use_ext.begin(), use_ext.end(), use_ext.begin(), tolower);
+			}
+			
 			LoaderImpl* loader = nullptr;
-			if (extension.size() > 0)
+			if (use_ext.size() > 0)
 			{
-				std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(extension);
+				std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(use_ext);
 				if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
 				{
 					loader = it->second;

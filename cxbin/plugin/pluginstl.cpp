@@ -44,7 +44,30 @@ namespace cxbin
 		fread(&faceCount, sizeof(uint32_t), 1, f);
 		const uint32_t expectedBinaryFileSize = faceCount * 50 + 84;
 
-		return expectedBinaryFileSize == fileSize;
+		if (expectedBinaryFileSize == fileSize) {
+			return true;
+		}
+		if (expectedBinaryFileSize < fileSize) {
+			int cha = fileSize - expectedBinaryFileSize;
+			fseek(f, expectedBinaryFileSize, SEEK_SET);
+			char* buf = new char[cha];
+			fread(buf, cha, 1, f);
+
+			bool is_stl = true;
+			for (int i = 0; i < cha; i++) {
+				if (buf[i] != 0x0) {
+					is_stl = false;
+					break;
+				}
+			}
+
+			delete[] buf;
+			buf = nullptr;
+
+			return is_stl;
+		}
+
+		return false;
 	}
 
 	// An ascii STL buffer will begin with "solid NAME", where NAME is optional.
