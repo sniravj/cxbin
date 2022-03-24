@@ -47,7 +47,7 @@ namespace cxbin
 		if (expectedBinaryFileSize == fileSize) {
 			return true;
 		}
-		if (expectedBinaryFileSize < fileSize) {
+		if (fileSize - expectedBinaryFileSize < 64) {
 			int cha = fileSize - expectedBinaryFileSize;
 			fseek(f, expectedBinaryFileSize, SEEK_SET);
 			char* buf = new char[cha];
