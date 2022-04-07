@@ -101,9 +101,10 @@ namespace cxbin
 		unsigned char b[1];
 		if (isASCII) {
 			// A lot of importers are write solid even if the file is binary. So we have to check for ASCII-characters.
-			if (fileSize >= 500) {
+			if (fileSize > 5) {//500  size(solid) bug for 6.1_Àâ×¶-J.stl
 				isASCII = true;
-				for (unsigned int i = 0; i < 500; i++) {
+				int detect = fileSize > 500 ? 500 : fileSize;//500   bug for 6.1_Àâ×¶-J.stl
+				for (unsigned int i = 0; i < detect; i++) {//500   bug for 6.1_Àâ×¶-J.stl
 
 					fread(b, 1, 1, f);
 					if (b[0] > 127) {
