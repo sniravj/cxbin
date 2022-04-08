@@ -155,10 +155,27 @@ namespace cxbin
         return "dae";
     }
 
+	bool IsDaeFile(FILE* f, unsigned int fileSize)
+	{
+		TiXmlDocument doc;
+		if (!doc.LoadFile(f))
+		{
+			return false;
+		}
+
+		const TiXmlElement* root = doc.RootElement();
+
+		if (nullptr == findNode(root, "library_geometries"))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
     bool DaeDomLoader::tryLoad(FILE* f, unsigned fileSize)
     {
-        //return IsDaeFile(f, fileSize);
-        return true;
+        return IsDaeFile(f, fileSize);
     }
 
     bool DaeDomLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
