@@ -5,7 +5,6 @@
 #include <map>
 
 #include "trimesh2/TriMesh.h"
-//#include "mmesh/trimesh/trimeshutil.h"
 
 #include <dae.h>
 #include <dom/domConstants.h>
@@ -157,18 +156,18 @@ namespace cxbin
 
 	bool IsDaeFile(FILE* f, unsigned int fileSize)
 	{
-		TiXmlDocument doc;
-		if (!doc.LoadFile(f))
-		{
-			return false;
-		}
-
-		const TiXmlElement* root = doc.RootElement();
-
-		if (nullptr == findNode(root, "library_geometries"))
-		{
-			return false;
-		}
+		//TiXmlDocument doc;
+		//if (!doc.LoadFile(f))
+		//{
+		//	return false;
+		//}
+		//
+		//const TiXmlElement* root = doc.RootElement();
+		//
+		//if (nullptr == findNode(root, "library_geometries"))
+		//{
+		//	return false;
+		//}
 
 		return true;
 	}
