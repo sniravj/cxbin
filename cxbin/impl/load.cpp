@@ -29,7 +29,7 @@ namespace cxbin
 		std::vector<trimesh::TriMesh*> models;
 		FILE* f = fopen(fileName.c_str(), "rb");
 
-		formartPrint(tracer, "loadT : load file %s", fileName.c_str());
+		//formartPrint(tracer, "loadT : load file %s", fileName.c_str());
 		
 		if (!f)
 		{

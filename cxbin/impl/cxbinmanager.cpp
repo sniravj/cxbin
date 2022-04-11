@@ -256,7 +256,7 @@ namespace cxbin
 
 		FILE* f = fopen(realFileName.c_str(), "wb");
 
-		formartPrint(tracer, "CXBinManager::save. save file %s.", realFileName.c_str());
+		//formartPrint(tracer, "CXBinManager::save. save file %s.", realFileName.c_str());
 		if (!f) {
 			if (tracer)
 			{
