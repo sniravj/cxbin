@@ -1,5 +1,5 @@
 #include "plugindaedom.h"
-//#include "tinyxml/tinyxml.h"
+#include "tinyxml/tinyxml.h"
 //#include "trimesh2/TriMesh.h"
 #include "ccglobal/tracer.h"
 #include <map>
@@ -154,22 +154,40 @@ namespace cxbin
         return "dae";
     }
 
+	const TiXmlNode* findNode(const TiXmlNode* node, std::string strNode)
+	{
+		if (node == nullptr)
+			return nullptr;
+		for (const TiXmlNode* sub_node = node->FirstChild(); sub_node; sub_node = sub_node->NextSibling())
+		{
+			if (sub_node->Type() == TiXmlNode::TINYXML_ELEMENT)
+			{
+				const TiXmlElement* sub_element = (const TiXmlElement*)sub_node;
+				if (!strcmp(sub_element->Value(), strNode.c_str()))
+				{
+					return  sub_node;
+				}
+			}
+		}
+		return nullptr;
+	}
+
 	bool IsDaeFile(FILE* f, unsigned int fileSize)
 	{
-		//TiXmlDocument doc;
-		//if (!doc.LoadFile(f))
-		//{
-		//	return false;
-		//}
-		//
-		//const TiXmlElement* root = doc.RootElement();
-		//
-		//if (nullptr == findNode(root, "library_geometries"))
-		//{
-		//	return false;
-		//}
+		TiXmlDocument doc;
+		if (!doc.LoadFile(f))
+		{
+			return false;
+		}
+		
+		const TiXmlElement* root = doc.RootElement();
+		
+		if (nullptr == findNode(root, "library_geometries"))
+		{
+			return false;
+		}
 
-		return true;
+		//return true;
 	}
 
     bool DaeDomLoader::tryLoad(FILE* f, unsigned fileSize)
