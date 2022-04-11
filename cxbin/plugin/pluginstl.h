@@ -12,7 +12,7 @@ namespace cxbin
 		virtual ~StlSaver();
 
 		std::string expectExtension() override;
-		bool save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer) override;
+		bool save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName = "") override;
 	};
 
 	class StlLoader : public LoaderImpl

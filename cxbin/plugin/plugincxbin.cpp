@@ -24,7 +24,7 @@ namespace cxbin
 		return "cxbin";
 	}
 
-	bool CXBinSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer)
+	bool CXBinSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName)
 	{
 		return writeCXBin(f, out, tracer);
 	}

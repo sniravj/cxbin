@@ -25,9 +25,9 @@ namespace cxbin
 		return "stl";
 	}
 
-	bool StlSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer)
+	bool StlSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName)
 	{
-		return false;
+		return out->write(fileName);
 	}
 
 	// A valid binary STL buffer should consist of the following elements, in order:

@@ -3,6 +3,7 @@
 
 #include "cxbin/impl/cxbinmanager.h"
 #include "stringutil/filenameutil.h"
+#include "cxbin/load.h"
 
 namespace cxbin
 {
@@ -10,5 +11,12 @@ namespace cxbin
 	{
 		std::string extension = stringutil::extensionFromFileName(fileName, true);
 		return cxmanager.save(model, fileName, extension, tracer);
+	}
+
+	bool convert(const std::string& fileIn, const std::string& fileOut, ccglobal::Tracer* tracer)
+	{
+		trimesh::TriMesh* model=loadAll(fileIn, tracer);
+		std::string extension = stringutil::extensionFromFileName(fileOut, true);
+		return cxmanager.save(model, fileOut, extension, tracer);
 	}
 }

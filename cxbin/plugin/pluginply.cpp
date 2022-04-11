@@ -273,7 +273,7 @@ namespace cxbin
 		return write_faces_bin(mesh, f, need_swap, 1, buf, 0, 0);
 	}
 
-	bool PlySaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer)
+	bool PlySaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName)
 	{
 		return write_ply_binary(out, f, trimesh::we_are_little_endian() ? true : false, 
 			false, false, false);

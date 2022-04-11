@@ -12,7 +12,7 @@ namespace cxbin
 		virtual ~PlySaver();
 
 		std::string expectExtension() override;
-		bool save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer) override;
+		bool save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName = "") override;
 	};
 
 	class PlyLoader : public LoaderImpl

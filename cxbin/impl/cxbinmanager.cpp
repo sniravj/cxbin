@@ -25,6 +25,7 @@ namespace cxbin
 
 		registerSaverImpl(&m_cxbinSaver);
 		registerSaverImpl(&m_plySaver);
+		registerSaverImpl(&m_stlSaver);
 	}
 
 	CXBinManager::~CXBinManager()
@@ -266,7 +267,7 @@ namespace cxbin
 		}
 
 		bool success = false;
-		if ((success = saver->save(f, mesh, tracer)) && tracer)
+		if ((success = saver->save(f, mesh, tracer, realFileName.c_str())) && tracer)
 		{
 			tracer->progress(1.0f);
 			tracer->success();
