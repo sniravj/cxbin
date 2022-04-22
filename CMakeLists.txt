@@ -40,7 +40,7 @@ set(SRCS cxbin/interface.h
 		 )
 		 
 set(LIBS trimesh2 stringutil tinyxml zlib)
-set(DEFS TIXML_USE_STL Z_PREFIX)
+set(DEFS TIXML_USE_STL Z_PREFIX BOOST_ALL_NO_LIB)
 
 if(TARGET lib3MF)
 	list(APPEND LIBS lib3MF zip)
@@ -53,7 +53,7 @@ if(TARGET collada-dom)
 	list(APPEND SRCS cxbin/plugin/plugindaedom.h
 					 cxbin/plugin/plugindaedom.cpp
 			)
-	list(APPEND LIBS collada-dom boost_file_system boost_system)
+	list(APPEND LIBS collada-dom boost_file_system)
 	list(APPEND DEFS DAE_USE_COLLDADA_DOM)
 else()
 	list(APPEND SRCS cxbin/plugin/plugindae.h
