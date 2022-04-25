@@ -61,23 +61,7 @@ else()
 			)
 endif()
 
-if(BUILD_CXBIN_STATIC)
-	__add_real_target(cxbin lib SOURCE ${SRCS}
-								LIB ${LIBS}
-								DEF ${DEFS}
-								INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-								SOURCE_FOLDER
-								)
-else()
-	list(APPEND DEFS CXBIN_DLL)
-	__add_real_target(cxbin dll SOURCE ${SRCS}
-								LIB ${LIBS}
-								DEF ${DEFS}
-								INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-								SOURCE_FOLDER
-								)
-								
-endif()
+__add_platform_library(cxbin)
 
 if(CC_INSTALL_CXBIN)
 	__install_directory_specif(${CMAKE_CURRENT_SOURCE_DIR}/ cxbin)
