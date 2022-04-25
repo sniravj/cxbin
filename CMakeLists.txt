@@ -49,11 +49,11 @@ if(TARGET lib3MF)
 					 )
 endif()
 
-if(TARGET collada-dom)
+if(TARGET colladadom)
 	list(APPEND SRCS cxbin/plugin/plugindaedom.h
 					 cxbin/plugin/plugindaedom.cpp
 			)
-	list(APPEND LIBS collada-dom boost_file_system)
+	list(APPEND LIBS colladadom boost_file_system)
 	list(APPEND DEFS DAE_USE_COLLDADA_DOM)
 else()
 	list(APPEND SRCS cxbin/plugin/plugindae.h
