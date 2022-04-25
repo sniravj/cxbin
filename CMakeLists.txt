@@ -61,7 +61,7 @@ else()
 			)
 endif()
 
-__add_platform_library(cxbin)
+__add_common_library(cxbin)
 
 if(CC_INSTALL_CXBIN)
 	__install_directory_specif(${CMAKE_CURRENT_SOURCE_DIR}/ cxbin)

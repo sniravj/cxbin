@@ -2,9 +2,15 @@
 #define CXBIN_INTERFACE_1604911737496_H
 #include "ccglobal/export.h"
 
-#ifdef CXBIN_DLL
-	#define CXBIN_API CC_DECLARE_EXPORT
-#else
+#if USE_CXBIN_DLL
 	#define CXBIN_API CC_DECLARE_IMPORT
+#elif USE_CXBIN_STATIC
+	#define CXBIN_API CC_DECLARE_STATIC
+#else
+	#if CXBIN_DLL
+		#define CXBIN_API CC_DECLARE_EXPORT
+	#else
+		#define CXBIN_API CC_DECLARE_STATIC
+	#endif
 #endif
 #endif // CXBIN_INTERFACE_1604911737496_H
