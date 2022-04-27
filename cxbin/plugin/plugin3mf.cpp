@@ -21,7 +21,7 @@ namespace cxbin
 		return "3mf";
 	}
 
-	bool _3mfLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool _3mfLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		if (fileSize == 0)
 			return false;

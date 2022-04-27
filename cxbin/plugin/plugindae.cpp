@@ -76,7 +76,7 @@ namespace cxbin
         return "dae";
     }
 
-    bool DaeLoader::tryLoad(FILE* f, unsigned fileSize)
+    bool DaeLoader::tryLoad(FILE* f, unsigned long long fileSize)
     {
         return IsDaeFile(f, fileSize);
     }

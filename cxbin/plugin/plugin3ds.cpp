@@ -30,7 +30,7 @@ namespace cxbin
 		return "3ds";
 	}
 
-	bool _3dsLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool _3dsLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		int c = fgetc(f);
 		if (c == EOF) {

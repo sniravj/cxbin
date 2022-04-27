@@ -145,9 +145,11 @@ namespace cxbin
 		bool loadSuccess = true;
 		do
 		{
-			unsigned fileSize = 0;
+			//unsigned fileSize = 0;
+			unsigned long long fileSize = 0;
 			fseek(f, 0L, SEEK_END);
-			fileSize = ftell(f);
+			//fileSize = ftell(f);   for big file 2.5G
+			fileSize = _ftelli64(f);
 			fseek(f, 0L, SEEK_SET);
 
 			std::string use_ext = extension;

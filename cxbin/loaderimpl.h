@@ -25,7 +25,7 @@ namespace cxbin
 		virtual ~LoaderImpl() {}
 
 		virtual std::string expectExtension() = 0;
-		virtual bool tryLoad(FILE* f, unsigned fileSize) = 0;
+		virtual bool tryLoad(FILE* f, unsigned long long fileSize) = 0;
 		virtual bool load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) = 0;
 	};
 

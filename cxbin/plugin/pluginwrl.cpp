@@ -32,7 +32,7 @@ namespace cxbin
 		return "wrl";
 	}
 
-	bool WrlLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool WrlLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		char buf[128];
 		if (!fgets(buf, 128, f))

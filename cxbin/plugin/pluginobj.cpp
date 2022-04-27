@@ -23,7 +23,7 @@ namespace cxbin
 		return "obj";
 	}
 
-	bool ObjLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool ObjLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		bool isObj = false;
 		int times = 0;

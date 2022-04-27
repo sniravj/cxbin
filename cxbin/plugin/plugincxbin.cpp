@@ -44,7 +44,7 @@ namespace cxbin
 		return "cxbin";
 	}
 
-	bool CXBinLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool CXBinLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		int _version = -1;
 		fread(&_version, sizeof(int), 1, f);

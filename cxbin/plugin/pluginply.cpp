@@ -386,7 +386,7 @@ namespace cxbin
 		return true;
 	}
 
-	bool PlyLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool PlyLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		bool binary = false;
 		bool need_swap = false;

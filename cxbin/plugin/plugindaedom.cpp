@@ -190,7 +190,7 @@ namespace cxbin
 		//return true;
 	}
 
-    bool DaeDomLoader::tryLoad(FILE* f, unsigned fileSize)
+    bool DaeDomLoader::tryLoad(FILE* f, unsigned long long fileSize)
     {
         return IsDaeFile(f, fileSize);
     }

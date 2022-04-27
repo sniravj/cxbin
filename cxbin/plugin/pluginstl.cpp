@@ -34,21 +34,21 @@ namespace cxbin
 	// 1) 80 byte header
 	// 2) 4 byte face count
 	// 3) 50 bytes per face
-	static bool IsBinarySTL(FILE* f, unsigned int fileSize) {
+	static bool IsBinarySTL(FILE* f, size_t fileSize) {
 		if (fileSize < 84) {
 			return false;
 		}
 
 		fseek(f, 80L, SEEK_SET);
-		uint32_t faceCount(0);
-		fread(&faceCount, sizeof(uint32_t), 1, f);
-		const uint32_t expectedBinaryFileSize = faceCount * 50 + 84;
+		size_t faceCount(0);
+		fread(&faceCount, sizeof(int), 1, f);
+		const size_t expectedBinaryFileSize = faceCount * 50 + 84;
 
 		if (expectedBinaryFileSize == fileSize) {
 			return true;
 		}
 		if (fileSize - expectedBinaryFileSize < 64) {
-			int cha = fileSize - expectedBinaryFileSize;
+			size_t cha = fileSize - expectedBinaryFileSize;
 			fseek(f, expectedBinaryFileSize, SEEK_SET);
 			char* buf = new char[cha];
 			fread(buf, cha, 1, f);
@@ -73,7 +73,7 @@ namespace cxbin
 	// An ascii STL buffer will begin with "solid NAME", where NAME is optional.
 	// Note: The "solid NAME" check is necessary, but not sufficient, to determine
 	// if the buffer is ASCII; a binary header could also begin with "solid NAME".
-	static bool IsAsciiSTL(FILE* f, unsigned int fileSize) {
+	static bool IsAsciiSTL(FILE* f, size_t fileSize) {
 		fseek(f, 0L, SEEK_SET);
 		int nNumWhiteSpace = 0;
 		unsigned char nWhiteSpace;
@@ -284,7 +284,7 @@ namespace cxbin
 		return "stl";
 	}
 
-	bool StlLoader::tryLoad(FILE* f, unsigned fileSize)
+	bool StlLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		return IsAsciiSTL(f, fileSize) || IsBinarySTL(f, fileSize);
 	}
