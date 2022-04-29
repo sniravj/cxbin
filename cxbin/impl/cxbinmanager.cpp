@@ -8,7 +8,7 @@
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
 
-#include"stdio.h"
+#include<stdio.h>
 
 namespace cxbin
 {
@@ -151,7 +151,13 @@ namespace cxbin
 			unsigned long long fileSize = 0;
 			fseek(f, 0L, SEEK_END);
 			//fileSize = ftell(f);   for big file 2.5G
+#ifdef _WIN32
 			fileSize = _ftelli64(f);
+#elif  __linux__
+			fileSize = ftello64(f);
+#else
+			fileSize = ftello64(f);
+#endif
 			fseek(f, 0L, SEEK_SET);
 
 			std::string use_ext = extension;
