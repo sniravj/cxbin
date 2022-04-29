@@ -284,7 +284,7 @@ namespace cxbin
 		return "stl";
 	}
 
-	bool StlLoader::tryLoad(FILE* f, size_t fileSize)
+	bool StlLoader::tryLoad(FILE* f, unsigned long long fileSize)
 	{
 		return IsAsciiSTL(f, fileSize) || IsBinarySTL(f, fileSize);
 	}

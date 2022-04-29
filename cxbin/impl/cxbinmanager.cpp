@@ -8,6 +8,8 @@
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
 
+#include"stdio.h"
+
 namespace cxbin
 {
 	CXBinManager cxmanager;
