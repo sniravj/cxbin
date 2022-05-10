@@ -33,7 +33,7 @@ namespace cxbin
 		
 		if (!f)
 		{
-			formartPrint(tracer, "load T : load file error for [%s]", strerror(errno));
+			formartPrint(tracer, "load T : Load file error for [%s]", strerror(errno));
 			if (tracer)
 				tracer->failed("Open File Error.");
 			return models;
@@ -58,7 +58,7 @@ namespace cxbin
 
 	std::vector<trimesh::TriMesh*> loadT(int fd, ccglobal::Tracer* tracer)
 	{
-		FILE* f = fdopen(fd, "rb");       /*文件描述符转换为文件指针*/
+		FILE* f = fdopen(fd, "rb");       /*锟侥硷拷锟斤拷锟斤拷锟斤拷转锟斤拷为锟侥硷拷指锟斤拷*/
 		return cxmanager.load(f, "", tracer, "");
 	}
 

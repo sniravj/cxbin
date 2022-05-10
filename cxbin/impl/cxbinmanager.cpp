@@ -101,7 +101,7 @@ namespace cxbin
 
 		if(!f)
 		{
-			LOGI("open file [%s] failed.", fileName.c_str());
+			LOGV("CXBinManager Open File [%s] Failed.", fileName.c_str());
 			return "";
 		}
 
@@ -172,7 +172,7 @@ namespace cxbin
 				if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
 				{
 					loader = it->second;
-					formartPrint(tracer, "CXBinManager::load : use plugin %s", it->first.c_str());
+					formartPrint(tracer, "CXBinManager::load : Use Plugin [%s]", it->first.c_str());
 				}
 			}
 
@@ -181,13 +181,13 @@ namespace cxbin
 				for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
 					it != m_loaders.end(); ++it)
 				{
-					formartPrint(tracer, "CXBinManager::load : try plugin [%s]", it->first.c_str());
+					formartPrint(tracer, "CXBinManager::load : Try plugin [%s]", it->first.c_str());
 					fseek(f, 0L, SEEK_SET);
 					if (it->second->tryLoad(f, fileSize))
 					{
 						loader = it->second;
 
-						formartPrint(tracer, "CXBinManager::load : searched plugin %s", it->first.c_str());
+						formartPrint(tracer, "CXBinManager::load : Searched Plugin [%s]", it->first.c_str());
 						break;
 					}
 				}
@@ -200,7 +200,7 @@ namespace cxbin
                 loader->modelPath.erase();
             }
 			else if (tracer)
-				tracer->failed("CXBinManager::load . can't find a plugin.");
+				tracer->failed("CXBinManager::load failed. Can't Find A Plugin.");
 		} while (0);
 		
 		if (loadSuccess)
