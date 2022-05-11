@@ -44,7 +44,7 @@ namespace cxbin
 		return "cxbin";
 	}
 
-	bool CXBinLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool CXBinLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		int _version = -1;
 		fread(&_version, sizeof(int), 1, f);
@@ -63,7 +63,7 @@ namespace cxbin
 		return true;
 	}
 
-	bool CXBinLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool CXBinLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		trimesh::TriMesh* model = new trimesh::TriMesh();
 		out.push_back(model);

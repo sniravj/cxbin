@@ -30,7 +30,7 @@ namespace cxbin
 		return "3ds";
 	}
 
-	bool _3dsLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool _3dsLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		int c = fgetc(f);
 		if (c == EOF) {
@@ -48,7 +48,7 @@ namespace cxbin
 		return false;
 	}
 
-	bool _3dsLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool _3dsLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		bool need_swap = trimesh::we_are_big_endian();
 		int mstart = 0;

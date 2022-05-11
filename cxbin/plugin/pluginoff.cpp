@@ -22,7 +22,7 @@ namespace cxbin
 		return "off";
 	}
 
-	bool OffLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool OffLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		char buf[128];
 		if (!fgets(buf, 128, f)) 
@@ -41,7 +41,7 @@ namespace cxbin
 		return nverts >= 3;
 	}
 
-	bool OffLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool OffLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		stringutil::skip_comments(f);
 		char buf[1024];

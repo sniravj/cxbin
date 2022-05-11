@@ -284,12 +284,12 @@ namespace cxbin
 		return "stl";
 	}
 
-	bool StlLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool StlLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		return IsAsciiSTL(f, fileSize) || IsBinarySTL(f, fileSize);
 	}
 
-	bool StlLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool StlLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		trimesh::TriMesh* model = new trimesh::TriMesh();
 		out.push_back(model);

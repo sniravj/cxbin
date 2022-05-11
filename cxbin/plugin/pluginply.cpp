@@ -386,14 +386,14 @@ namespace cxbin
 		return true;
 	}
 
-	bool PlyLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool PlyLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		bool binary = false;
 		bool need_swap = false;
 		return parsePlyFormat(f, binary, need_swap);
 	}
 
-	bool PlyLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool PlyLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		char buf[1024];
 		bool binary = false, need_swap = false, float_color = false;

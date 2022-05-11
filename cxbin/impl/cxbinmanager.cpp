@@ -7,11 +7,24 @@
 
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
-
-#include<stdio.h>
+#include "ccglobal/platform.h"
 
 namespace cxbin
 {
+	size_t getFileSize(FILE* file)
+	{
+		if (!file)
+			return 0;
+
+		size_t size = 0;
+		fseek(file, 0L, SEEK_END);
+		size = _cc_ftelli64(file);
+		fseek(file, 0L, SEEK_SET);
+
+		LOGI("CXBinManager open file size [%zu]", size);
+		return size;
+	}
+
 	CXBinManager cxmanager;
 	CXBinManager::CXBinManager()
 	{
@@ -105,10 +118,7 @@ namespace cxbin
 			return "";
 		}
 
-		unsigned fileSize = 0;
-		fseek(f, 0L, SEEK_END);
-		fileSize = ftell(f);
-		fseek(f, 0L, SEEK_SET);
+		size_t fileSize = getFileSize(f);
 
 		LoaderImpl* loader = nullptr;
 		if (extension.size() > 0)
@@ -147,18 +157,7 @@ namespace cxbin
 		bool loadSuccess = true;
 		do
 		{
-			//unsigned fileSize = 0;
-			unsigned long long fileSize = 0;
-			fseek(f, 0L, SEEK_END);
-			//fileSize = ftell(f);   for big file 2.5G
-#ifdef _WIN32
-			fileSize = _ftelli64(f);
-#elif  __linux__
-			fileSize = ftello64(f);
-#else
-			fileSize = ftello64(f);
-#endif
-			fseek(f, 0L, SEEK_SET);
+			size_t fileSize = getFileSize(f);
 
 			std::string use_ext = extension;
 			if (use_ext.size() > 0) {
@@ -276,8 +275,8 @@ namespace cxbin
 			return false;
 		}
 
-		bool success = false;
-		if ((success = saver->save(f, mesh, tracer, realFileName.c_str())) && tracer)
+		bool success = saver->save(f, mesh, tracer, realFileName.c_str());
+		if (success && tracer)
 		{
 			tracer->progress(1.0f);
 			tracer->success();

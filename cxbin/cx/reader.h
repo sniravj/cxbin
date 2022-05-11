@@ -14,7 +14,7 @@ namespace ccglobal
 
 namespace cxbin
 {
-	bool loadCXBin(FILE* f, unsigned fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer);
+	bool loadCXBin(FILE* f, size_t fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer);
 }
 
 #endif // CXBIN_READER_1630913098880_H

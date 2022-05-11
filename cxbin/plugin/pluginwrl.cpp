@@ -32,7 +32,7 @@ namespace cxbin
 		return "wrl";
 	}
 
-	bool WrlLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool WrlLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		char buf[128];
 		if (!fgets(buf, 128, f))
@@ -44,7 +44,7 @@ namespace cxbin
 		return true;
 	}
 
-	bool WrlLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool WrlLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		std::vector<std::vector<std::vector<int>>> polygons_Indexx;
 		std::vector<std::vector<trimesh::point>> pointss;

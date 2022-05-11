@@ -172,7 +172,7 @@ namespace cxbin
 		return nullptr;
 	}
 
-	bool IsDaeFile(FILE* f, unsigned int fileSize)
+	bool IsDaeFile(FILE* f, size_t fileSize)
 	{
 		TiXmlDocument doc;
 		if (!doc.LoadFile(f))
@@ -190,12 +190,12 @@ namespace cxbin
 		//return true;
 	}
 
-    bool DaeDomLoader::tryLoad(FILE* f, unsigned long long fileSize)
+    bool DaeDomLoader::tryLoad(FILE* f, size_t fileSize)
     {
         return IsDaeFile(f, fileSize);
     }
 
-    bool DaeDomLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+    bool DaeDomLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
     {
         bool success = false;
 

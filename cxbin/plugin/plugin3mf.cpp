@@ -21,7 +21,7 @@ namespace cxbin
 		return "3mf";
 	}
 
-	bool _3mfLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool _3mfLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		if (fileSize == 0)
 			return false;
@@ -50,7 +50,7 @@ namespace cxbin
 		return have3Mf;
 	}
 
-	bool _3mfLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool _3mfLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		if (fileSize == 0)
 		{

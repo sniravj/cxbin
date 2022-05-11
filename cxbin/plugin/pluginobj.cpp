@@ -23,7 +23,7 @@ namespace cxbin
 		return "obj";
 	}
 
-	bool ObjLoader::tryLoad(FILE* f, unsigned long long fileSize)
+	bool ObjLoader::tryLoad(FILE* f, size_t fileSize)
 	{
 		bool isObj = false;
 		int times = 0;
@@ -90,7 +90,7 @@ namespace cxbin
         return s;
     }
 
-	bool ObjLoader::load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
+	bool ObjLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
 		trimesh::TriMesh* model = new trimesh::TriMesh();
 		out.push_back(model);

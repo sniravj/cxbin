@@ -8,7 +8,7 @@
 
 namespace cxbin
 {
-	bool loadCXBin0(FILE* f, unsigned fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer)
+	bool loadCXBin0(FILE* f, size_t fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer)
 	{
 		bool success = false;
 		int vertNum = 0;
@@ -72,7 +72,7 @@ namespace cxbin
 		return success;
 	}
 
-	bool loadCXBin(FILE* f, unsigned fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer)
+	bool loadCXBin(FILE* f, size_t fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer)
 	{
 		int version = -1;
 		fread(&version, sizeof(int), 1, f);

@@ -11,8 +11,8 @@ namespace cxbin
 		virtual ~ObjLoader();
 
 		std::string expectExtension() override;
-		bool tryLoad(FILE* f, unsigned long long fileSize) override;
-		bool load(FILE* f, unsigned fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) override;
+		bool tryLoad(FILE* f, size_t fileSize) override;
+		bool load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) override;
         
     private:
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
