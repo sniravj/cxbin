@@ -114,7 +114,7 @@ namespace cxbin
 
 		if(!f)
 		{
-			LOGV("CXBinManager Open File [%s] Failed.", fileName.c_str());
+			LOGE("CXBinManager Open File [%s] Failed.", fileName.c_str());
 			return "";
 		}
 
