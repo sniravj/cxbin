@@ -112,9 +112,9 @@ namespace cxbin
             
 			if (feof(f))
 				break;
-            char buf[65536];
+            char buf[MAX_OBJ_READLINE_LEN] = { 0 };
 //            GET_LINE();
-            fgets(buf, 65536, f);
+            fgets(buf, MAX_OBJ_READLINE_LEN, f);
 
 			std::string str = buf;
 			count += str.length();

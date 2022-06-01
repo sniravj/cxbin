@@ -2,6 +2,8 @@
 #define CXBIN_PLUGINOBJ_1630741230194_H
 #include "cxbin/loaderimpl.h"
 #include "trimesh2/TriMesh.h"
+
+#define MAX_OBJ_READLINE_LEN 10240
 namespace cxbin
 {
 	class ObjLoader : public LoaderImpl
