@@ -81,11 +81,11 @@ namespace cxbin
 	std::vector<trimesh::TriMesh*> loadT(const std::wstring& fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models;
-#ifdef _WIN32
+//#ifdef _WIN32
 		FILE* f = _wfopen(fileName.c_str(), L"rb");
-#else
-		FILE* f = fopen(fileName.c_str(), "rb");
-#endif
+//#else
+//		FILE* f = fopen(fileName.c_str(), "rb");
+//#endif
 		formartPrint(tracer, "loadT : load file %s", fileName.c_str());
 
 		if (!f)
