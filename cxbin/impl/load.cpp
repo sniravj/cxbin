@@ -6,7 +6,7 @@
 #include "stringutil/filenameutil.h"
 #include "cxbin/impl/inner.h"
 #include <assert.h>
-
+#include <codecvt>
 
 
 namespace cxbin
@@ -24,6 +24,20 @@ namespace cxbin
 		}
 		return outMesh;
 	}
+
+	trimesh::TriMesh* loadAll(const std::wstring& fileName, ccglobal::Tracer* tracer)
+	{
+		std::vector<trimesh::TriMesh*> models = loadT(fileName, tracer);
+		if (models.size() <= 0) return nullptr;
+		trimesh::TriMesh* outMesh = new trimesh::TriMesh();
+		mergeTriMesh(outMesh, models);
+		for (auto& mesh : models)
+		{
+			delete mesh;
+		}
+		return outMesh;
+	}
+
 	std::vector<trimesh::TriMesh*> loadT(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models;
@@ -41,6 +55,50 @@ namespace cxbin
 
 		std::string extension = stringutil::extensionFromFileName(fileName, true);
 		models = cxmanager.load(f, extension, tracer, fileName);
+
+		if (tracer && models.size() > 0)
+		{
+			tracer->progress(1.0f);
+			tracer->success();
+		}
+
+		if(f)
+			fclose(f);
+
+		if (tracer && models.size() == 0)
+			tracer->failed("Parse File Error.");
+		return models;
+	}
+
+	std::string ws2s(const std::wstring& wstr)
+	{
+		using convert_typeX = std::codecvt_utf8<wchar_t>;
+		std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+		return converterX.to_bytes(wstr);
+	}
+
+	std::vector<trimesh::TriMesh*> loadT(const std::wstring& fileName, ccglobal::Tracer* tracer)
+	{
+		std::vector<trimesh::TriMesh*> models;
+#ifdef _WIN32
+		FILE* f = _wfopen(fileName.c_str(), L"rb");
+#else
+		FILE* f = fopen(fileName.c_str(), "rb");
+#endif
+		formartPrint(tracer, "loadT : load file %s", fileName.c_str());
+
+		if (!f)
+		{
+			formartPrint(tracer, "load T : Load file error for [%s]", strerror(errno));
+			if (tracer)
+				tracer->failed("Open File Error.");
+			return models;
+		}
+
+		const std::string _fileName = ws2s(fileName);
+		std::string extension = stringutil::extensionFromFileName(_fileName, true);
+		models = cxmanager.load(f, extension, tracer, _fileName);
 
 		if (tracer && models.size() > 0)
 		{
