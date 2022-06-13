@@ -6,8 +6,8 @@
 #include "stringutil/filenameutil.h"
 #include "cxbin/impl/inner.h"
 #include <assert.h>
-#include <codecvt>
 
+#include "boost/boost/nowide/cstdio.hpp"
 
 namespace cxbin
 {
@@ -25,7 +25,7 @@ namespace cxbin
 		return outMesh;
 	}
 
-	trimesh::TriMesh* loadAll(const std::wstring& fileName, ccglobal::Tracer* tracer)
+	trimesh::TriMesh* loadAll(const char* fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models = loadT(fileName, tracer);
 		if (models.size() <= 0) return nullptr;
@@ -41,7 +41,8 @@ namespace cxbin
 	std::vector<trimesh::TriMesh*> loadT(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models;
-		FILE* f = fopen(fileName.c_str(), "rb");
+		//FILE* f = fopen(fileName.c_str(), "rb");
+		FILE* f = boost::nowide::fopen(fileName.c_str(), "rb");
 
 		//formartPrint(tracer, "loadT : load file %s", fileName.c_str());
 		
@@ -70,23 +71,13 @@ namespace cxbin
 		return models;
 	}
 
-	std::string ws2s(const std::wstring& wstr)
-	{
-		using convert_typeX = std::codecvt_utf8<wchar_t>;
-		std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-		return converterX.to_bytes(wstr);
-	}
-
-	std::vector<trimesh::TriMesh*> loadT(const std::wstring& fileName, ccglobal::Tracer* tracer)
+	std::vector<trimesh::TriMesh*> loadT(const char* fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models;
-//#ifdef _WIN32
-		FILE* f = _wfopen(fileName.c_str(), L"rb");
-//#else
-//		FILE* f = fopen(fileName.c_str(), "rb");
-//#endif
-		formartPrint(tracer, "loadT : load file %s", fileName.c_str());
+
+		FILE* f = boost::nowide::fopen(fileName, "rb");
+
+		formartPrint(tracer, "loadT : load file %s", fileName);
 
 		if (!f)
 		{
@@ -96,7 +87,7 @@ namespace cxbin
 			return models;
 		}
 
-		const std::string _fileName = ws2s(fileName);
+		const std::string _fileName = fileName;
 		std::string extension = stringutil::extensionFromFileName(_fileName, true);
 		models = cxmanager.load(f, extension, tracer, _fileName);
 
