@@ -7,7 +7,7 @@
 #include "cxbin/impl/inner.h"
 #include <assert.h>
 
-#include "boost/boost/nowide/cstdio.hpp"
+#include "boost/nowide/cstdio.hpp"
 
 namespace cxbin
 {
@@ -40,41 +40,12 @@ namespace cxbin
 
 	std::vector<trimesh::TriMesh*> loadT(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
-		std::vector<trimesh::TriMesh*> models;
-		//FILE* f = fopen(fileName.c_str(), "rb");
-		FILE* f = boost::nowide::fopen(fileName.c_str(), "rb");
-
-		//formartPrint(tracer, "loadT : load file %s", fileName.c_str());
-		
-		if (!f)
-		{
-			formartPrint(tracer, "load T : Load file error for [%s]", strerror(errno));
-			if (tracer)
-				tracer->failed("Open File Error.");
-			return models;
-		}
-
-		std::string extension = stringutil::extensionFromFileName(fileName, true);
-		models = cxmanager.load(f, extension, tracer, fileName);
-
-		if (tracer && models.size() > 0)
-		{
-			tracer->progress(1.0f);
-			tracer->success();
-		}
-
-		if(f)
-			fclose(f);
-
-		if (tracer && models.size() == 0)
-			tracer->failed("Parse File Error.");
-		return models;
+        return loadT(fileName.c_str(), tracer);
 	}
 
 	std::vector<trimesh::TriMesh*> loadT(const char* fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models;
-
 		FILE* f = boost::nowide::fopen(fileName, "rb");
 
 		formartPrint(tracer, "loadT : load file %s", fileName);
