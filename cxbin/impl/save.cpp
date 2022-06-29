@@ -13,6 +13,11 @@ namespace cxbin
 		return cxmanager.save(model, fileName, extension, tracer);
 	}
 
+	bool saveWithExtension(const std::string& fileName, const std::string& extension, trimesh::TriMesh* model, ccglobal::Tracer* tracer)
+	{
+		return cxmanager.save(model, fileName, extension, tracer);
+	}
+
 	bool convert(const std::string& fileIn, const std::string& fileOut, ccglobal::Tracer* tracer)
 	{
 		trimesh::TriMesh* model=loadAll(fileIn, tracer);

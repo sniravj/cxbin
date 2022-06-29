@@ -257,8 +257,8 @@ namespace cxbin
 		if (!saver)
 		{
 			saver = &m_cxbinSaver;
-			realFileName += ".";
-			realFileName += "cxbin";
+			//realFileName += ".";
+			//realFileName += "cxbin";
 
 			formartPrint(tracer, "CXBinManager::save. use cxbin extension.");
 		}
