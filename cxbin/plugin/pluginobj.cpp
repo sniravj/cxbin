@@ -14,7 +14,7 @@ namespace cxbin
         std::vector<int> v;
         std::vector<int> t;
         std::vector<int> n;
-        int tInd = 0;
+        int tInd = -1;
         bool edge[3];// useless if the face is a polygon, no need to have variable length array
         trimesh::ivec4 clr;
     };
@@ -117,9 +117,9 @@ namespace cxbin
         std::vector<ObjIndexedFace> indexedFaces;
 
         int  currentMaterialIdx = 0;
-        trimesh::Material defaultMaterial;					
-        defaultMaterial.index = currentMaterialIdx;
-        materials.push_back(defaultMaterial);
+        //trimesh::Material defaultMaterial;					
+        //defaultMaterial.index = currentMaterialIdx;
+        //materials.push_back(defaultMaterial);
 
 		while (1) {
 			if (tracer && tracer->interrupt())
@@ -197,10 +197,12 @@ namespace cxbin
                     {
                         ff.v.emplace_back(remapVertexIndex(vi));
                         ff.n.emplace_back(remapNormalIndex(ni));
+                        ff.tInd = -1;
                     }
                     else if (sscanf(ptr, "%d", &vi) == 1)
                     {
                         ff.v.emplace_back(remapVertexIndex(vi));
+                        ff.tInd = -1;
                     }
 
                     // skip to white space or end of line
@@ -251,7 +253,7 @@ namespace cxbin
                 // emergency check. If there are no materials, the material library failed to load or was not specified
                 // but there are tools that save the material library with the same name of the file, but do not add the 
                 // "mtllib" definition in the header. So, we can try to see if this is the case
-                if ((materials.size() == 1) && (materials[0].name == "")) {
+                if (materials.size() == 0) {
                     std::string materialFileName(modelPath);
                     materialFileName.replace(materialFileName.end() - 4, materialFileName.end(), ".mtl");
                     loadMtl(materialFileName, materials);
@@ -314,7 +316,7 @@ namespace cxbin
                     else
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(0, 0,0));
-                        modelmesh->textureIDs.emplace_back(0);
+                        modelmesh->textureIDs.emplace_back(-1);
                     }
                 }
             }
