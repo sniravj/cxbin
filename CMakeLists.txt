@@ -1,4 +1,5 @@
 __assert_target(trimesh2)
+__cc_find(Boost)
 
 set(SRCS cxbin/interface.h
 		 cxbin/load.h
