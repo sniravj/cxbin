@@ -91,19 +91,26 @@ namespace cxbin
     }
 
 	bool ObjLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
-	{
-		trimesh::TriMesh* model = new trimesh::TriMesh();
-		out.push_back(model);
+    {
 		unsigned count = 0;
 		unsigned calltime = fileSize / 10;
 		int num = 0;
 
-        std::vector<trimesh::vec3> tmp_normals;
-        std::vector<trimesh::vec3> tmp_vertices;
-        std::vector<trimesh::vec2> tmp_UVs;
-        
-        std::vector<trimesh::Material> mates;
-        
+         std::vector<trimesh::vec3> tmp_vertices;
+         std::vector<trimesh::vec2> tmp_UVs;
+         std::vector<trimesh::vec3> tmp_normals;
+         auto remapVertexIndex = [tmp_vertices](int vi) { return (vi < 0) ? tmp_vertices.size() + vi : vi - 1; };
+         auto remapNormalIndex = [tmp_normals](int vi) { return (vi < 0) ? tmp_normals.size() + vi : vi - 1; };
+         auto remapTexCoordIndex=[tmp_UVs](int vi) { return (vi < 0) ? tmp_UVs.size() + vi : vi - 1; };
+
+        std::vector<trimesh::Material> materials;
+        std::vector<trimesh::ObjIndexedFace> indexedFaces;
+
+        int  currentMaterialIdx = 0;
+        trimesh::Material defaultMaterial;					
+        defaultMaterial.index = currentMaterialIdx;
+        materials.push_back(defaultMaterial);
+
 		while (1) {
 			if (tracer && tracer->interrupt())
 				return false;
@@ -153,122 +160,48 @@ namespace cxbin
 			else if (LINE_IS("f ") || LINE_IS("f\t")) {
 				
                 std::string strOfFace = str.substr(2, str.length()-2);
-                strOfFace = trimStr(strOfFace);
-                //一个图元，可能包含超过3个顶点
-                std::vector<std::string> face;
-                componentsSeparatedByString(strOfFace, ' ', face);
-                size_t pointSize = face.size();
-                
-                for (size_t i = 2; i < pointSize; i++) {
-                    
-                    std::string firstStrOfPoint = face[0];
-                    //一个顶点可能包含多个不同的属性
-                    std::vector<std::string> firstAttributeOut;
-                    componentsSeparatedByString(firstStrOfPoint, '/', firstAttributeOut);
-                    
-                    switch (firstAttributeOut.size()) {
-                            
-                        case 1:
-                        {
-                            //顶点
-                            int idx0 = atoi(firstStrOfPoint.c_str()) - 1;
-                            int idx1 = atoi(face[i-1].c_str()) - 1;
-                            int idx2 = atoi(face[i].c_str()) - 1;
-                            
-                            model->faces.push_back(trimesh::TriMesh::Face(idx0, idx1, idx2));
-                        }
-                            break;
-                            
-                        case 2:
-                        {
-                            
-                            if (tmp_UVs.size() > 0) {
-                                //顶点+纹理
-                                
-                                //第一个顶点
-                                int idx0 = atoi(firstAttributeOut[0].c_str()) - 1;
-                                int uvidx0 = atoi(firstAttributeOut[1].c_str()) - 1;
-                                
-                                //第二个顶点
-                                std::string secondStrOfPoint = face[i-1];
-                                std::vector<std::string> secondAttributeOut;
-                                componentsSeparatedByString(secondStrOfPoint, '/', secondAttributeOut);
-                                
-                                int idx1 = atoi(secondAttributeOut[0].c_str()) - 1;
-                                int uvidx1 = atoi(secondAttributeOut[1].c_str()) - 1;
-                                
-                                //第三个顶点
-                                std::string thirdStrOfPoint = face[i];
-                                std::vector<std::string> thirdAttributeOut;
-                                componentsSeparatedByString(thirdStrOfPoint, '/', thirdAttributeOut);
-                                
-                                int idx2 = atoi(thirdAttributeOut[0].c_str()) - 1;
-                                int uvidx2 = atoi(thirdAttributeOut[1].c_str()) - 1;
-                                
-                                model->faces.push_back(trimesh::TriMesh::Face(idx0, idx1, idx2));
-                                model->faceUVs.push_back(trimesh::TriMesh::Face(uvidx0, uvidx1, uvidx2));
-                                
-                            } else if (tmp_normals.size() > 0)
-                            {
-                                //顶点+法线
-                                
-                                //第一个顶点
-                                int idx0 = atoi(firstAttributeOut[0].c_str()) - 1;
-                                
-                                //第二个顶点
-                                std::string secondStrOfPoint = face[i-1];
-                                std::vector<std::string> secondAttributeOut;
-                                componentsSeparatedByString(secondStrOfPoint, '/', secondAttributeOut);
-                                
-                                int idx1 = atoi(secondAttributeOut[0].c_str()) - 1;
-                            
-                                //第三个顶点
-                                std::string thirdStrOfPoint = face[i];
-                                std::vector<std::string> thirdAttributeOut;
-                                componentsSeparatedByString(thirdStrOfPoint, '/', thirdAttributeOut);
-                                
-                                int idx2 = atoi(thirdAttributeOut[0].c_str()) - 1;
-                                model->faces.push_back(trimesh::TriMesh::Face(idx0, idx1, idx2));
-                                
-                            }
-                        }
-                            break;
-                        case 3:
-                        {
-                            //顶点+纹理+法线
-                            
-                            //第一个顶点
-                            int idx0 = atoi(firstAttributeOut[0].c_str()) - 1;
-                            int uvidx0 = atoi(firstAttributeOut[1].c_str()) - 1;
-                            
-                            
-                            //第二个顶点
-                            std::string secondStrOfPoint = face[i-1];
-                            std::vector<std::string> secondAttributeOut;
-                            componentsSeparatedByString(secondStrOfPoint, '/', secondAttributeOut);
-                            
-                            int idx1 = atoi(secondAttributeOut[0].c_str()) - 1;
-                            int uvidx1 = atoi(secondAttributeOut[1].c_str()) - 1;
+                const char* ptr = strOfFace.c_str();
+                int vi = 0, ti = 0, ni = 0;
+                trimesh::ObjIndexedFace   ff;
+                while (*ptr != 0)
+                {
+                    // skip white space
+                    while (*ptr == ' ') ++ptr;
 
-                            //第三个顶点
-                            std::string thirdStrOfPoint = face[i];
-                            std::vector<std::string> thirdAttributeOut;
-                            componentsSeparatedByString(thirdStrOfPoint, '/', thirdAttributeOut);
-                            
-                            int idx2 = atoi(thirdAttributeOut[0].c_str()) - 1;
-                            int uvidx2 = atoi(thirdAttributeOut[1].c_str()) - 1;
-                            
-                            model->faces.push_back(trimesh::TriMesh::Face(idx0, idx1, idx2));
-                            model->faceUVs.push_back(trimesh::TriMesh::Face(uvidx0, uvidx1, uvidx2));
-                            
-                        }
-                            break;
-                            
-                        default:
-                            break;
+                    if (sscanf(ptr, "%d/%d/%d", &vi, &ti, &ni) == 3)
+                    {
+                        ff.v.emplace_back(remapVertexIndex(vi));
+                        ff.t.emplace_back(remapTexCoordIndex(ti));
+                        ff.n.emplace_back(remapNormalIndex(ni));
+                        ff.tInd = currentMaterialIdx;
+
                     }
+                    else if (sscanf(ptr, "%d/%d", &vi, &ti) == 2)
+                    {
+                        ff.v.emplace_back(remapVertexIndex(vi));
+                        ff.t.emplace_back(remapTexCoordIndex(ti));
+                        ff.tInd = currentMaterialIdx;
+
+                    }
+                    else if (sscanf(ptr, "%d//%d", &vi, &ni) == 2)
+                    {
+                        ff.v.emplace_back(remapVertexIndex(vi));
+                        ff.n.emplace_back(remapNormalIndex(ni));
+                    }
+                    else if (sscanf(ptr, "%d", &vi) == 1)
+                    {
+                        ff.v.emplace_back(remapVertexIndex(vi));
+                    }
+
+                    // skip to white space or end of line
+                    while (*ptr != ' ' && *ptr != 0) ++ptr;
+
                 }
-			} else if (LINE_IS("g ") || LINE_IS("o ")) {
+                indexedFaces.push_back(ff);
+
+
+			} 
+            else if (LINE_IS("g ") || LINE_IS("o ")) {
                 //结束上一个部件
 //                if (model->faces.size() > 0) {
 //                    model = new trimesh::TriMesh();
@@ -279,7 +212,8 @@ namespace cxbin
 //                std::string name = str.substr(2, str.length()-2);
 //                name = trimStr(name);
                 
-            } else if (LINE_IS("mtllib ")) {
+            } 
+            else if (LINE_IS("mtllib ")) {
                 std::string name = str.substr(7, str.length()-7);
                 name = trimStr(name);
                 //mtl文件名
@@ -287,59 +221,60 @@ namespace cxbin
                 size_t loc = modelPath.find_last_of("/");
                 if (loc != std::string::npos) {
                     
-                    const std::string full = modelPath.substr(0, loc) + "/" + name;
-                    printf("[mtl]: %s\n", full.c_str());
+                    const std::string materialFileName = modelPath.substr(0, loc) + "/" + name;
+                    printf("[mtl]: %s\n", materialFileName.c_str());
                     
-                    loadMtl(full, mates);
+                    loadMtl(materialFileName, materials);
                 }
                 
                 
-            } else if (LINE_IS("usemtl ")) {
-                continue;
-                //"usemtl"指定了材质之后，以后的面都是使用这一材质，直到遇到下一个"usemtl"来指定新的材质。
-                
+            } 
+            else if (LINE_IS("usemtl ")) {
+                //mtllib should been readed before 
                 std::string name = str.substr(7, str.length()-7);
                 name = trimStr(name);
                 
                 if (name.empty()) {
                     continue;
                 }
-                
-                //结束上一个部件
-                if (model->faces.size() > 0) {
-                    trimesh::TriMesh *sameNameModel = nullptr;
-                    
-                    for (int i = 0; i < out.size(); i++) {
-                        trimesh::TriMesh *sub = out[i];
-                        if (sub->material.name == name) {
-                            sameNameModel = sub;
-                            break;
-                        }
-                    }
-                    
-                    if (sameNameModel) {
-                        
-                        model = sameNameModel;
-                        
-                    } else {
-                        model = new trimesh::TriMesh();
-                        out.push_back(model);
-                    }
-                    
+
+                // emergency check. If there are no materials, the material library failed to load or was not specified
+                // but there are tools that save the material library with the same name of the file, but do not add the 
+                // "mtllib" definition in the header. So, we can try to see if this is the case
+                if ((materials.size() == 1) && (materials[0].name == "")) {
+                    std::string materialFileName(modelPath);
+                    materialFileName.replace(materialFileName.end() - 4, materialFileName.end(), ".mtl");
+                    loadMtl(materialFileName, materials);
                 }
-                
-                if (mates.size()) {
-                    for (trimesh::Material mat : mates) {
-                        if (mat.name == name) {
-                            model->material = mat;
-                            break;
-                        }
+
+                std::string materialName= name;
+
+                bool found = false;
+                unsigned i = 0;
+                while (!found && (i < materials.size()))
+                {
+                    std::string currentMaterialName = materials[i].name;
+                    if (currentMaterialName == materialName)
+                    {
+                        currentMaterialIdx = i;
+                        trimesh::Material& material = materials[currentMaterialIdx];
+                        trimesh::vec3 diffuseColor = material.diffuse;
+                        unsigned char r = (unsigned char)(diffuseColor[0] * 255.0);
+                        unsigned char g = (unsigned char)(diffuseColor[1] * 255.0);
+                        unsigned char b = (unsigned char)(diffuseColor[2] * 255.0);
+                        unsigned char alpha = (unsigned char)(material.Tr * 255.0);
+                        trimesh::vec4 currentColor = trimesh::vec4(r, g, b, alpha);
+                        found = true;
                     }
-                } else {
-                    model->material.name = name;
+                    ++i;
                 }
-                
+
+                if (!found)
+                {
+                    currentMaterialIdx = 0;
+                }
             }
+
         }
 
 		// XXX - FIXME
@@ -348,12 +283,36 @@ namespace cxbin
 		// the file just uses per-vertex normals.  Otherwise, we can't
 		// handle it.
         
-        for (int i=0; i<out.size(); i++) {
-            trimesh::TriMesh *mesh = out[i];
-            mesh->vertices = tmp_vertices;
-            mesh->UVs = tmp_UVs;
+
+        //if (tmp_vertices.size()*3== tmp_UVs.size()
+        //    && tmp_UVs.size() == tmp_normals.size())
+        {
+            trimesh::TriMesh* modelmesh = new trimesh::TriMesh();
+            std::swap(modelmesh->vertices, tmp_vertices);
+            std::swap(modelmesh->UVs, tmp_UVs);
+            for (int i = 0; i < indexedFaces.size(); i++)
+            {
+                trimesh::ObjIndexedFace& ff = indexedFaces[i];
+                if (ff.v.size() == 3)
+                {
+                   modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
+                   if (ff.t.size() == 3)
+                    {
+                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
+                        modelmesh->textureIDs.emplace_back(ff.tInd);
+                    }
+                    else
+                    {
+                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(0, 0,0));
+                        modelmesh->textureIDs.emplace_back(0);
+                    }
+                }
+            }
+            std::swap(modelmesh->m_materials, materials);
+            
+            out.push_back(modelmesh);
         }
-        
+
 		if (tracer)
 		{
 			tracer->success();
@@ -380,6 +339,7 @@ namespace cxbin
             if (LINE_IS("newmtl ")) {
                 
                 trimesh::Material newmat;
+                newmat.index = out.size();
                 out.push_back(newmat);
                 
                 matePtr = &out[out.size()-1];
@@ -451,7 +411,15 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    matePtr->ambientMap = strs[strs.size()-1];
+                    size_t loc = fileName.find_last_of("/");
+                    if (loc != std::string::npos) {
+
+                        const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
+                        printf("[map_Ka]: %s\n", full.c_str());
+                        matePtr->ambientMap = strs[strs.size() - 1];
+
+                    }
+
                 }
                 
             } else if (LINE_IS("map_Kd ")) {
@@ -463,7 +431,15 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    matePtr->diffuseMap = strs[strs.size()-1];
+                    size_t loc = fileName.find_last_of("/");
+                    if (loc != std::string::npos) {
+
+                        const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
+                        printf("[map_Kd]: %s\n", full.c_str());
+                        matePtr->diffuseMap = full;
+
+                    }
+
                 }
                 
             } else if (LINE_IS("map_Ks ")) {
@@ -475,7 +451,14 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    matePtr->specularMap = strs[strs.size()-1];
+                    size_t loc = fileName.find_last_of("/");
+                    if (loc != std::string::npos) {
+
+                        const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
+                        printf("[map_Ks]: %s\n", full.c_str());
+                        matePtr->specularMap = full;
+
+                    }
                 }
                 
             } else if (LINE_IS("map_bump ")) {
