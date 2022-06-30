@@ -8,6 +8,16 @@
 
 namespace cxbin
 {
+    struct ObjIndexedFace
+    {
+        void set(const int& num) { v.resize(num); n.resize(num); t.resize(num); }
+        std::vector<int> v;
+        std::vector<int> t;
+        std::vector<int> n;
+        int tInd = 0;
+        bool edge[3];// useless if the face is a polygon, no need to have variable length array
+        trimesh::ivec4 clr;
+    };
 	ObjLoader::ObjLoader()
 	{
 
@@ -104,7 +114,7 @@ namespace cxbin
          auto remapTexCoordIndex=[tmp_UVs](int vi) { return (vi < 0) ? tmp_UVs.size() + vi : vi - 1; };
 
         std::vector<trimesh::Material> materials;
-        std::vector<trimesh::ObjIndexedFace> indexedFaces;
+        std::vector<ObjIndexedFace> indexedFaces;
 
         int  currentMaterialIdx = 0;
         trimesh::Material defaultMaterial;					
@@ -162,7 +172,7 @@ namespace cxbin
                 std::string strOfFace = str.substr(2, str.length()-2);
                 const char* ptr = strOfFace.c_str();
                 int vi = 0, ti = 0, ni = 0;
-                trimesh::ObjIndexedFace   ff;
+                ObjIndexedFace   ff;
                 while (*ptr != 0)
                 {
                     // skip white space
@@ -292,7 +302,7 @@ namespace cxbin
             std::swap(modelmesh->UVs, tmp_UVs);
             for (int i = 0; i < indexedFaces.size(); i++)
             {
-                trimesh::ObjIndexedFace& ff = indexedFaces[i];
+                ObjIndexedFace& ff = indexedFaces[i];
                 if (ff.v.size() == 3)
                 {
                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
