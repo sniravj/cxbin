@@ -41,6 +41,7 @@ namespace cxbin
 		registerSaverImpl(&m_cxbinSaver);
 		registerSaverImpl(&m_plySaver);
 		registerSaverImpl(&m_stlSaver);
+		registerSaverImpl(&m_objSaver);
 	}
 
 	CXBinManager::~CXBinManager()

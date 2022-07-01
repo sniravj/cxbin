@@ -120,6 +120,7 @@ namespace cxbin
         //trimesh::Material defaultMaterial;					
         //defaultMaterial.index = currentMaterialIdx;
         //materials.push_back(defaultMaterial);
+		std::string mtlName;
 
 		while (1) {
 			if (tracer && tracer->interrupt())
@@ -226,14 +227,14 @@ namespace cxbin
                 
             } 
             else if (LINE_IS("mtllib ")) {
-                std::string name = str.substr(7, str.length()-7);
-                name = trimStr(name);
+                mtlName = str.substr(7, str.length()-7);
+                mtlName = trimStr(mtlName);
                 //mtl文件名
                 
-                size_t loc = modelPath.find_last_of("/");
+                size_t loc = modelPath.find_last_of("/")+1;
                 if (loc != std::string::npos) {
                     
-                    const std::string materialFileName = modelPath.substr(0, loc) + "/" + name;
+                    const std::string materialFileName = modelPath.substr(0, loc) + mtlName;
                     printf("[mtl]: %s\n", materialFileName.c_str());
                     
                     loadMtl(materialFileName, materials);
@@ -300,8 +301,10 @@ namespace cxbin
         //    && tmp_UVs.size() == tmp_normals.size())
         {
             trimesh::TriMesh* modelmesh = new trimesh::TriMesh();
+            modelmesh->mtlName = mtlName;
             std::swap(modelmesh->vertices, tmp_vertices);
             std::swap(modelmesh->UVs, tmp_UVs);
+            std::swap(modelmesh->normals, tmp_normals);
             for (int i = 0; i < indexedFaces.size(); i++)
             {
                 ObjIndexedFace& ff = indexedFaces[i];
@@ -317,6 +320,10 @@ namespace cxbin
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(0, 0,0));
                         modelmesh->textureIDs.emplace_back(-1);
+                    }
+                    if (ff.n.size()==3)
+                    {
+                        modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
                     }
                 }
             }
@@ -493,4 +500,28 @@ namespace cxbin
             
         return true;
     }
+
+
+
+
+	ObjSaver::ObjSaver()
+	{
+
+	}
+
+	ObjSaver::~ObjSaver()
+	{
+
+	}
+
+	std::string ObjSaver::expectExtension()
+	{
+        return "obj";
+	}
+
+	bool ObjSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName)
+	{
+        return out->write(fileName);
+	}
+
 }

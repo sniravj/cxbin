@@ -1,6 +1,7 @@
 #ifndef CXBIN_PLUGINOBJ_1630741230194_H
 #define CXBIN_PLUGINOBJ_1630741230194_H
 #include "cxbin/loaderimpl.h"
+#include "cxbin/saverimpl.h"
 #include "trimesh2/TriMesh.h"
 
 #define MAX_OBJ_READLINE_LEN 10240
@@ -19,6 +20,18 @@ namespace cxbin
     private:
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
     private:
+	};
+
+
+	class ObjSaver : public SaverImpl
+	{
+	public:
+		ObjSaver();
+		virtual ~ObjSaver();
+
+		std::string expectExtension() override;
+		bool save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName = "") override;
+	private:
 	};
 }
 

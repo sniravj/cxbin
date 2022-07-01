@@ -60,6 +60,7 @@ namespace cxbin
 		CXBinSaver m_cxbinSaver;
 		PlySaver m_plySaver;
 		StlSaver m_stlSaver;
+		ObjSaver m_objSaver;
 	};
 
 	extern CXBinManager cxmanager;
