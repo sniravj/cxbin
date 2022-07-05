@@ -53,6 +53,13 @@ if(TARGET lib3MF)
 					 )
 endif()
 
+if(TARGET lib3mf)
+	list(APPEND LIBS lib3mf zip)
+	list(APPEND SRCS cxbin/plugin/plugin3mf.h
+					 cxbin/plugin/plugin3mf.cpp
+					 )
+endif()
+
 if(TARGET colladadom)
 	list(APPEND SRCS cxbin/plugin/plugindaedom.h
 					 cxbin/plugin/plugindaedom.cpp
