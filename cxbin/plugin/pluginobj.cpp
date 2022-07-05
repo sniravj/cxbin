@@ -275,8 +275,8 @@ namespace cxbin
                         unsigned char r = (unsigned char)(diffuseColor[0] * 255.0);
                         unsigned char g = (unsigned char)(diffuseColor[1] * 255.0);
                         unsigned char b = (unsigned char)(diffuseColor[2] * 255.0);
-                        unsigned char alpha = (unsigned char)(material.Tr * 255.0);
-                        trimesh::vec4 currentColor = trimesh::vec4(r, g, b, alpha);
+                        //unsigned char alpha = (unsigned char)(material.Tr * 255.0);
+                        //trimesh::vec4 currentColor = trimesh::vec4(r, g, b, alpha);
                         found = true;
                     }
                     ++i;
@@ -301,7 +301,7 @@ namespace cxbin
         //    && tmp_UVs.size() == tmp_normals.size())
         {
             trimesh::TriMesh* modelmesh = new trimesh::TriMesh();
-            modelmesh->mtlName = mtlName;
+            //modelmesh->mtlName = mtlName;
             std::swap(modelmesh->vertices, tmp_vertices);
             std::swap(modelmesh->UVs, tmp_UVs);
             std::swap(modelmesh->normals, tmp_normals);
@@ -314,21 +314,22 @@ namespace cxbin
                    if (ff.t.size() == 3)
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
-                        modelmesh->textureIDs.emplace_back(ff.tInd);
+                        //modelmesh->textureIDs.emplace_back(ff.tInd);
                     }
                     else
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(0, 0,0));
-                        modelmesh->textureIDs.emplace_back(-1);
+                        //modelmesh->textureIDs.emplace_back(-1);
                     }
-                    if (ff.n.size()==3)
-                    {
-                        modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
-                    }
+                    //if (ff.n.size()==3)
+                    //{
+                    //    modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
+                    //}
                 }
             }
-            std::swap(modelmesh->m_materials, materials);
-            
+            //std::swap(modelmesh->m_materials, materials);
+            if(materials.size()>0)
+                modelmesh->material = materials[0];
             out.push_back(modelmesh);
         }
 
@@ -358,7 +359,7 @@ namespace cxbin
             if (LINE_IS("newmtl ")) {
                 
                 trimesh::Material newmat;
-                newmat.index = out.size();
+                //newmat.index = out.size();
                 out.push_back(newmat);
                 
                 matePtr = &out[out.size()-1];
