@@ -318,7 +318,7 @@ namespace cxbin
                     }
                     else
                     {
-                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(0, 0,0));
+                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
                         //modelmesh->textureIDs.emplace_back(-1);
                     }
                     //if (ff.n.size()==3)
