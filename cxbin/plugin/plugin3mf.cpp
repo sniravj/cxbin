@@ -3,6 +3,7 @@
 #include "lib3mf_implicit.hpp"
 #include "trimesh2/TriMesh.h"
 #include "ccglobal/tracer.h"
+#include "ccglobal/log.h"
 
 namespace cxbin
 {
@@ -26,9 +27,17 @@ namespace cxbin
 		if (fileSize == 0)
 			return false;
 
-		unsigned char* buffer = new unsigned char[fileSize];
-		Lib3MF::CInputVector<Lib3MF_uint8> Ibuffer(buffer, fileSize);
-		fread(buffer, 1, fileSize, f);
+		LOGM("_3mfLoader try load file size [%d]", (int)fileSize);
+		unsigned char* buffer = new unsigned char[fileSize + 1];
+		Lib3MF::CInputVector<Lib3MF_uint8> Ibuffer(buffer, fileSize + 1);
+		size_t readSize = fread(buffer, 1, fileSize, f);
+		buffer[fileSize] = '\0';
+
+		if(readSize < fileSize)
+		{
+			LOGM("_3mfLoader try read file size [%d]", (int)readSize);
+			return false;
+		}
 
 		Lib3MF::PWrapper wrapper = Lib3MF::CWrapper::loadLibrary();
 		Lib3MF::PModel model = wrapper->CreateModel();
