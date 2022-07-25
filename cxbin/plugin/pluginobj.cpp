@@ -327,9 +327,9 @@ namespace cxbin
                     //}
                 }
             }
-            //std::swap(modelmesh->m_materials, materials);
-            if(materials.size()>0)
-                modelmesh->material = materials[0];
+            std::swap(modelmesh->m_materials, materials);
+            //if(materials.size()>0)
+            //    modelmesh->material = materials[0];
             out.push_back(modelmesh);
         }
 
@@ -436,7 +436,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Ka]: %s\n", full.c_str());
-                        matePtr->ambientMap = strs[strs.size() - 1];
+                        matePtr->map_ambient_filepath = strs[strs.size() - 1];
 
                     }
 
@@ -456,7 +456,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Kd]: %s\n", full.c_str());
-                        matePtr->diffuseMap = full;
+                        matePtr->map_diffuse_filepath = full;
 
                     }
 
@@ -476,7 +476,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Ks]: %s\n", full.c_str());
-                        matePtr->specularMap = full;
+                        matePtr->map_specular_filepath = full;
 
                     }
                 }
@@ -491,7 +491,7 @@ namespace cxbin
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
                     std::vector<std::string>::iterator it = strs.end()-1;
-                    matePtr->normalMap = *it;
+                    matePtr->map_normal_filepath = *it;
                 }
                 
             }
