@@ -314,12 +314,12 @@ namespace cxbin
                    if (ff.t.size() == 3)
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
-                        //modelmesh->textureIDs.emplace_back(ff.tInd);
+                        modelmesh->textureIDs.emplace_back(ff.tInd);
                     }
                     else
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
-                        //modelmesh->textureIDs.emplace_back(-1);
+                        modelmesh->textureIDs.emplace_back(-1);
                     }
                     //if (ff.n.size()==3)
                     //{
@@ -359,7 +359,7 @@ namespace cxbin
             if (LINE_IS("newmtl ")) {
                 
                 trimesh::Material newmat;
-                //newmat.index = out.size();
+                newmat.index = out.size();
                 out.push_back(newmat);
                 
                 matePtr = &out[out.size()-1];
@@ -436,12 +436,11 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Ka]: %s\n", full.c_str());
-                        matePtr->map_ambient_filepath = strs[strs.size() - 1];
+                        matePtr->map_ambient_filepath = full;
+
 
                     }
-
                 }
-                
             } else if (LINE_IS("map_Kd ")) {
                 
                 if (!isValid) continue;
@@ -490,8 +489,15 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    std::vector<std::string>::iterator it = strs.end()-1;
-                    matePtr->map_normal_filepath = *it;
+                    size_t loc = fileName.find_last_of("/");
+                    if (loc != std::string::npos) {
+
+                        const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
+                        printf("[map_Kb]: %s\n", full.c_str());
+                        matePtr->map_normal_filepath = full;
+
+
+                    }
                 }
                 
             }
