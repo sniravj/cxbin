@@ -1,5 +1,9 @@
 __assert_target(trimesh2)
 __cc_find(Boost)
+__cc_find(ZLib)
+__cc_find(Zip)
+__cc_find(TinyXml)
+__cc_find(Lib3mf)
 
 set(SRCS cxbin/interface.h
 		 cxbin/load.h
