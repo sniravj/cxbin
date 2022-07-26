@@ -650,7 +650,7 @@ namespace cxbin
                 if (init_from) {
                     std::string imgName = init_from->GetText();
                     if (imgName.length()) {
-                        mate.map_diffuse_filepath = imgName;
+                        mate.map_filepaths[trimesh::Material::DIFFUSE] = imgName;
                         mate.diffuse = trimesh::vec3(0.9);
                         mate.name = name;
                         break;
