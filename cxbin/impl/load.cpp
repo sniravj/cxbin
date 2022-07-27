@@ -11,6 +11,8 @@
 
 namespace cxbin
 {
+	void mergeTriMeshUVSingle(trimesh::TriMesh* outMesh, trimesh::TriMesh* inmesh, bool fanzhuan);
+	void mergeTriMeshSingle(trimesh::TriMesh* outMesh, trimesh::TriMesh* inmesh, bool fanzhuan);
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan=false);
 	trimesh::TriMesh* loadAll(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
@@ -149,6 +151,92 @@ namespace cxbin
 						startVertexIndex += vertexNum;
 						startUVIndex += uvNum;
 
+					}
+				}
+			}
+		}
+	}
+	void mergeTriMeshUVSingle(trimesh::TriMesh* outMesh, trimesh::TriMesh* inmesh, bool fanzhuan)
+	{
+		assert(outMesh);
+		if (inmesh != nullptr)
+		{
+			size_t startMaterialSize = outMesh->m_materials.size();
+			size_t startUVSize = outMesh->UVs.size();
+			size_t startfaceUVSize = outMesh->faceUVs.size();
+
+			int addMaterialSize = inmesh->m_materials.size();
+			int addfaceUVSize = inmesh->faceUVs.size();
+			int addUVSize = inmesh->UVs.size();
+			if (addfaceUVSize > 0 && addUVSize > 0)
+			{
+				outMesh->m_materials.insert(outMesh->m_materials.end(), inmesh->m_materials.begin(), inmesh->m_materials.end());
+				outMesh->faceUVs.insert(outMesh->faceUVs.end(), inmesh->faceUVs.begin(), inmesh->faceUVs.end());
+				outMesh->UVs.insert(outMesh->UVs.end(), inmesh->UVs.begin(), inmesh->UVs.end());
+				outMesh->textureIDs.insert(outMesh->textureIDs.end(), inmesh->textureIDs.begin(), inmesh->textureIDs.end());
+
+				for (size_t ii = startfaceUVSize; ii < startfaceUVSize + addfaceUVSize; ++ii)
+				{
+					trimesh::TriMesh::Face& faceUV = outMesh->faceUVs.at(ii);
+					int& textureID = outMesh->textureIDs.at(ii);//textureIDs.size() ==faceUVs.size()
+					textureID += addMaterialSize;//对应m_materials中的index值
+
+					for (int j = 0; j < 3; ++j)
+						faceUV[j] += startfaceUVSize;
+
+					if (fanzhuan)
+					{
+						int t = faceUV[1];
+						faceUV[1] = faceUV[2];
+						faceUV[2] = t;
+					}
+				}
+				//material.index
+				for (size_t ii = startMaterialSize; ii < startMaterialSize + addMaterialSize; ii++)
+				{
+					trimesh::Material& material = outMesh->m_materials.at(ii);
+					material.index += addMaterialSize;//对应m_materials中的值
+
+				}
+				//此处不合理，待后续完善
+				for (int index = 0; index < trimesh::Material::MapType::TYPE_COUNT; index++)
+				{
+					outMesh->map_widths[index] = inmesh->map_widths[index];
+					outMesh->map_heights[index] = inmesh->map_heights[index];
+					outMesh->map_buffers[index] = inmesh->map_buffers[index];
+				}
+
+			}
+		}
+	}
+	void mergeTriMeshSingle(trimesh::TriMesh* outMesh, trimesh::TriMesh* inmesh, bool fanzhuan)
+	{
+		assert(outMesh);
+		if (inmesh != nullptr)
+		{
+			size_t startFaceIndex = outMesh->faces.size();
+			size_t startVertexIndex = outMesh->vertices.size();;
+			size_t startcornerareaNum = outMesh->cornerareas.size();
+			int addvertexNum = inmesh->vertices.size();
+			int addfaceNum = inmesh->faces.size();
+			int addcornerareaNum = inmesh->cornerareas.size();
+			if (addvertexNum > 0 && addfaceNum > 0)
+			{
+				outMesh->vertices.insert(outMesh->vertices.end(), inmesh->vertices.begin(), inmesh->vertices.end());
+				outMesh->cornerareas.insert(outMesh->cornerareas.end(), inmesh->cornerareas.begin(), inmesh->cornerareas.end());
+				outMesh->faces.insert(outMesh->faces.end(), inmesh->faces.begin(), inmesh->faces.end());
+
+				for (size_t ii = startFaceIndex; ii < startFaceIndex + addfaceNum; ++ii)
+				{
+					trimesh::TriMesh::Face& face = outMesh->faces.at(ii);
+					for (int j = 0; j < 3; ++j)
+						face[j] += startVertexIndex;
+
+					if (fanzhuan)
+					{
+						int t = face[1];
+						face[1] = face[2];
+						face[2] = t;
 					}
 				}
 			}
