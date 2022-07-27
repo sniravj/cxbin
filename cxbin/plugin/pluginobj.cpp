@@ -237,7 +237,6 @@ namespace cxbin
                     
                     const std::string materialFileName = modelPath.substr(0, loc) + mtlName;
                     printf("[mtl]: %s\n", materialFileName.c_str());
-                    
                     loadMtl(materialFileName, materials);
                 }
                 
@@ -302,7 +301,7 @@ namespace cxbin
         //    && tmp_UVs.size() == tmp_normals.size())
         {
             trimesh::TriMesh* modelmesh = new trimesh::TriMesh();
-            //modelmesh->mtlName = mtlName;
+            modelmesh->mtlName = mtlName;
             std::swap(modelmesh->vertices, tmp_vertices);
             std::swap(modelmesh->UVs, tmp_UVs);
             std::swap(modelmesh->normals, tmp_normals);
@@ -328,7 +327,7 @@ namespace cxbin
                     //}
                 }
             }
-            std::swap(modelmesh->m_materials, materials);
+            std::swap(modelmesh->materials, materials);
             //if(materials.size()>0)
             //    modelmesh->material = materials[0];
 
@@ -511,7 +510,7 @@ namespace cxbin
         if (mesh == nullptr)
             return false;
 
-        std::vector<trimesh::Material>& materials = mesh->m_materials;
+        std::vector<trimesh::Material>& materials = mesh->materials;
         for (int type = 0; type < trimesh::Material::TYPE_COUNT; type++)
         {
             enchase::ImageData* imageData = nullptr;
