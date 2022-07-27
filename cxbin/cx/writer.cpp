@@ -71,7 +71,7 @@ namespace cxbin
 		unsigned mapBufferSizes[trimesh::Material::TYPE_COUNT];
 		for (int i = 0; i < mapTypeCount; i++)
 		{
-			unsigned bufferSize = std::max(2 * sizeof(int) + mesh->map_widths[i] * mesh->map_heights[i] * sizeof(char), 0ull);
+			unsigned bufferSize = 2 * sizeof(int) + mesh->map_widths[i] * mesh->map_heights[i] * sizeof(char);
 			mapBufferSize += bufferSize;
 			mapBufferSizes[i] = mesh->map_widths[i] * mesh->map_heights[i] * sizeof(char);
 		}
