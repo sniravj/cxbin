@@ -14,21 +14,18 @@ namespace cxbin
 	void mergeTriMesh(trimesh::TriMesh* outMesh, std::vector<trimesh::TriMesh*>& inMeshes, bool fanzhuan=false);
 	trimesh::TriMesh* loadAll(const std::string& fileName, ccglobal::Tracer* tracer)
 	{
-		std::vector<trimesh::TriMesh*> models = loadT(fileName, tracer);
-		if (models.size() <= 0) return nullptr;
-		trimesh::TriMesh* outMesh = new trimesh::TriMesh();
-		mergeTriMesh(outMesh, models);
-		for (auto& mesh : models)
-		{
-			delete mesh;
-		}
-		return outMesh;
+		return loadAll(fileName.c_str(), tracer);
 	}
 
 	trimesh::TriMesh* loadAll(const char* fileName, ccglobal::Tracer* tracer)
 	{
 		std::vector<trimesh::TriMesh*> models = loadT(fileName, tracer);
-		if (models.size() <= 0) return nullptr;
+		if (models.size() <= 0)
+			return nullptr;
+
+		if (models.size() == 1)
+			return models.at(0);
+
 		trimesh::TriMesh* outMesh = new trimesh::TriMesh();
 		mergeTriMesh(outMesh, models);
 		for (auto& mesh : models)
