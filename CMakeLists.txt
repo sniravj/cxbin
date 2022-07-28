@@ -1,5 +1,13 @@
-__assert_target(trimesh2)
+__cc_find(Trimesh2)
 __cc_find(Boost)
+__cc_find(Zlib)
+__cc_find(Stringutil)
+__cc_find(Tinyxml)
+__assert_target(trimesh2)
+__assert_target(boost)
+__assert_target(zlib)
+__assert_target(stringutil)
+__assert_target(tinyxml)
 
 set(SRCS cxbin/interface.h
 		 cxbin/load.h
