@@ -162,6 +162,17 @@ namespace cxbin
 
 		delete[]data;
 		delete[]cdata;
+
+		for (int i = 0; i < materialNum; i++)
+		{
+			if (materialSizeVector[i].first)
+			{
+				delete materialSizeVector[i].first;
+				materialSizeVector[i].first = nullptr;
+			}
+		}
+		materialSizeVector.clear();
+
 		return success;
 	}
 

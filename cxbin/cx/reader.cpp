@@ -166,6 +166,9 @@ namespace cxbin
 						dataPtr += size;
 
 						out.materials[i].decode(matBuffer, size);
+
+						delete matBuffer;
+						matBuffer = nullptr;
 					}
 				}
 				if (mtlNameLen > 0)
