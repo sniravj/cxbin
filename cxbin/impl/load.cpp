@@ -161,16 +161,16 @@ namespace cxbin
 		assert(outMesh);
 		if (inmesh != nullptr)
 		{
-			size_t startMaterialSize = outMesh->m_materials.size();
+			size_t startMaterialSize = outMesh->materials.size();
 			size_t startUVSize = outMesh->UVs.size();
 			size_t startfaceUVSize = outMesh->faceUVs.size();
 
-			int addMaterialSize = inmesh->m_materials.size();
+			int addMaterialSize = inmesh->materials.size();
 			int addfaceUVSize = inmesh->faceUVs.size();
 			int addUVSize = inmesh->UVs.size();
 			if (addfaceUVSize > 0 && addUVSize > 0)
 			{
-				outMesh->m_materials.insert(outMesh->m_materials.end(), inmesh->m_materials.begin(), inmesh->m_materials.end());
+				outMesh->materials.insert(outMesh->materials.end(), inmesh->materials.begin(), inmesh->materials.end());
 				outMesh->faceUVs.insert(outMesh->faceUVs.end(), inmesh->faceUVs.begin(), inmesh->faceUVs.end());
 				outMesh->UVs.insert(outMesh->UVs.end(), inmesh->UVs.begin(), inmesh->UVs.end());
 				outMesh->textureIDs.insert(outMesh->textureIDs.end(), inmesh->textureIDs.begin(), inmesh->textureIDs.end());
@@ -194,7 +194,7 @@ namespace cxbin
 				//material.index
 				for (size_t ii = startMaterialSize; ii < startMaterialSize + addMaterialSize; ii++)
 				{
-					trimesh::Material& material = outMesh->m_materials.at(ii);
+					trimesh::Material& material = outMesh->materials.at(ii);
 					material.index += addMaterialSize;//对应m_materials中的值
 
 				}

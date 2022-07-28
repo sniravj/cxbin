@@ -362,7 +362,7 @@ namespace cxbin
             if (LINE_IS("newmtl ")) {
                 
                 trimesh::Material newmat;
-                //newmat.index = out.size();
+                newmat.index = out.size();
                 out.push_back(newmat);
                 
                 matePtr = &out[out.size()-1];
