@@ -439,7 +439,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Ka]: %s\n", full.c_str());
-                        matePtr->map_filepaths[trimesh::Material::AMBIENT] = strs[strs.size() - 1];
+                        matePtr->map_filepaths[trimesh::Material::AMBIENT] = full;
 
                     }
 
@@ -493,10 +493,13 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    std::vector<std::string>::iterator it = strs.end()-1;
-                    matePtr->map_filepaths[trimesh::Material::NORMAL] = *it;
+                    size_t loc = fileName.find_last_of("/");
+                    if (loc != std::string::npos) {
+                        const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
+                        printf("[map_bump]: %s\n", full.c_str());
+                        matePtr->map_filepaths[trimesh::Material::NORMAL] = full;
+                    }
                 }
-                
             }
         }
         
