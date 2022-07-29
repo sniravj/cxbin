@@ -578,6 +578,23 @@ namespace cxbin
                     mesh->map_buffers[type] = imageData->data;
                 }
             }
+
+            for (int i = 0; i < imagedataV.size(); i++)
+            {
+                if (imagedataV[i])
+                {
+                    delete imagedataV[i];
+                    imagedataV[i] = nullptr;
+                }
+            }
+            imagedataV.clear();
+
+            if (imageData)
+            {
+                imageData->data = nullptr;
+                delete imageData;
+                imageData = nullptr;
+            }
         }
 
         return true;
