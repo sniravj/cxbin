@@ -4,7 +4,7 @@
 
 namespace cxbin
 {
-	static int version = 0;
+	static int version = 1;
 	static int invalid = -1;
 
 	class Chunk

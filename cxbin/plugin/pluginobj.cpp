@@ -5,6 +5,7 @@
 #include "trimesh2/TriMesh.h"
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
+#include "mmesh/enchase/imageloader.h"
 
 namespace cxbin
 {
@@ -236,7 +237,6 @@ namespace cxbin
                     
                     const std::string materialFileName = modelPath.substr(0, loc) + mtlName;
                     printf("[mtl]: %s\n", materialFileName.c_str());
-                    
                     loadMtl(materialFileName, materials);
                 }
                 
@@ -301,7 +301,7 @@ namespace cxbin
         //    && tmp_UVs.size() == tmp_normals.size())
         {
             trimesh::TriMesh* modelmesh = new trimesh::TriMesh();
-            //modelmesh->mtlName = mtlName;
+            modelmesh->mtlName = mtlName;
             std::swap(modelmesh->vertices, tmp_vertices);
             std::swap(modelmesh->UVs, tmp_UVs);
             std::swap(modelmesh->normals, tmp_normals);
@@ -314,12 +314,12 @@ namespace cxbin
                    if (ff.t.size() == 3)
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
-                        //modelmesh->textureIDs.emplace_back(ff.tInd);
+                        modelmesh->textureIDs.emplace_back(ff.tInd);
                     }
                     else
                     {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
-                        //modelmesh->textureIDs.emplace_back(-1);
+                        modelmesh->textureIDs.emplace_back(-1);
                     }
                     //if (ff.n.size()==3)
                     //{
@@ -327,9 +327,12 @@ namespace cxbin
                     //}
                 }
             }
-            //std::swap(modelmesh->m_materials, materials);
-            if(materials.size()>0)
-                modelmesh->material = materials[0];
+            std::swap(modelmesh->materials, materials);
+            //if(materials.size()>0)
+            //    modelmesh->material = materials[0];
+
+            loadMap(modelmesh);
+
             out.push_back(modelmesh);
         }
 
@@ -359,7 +362,7 @@ namespace cxbin
             if (LINE_IS("newmtl ")) {
                 
                 trimesh::Material newmat;
-                //newmat.index = out.size();
+                newmat.index = out.size();
                 out.push_back(newmat);
                 
                 matePtr = &out[out.size()-1];
@@ -436,7 +439,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Ka]: %s\n", full.c_str());
-                        matePtr->ambientMap = strs[strs.size() - 1];
+                        matePtr->map_filepaths[trimesh::Material::AMBIENT] = full;
 
                     }
 
@@ -456,7 +459,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Kd]: %s\n", full.c_str());
-                        matePtr->diffuseMap = full;
+                        matePtr->map_filepaths[trimesh::Material::DIFFUSE] = full;
 
                     }
 
@@ -476,7 +479,7 @@ namespace cxbin
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_Ks]: %s\n", full.c_str());
-                        matePtr->specularMap = full;
+                        matePtr->map_filepaths[trimesh::Material::SPECULAR] = full;
 
                     }
                 }
@@ -490,15 +493,93 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
-                    std::vector<std::string>::iterator it = strs.end()-1;
-                    matePtr->normalMap = *it;
+                    size_t loc = fileName.find_last_of("/");
+                    if (loc != std::string::npos) {
+                        const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
+                        printf("[map_bump]: %s\n", full.c_str());
+                        matePtr->map_filepaths[trimesh::Material::NORMAL] = full;
+                    }
                 }
-                
             }
         }
         
-        fclose(f);
-            
+        fclose(f);    
+
+        return true;
+    }
+
+    bool ObjLoader::loadMap(trimesh::TriMesh* mesh)
+    {
+        if (mesh == nullptr)
+            return false;
+
+        std::vector<trimesh::Material>& materials = mesh->materials;
+        for (int type = 0; type < trimesh::Material::TYPE_COUNT; type++)
+        {
+            enchase::ImageData* imageData = nullptr;
+            int widthMax = 0;
+            int heightMax = 0;
+            int widthOffset = 0;
+            int heightOffset = 0;
+            int bytesPerPixel = 4;//FORMAT_RGBA_8888
+            std::vector<enchase::ImageData*> imagedataV(materials.size(), nullptr);
+            for (int i = 0; i < materials.size(); i++)
+            {
+                trimesh::Material& material = materials[i];
+                const std::string& fileName = material.map_filepaths[type];
+                if (!fileName.empty())
+                {
+                    enchase::ImageData* newimagedatetemp = new enchase::ImageData;
+                    newimagedatetemp->format = enchase::ImageDataFormat::FORMAT_RGBA_8888;
+                    enchase::loadImage_freeImage(*newimagedatetemp, fileName);
+                    if (newimagedatetemp->valid() == false)
+                    {
+                        imagedataV[i] = nullptr;
+                        delete newimagedatetemp;
+                    }
+                    else
+                    {
+                        imagedataV[i] = newimagedatetemp;
+                        //material.startUV = trimesh::vec2(width0ffset, heightoffset);
+                        //material.endUV = trimesh::vec2(width0ffset + imagedataV[i]->width / bytesPerPixel, heightoffset + imagedataV[i]->height);
+                        heightOffset += imagedataV[i]->height;
+                    }
+                }
+            }
+
+            if (imagedataV.size() > 0)
+            {
+                std::vector<std::pair<enchase::ImageData::point, enchase::ImageData::point>> imageOffset;
+                imageData = enchase::constructNewFreeImage(imagedataV, enchase::ImageDataFormat::FORMAT_RGBA_8888, imageOffset);
+                if (imageData != nullptr)
+                {
+                    widthMax = imageData->width / bytesPerPixel;
+                    heightMax = imageData->height;
+                    for (int i = 0; i < materials.size(); i++)
+                    {
+                        if (imagedataV[i] != nullptr)
+                        {
+                            trimesh::Material& material = materials[i];
+                            enchase::ImageData::point startpos = imageOffset[i].first;
+                            enchase::ImageData::point endpos = imageOffset[i].second;
+                            material.map_startUVs[type] = trimesh::vec2((float)startpos.x / widthMax, (float)startpos.y / heightMax);
+                            material.map_endUVs[type] = trimesh::vec2((float)endpos.x / widthMax, (float)endpos.y / heightMax);
+                        }
+                    }
+
+                    if (std::max(widthMax, heightMax) > 4096)
+                    {
+                        float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
+                        imageData = enchase::scaleFreeImage(imageData, scalevalue, scalevalue);
+                    }
+
+                    mesh->map_widths[type] = imageData->width;
+                    mesh->map_heights[type] = imageData->height;
+                    mesh->map_buffers[type] = imageData->data;
+                }
+            }
+        }
+
         return true;
     }
 

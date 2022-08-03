@@ -45,10 +45,12 @@ namespace cxbin
 		StlLoader m_stlLoader;
 		PlyLoader m_plyLoader;
 		ObjLoader m_objLoader;
+#ifndef __WEB__
 		OffLoader m_offLoader;
 		_3dsLoader m_3dsLoader;
 		WrlLoader m_wrlLoader;
 		_3mfLoader m_3mfLoader;
+#endif
 
 #ifdef DAE_USE_COLLDADA_DOM
 		DaeDomLoader m_daeLoader;

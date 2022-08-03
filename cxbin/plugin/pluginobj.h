@@ -19,6 +19,7 @@ namespace cxbin
         
     private:
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
+		bool loadMap(trimesh::TriMesh* mesh);
     private:
 	};
 

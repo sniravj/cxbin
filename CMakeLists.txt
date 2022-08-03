@@ -1,5 +1,9 @@
 __assert_target(trimesh2)
 __cc_find(Boost)
+__cc_find(ZLib)
+__cc_find(Zip)
+__cc_find(TinyXml)
+__cc_find(Lib3mf)
 
 set(SRCS cxbin/interface.h
 		 cxbin/load.h
@@ -40,7 +44,7 @@ set(SRCS cxbin/interface.h
 
 		 )
 		 
-set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide)
+set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide mmesh)
 set(DEFS TIXML_USE_STL Z_PREFIX BOOST_ALL_NO_LIB)
 if(NOT CC_BC_WIN)
 	list(APPEND DEFS __USE_FILE_OFFSET64)
