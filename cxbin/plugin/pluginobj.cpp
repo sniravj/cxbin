@@ -5,7 +5,7 @@
 #include "trimesh2/TriMesh.h"
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
-#include "mmesh/enchase/imageloader.h"
+#include "imageproc/imageloader.h"
 
 namespace cxbin
 {
@@ -516,22 +516,22 @@ namespace cxbin
         std::vector<trimesh::Material>& materials = mesh->materials;
         for (int type = 0; type < trimesh::Material::TYPE_COUNT; type++)
         {
-            enchase::ImageData* imageData = nullptr;
+            imgproc::ImageData* imageData = nullptr;
             int widthMax = 0;
             int heightMax = 0;
             int widthOffset = 0;
             int heightOffset = 0;
             int bytesPerPixel = 4;//FORMAT_RGBA_8888
-            std::vector<enchase::ImageData*> imagedataV(materials.size(), nullptr);
+            std::vector<imgproc::ImageData*> imagedataV(materials.size(), nullptr);
             for (int i = 0; i < materials.size(); i++)
             {
                 trimesh::Material& material = materials[i];
                 const std::string& fileName = material.map_filepaths[type];
                 if (!fileName.empty())
                 {
-                    enchase::ImageData* newimagedatetemp = new enchase::ImageData;
-                    newimagedatetemp->format = enchase::ImageDataFormat::FORMAT_RGBA_8888;
-                    enchase::loadImage_freeImage(*newimagedatetemp, fileName);
+                    imgproc::ImageData* newimagedatetemp = new imgproc::ImageData;
+                    newimagedatetemp->format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
+                    imgproc::loadImage_freeImage(*newimagedatetemp, fileName);
                     if (newimagedatetemp->valid() == false)
                     {
                         imagedataV[i] = nullptr;
@@ -549,8 +549,8 @@ namespace cxbin
 
             if (imagedataV.size() > 0)
             {
-                std::vector<std::pair<enchase::ImageData::point, enchase::ImageData::point>> imageOffset;
-                imageData = enchase::constructNewFreeImage(imagedataV, enchase::ImageDataFormat::FORMAT_RGBA_8888, imageOffset);
+                std::vector<std::pair<imgproc::ImageData::point, imgproc::ImageData::point>> imageOffset;
+                imageData = imgproc::constructNewFreeImage(imagedataV, imgproc::ImageDataFormat::FORMAT_RGBA_8888, imageOffset);
                 if (imageData != nullptr)
                 {
                     widthMax = imageData->width / bytesPerPixel;
@@ -560,8 +560,8 @@ namespace cxbin
                         if (imagedataV[i] != nullptr)
                         {
                             trimesh::Material& material = materials[i];
-                            enchase::ImageData::point startpos = imageOffset[i].first;
-                            enchase::ImageData::point endpos = imageOffset[i].second;
+                            imgproc::ImageData::point startpos = imageOffset[i].first;
+                            imgproc::ImageData::point endpos = imageOffset[i].second;
                             material.map_startUVs[type] = trimesh::vec2((float)startpos.x / widthMax, (float)startpos.y / heightMax);
                             material.map_endUVs[type] = trimesh::vec2((float)endpos.x / widthMax, (float)endpos.y / heightMax);
                         }
@@ -570,12 +570,15 @@ namespace cxbin
                     if (std::max(widthMax, heightMax) > 4096)
                     {
                         float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
-                        imageData = enchase::scaleFreeImage(imageData, scalevalue, scalevalue);
+                        imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
 
-                    mesh->map_widths[type] = imageData->width;
-                    mesh->map_heights[type] = imageData->height;
-                    mesh->map_buffers[type] = imageData->data;
+                    unsigned char* buffer;
+                    unsigned bufferSize;
+                    imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
+
+                    mesh->map_bufferSize[type] = bufferSize;
+                    mesh->map_buffers[type] = buffer;
                 }
             }
 
@@ -591,7 +594,6 @@ namespace cxbin
 
             if (imageData)
             {
-                imageData->data = nullptr;
                 delete imageData;
                 imageData = nullptr;
             }
