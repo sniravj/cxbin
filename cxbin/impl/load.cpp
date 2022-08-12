@@ -201,8 +201,7 @@ namespace cxbin
 				//此处不合理，待后续完善
 				for (int index = 0; index < trimesh::Material::MapType::TYPE_COUNT; index++)
 				{
-					outMesh->map_widths[index] = inmesh->map_widths[index];
-					outMesh->map_heights[index] = inmesh->map_heights[index];
+					outMesh->map_bufferSize[index] = inmesh->map_bufferSize[index];
 					outMesh->map_buffers[index] = inmesh->map_buffers[index];
 				}
 
