@@ -8,6 +8,7 @@
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
 #include "ccglobal/platform.h"
+#include "mmesh/trimesh/trimeshutil.h"
 
 namespace cxbin
 {
@@ -224,6 +225,8 @@ namespace cxbin
 						break;
 					}
 				}
+                mmesh::removeInvalidVertex(model);
+                mmesh::removeNorFaces(model, tracer);
 			}
 		}
 
