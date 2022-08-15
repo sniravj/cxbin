@@ -350,7 +350,7 @@ namespace cxbin
 						}
 
 						unsigned char* pngBuffer = nullptr;
-						unsigned pngBufferSize = -1;
+						unsigned pngBufferSize = 0;
 
 						if (bufferData)
 						{
