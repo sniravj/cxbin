@@ -162,7 +162,8 @@ namespace cxbin
 							matBuffer = nullptr;
 						}
 					}
-					if (mtlNameLen > 0)
+					// > 1 cause std::string end by '\0'
+					if (mtlNameLen > 1)
 					{
 						char* strData = new char[mtlNameLen];
 						memcpy(strData, dataPtr, mtlNameLen * sizeof(char));
@@ -170,7 +171,7 @@ namespace cxbin
 
 						out.mtlName = std::string(strData);
 					}
-					if (mapTypeCount > 0 && mapTypeCount == trimesh::Material::TYPE_COUNT)
+					if (mapTypeCount == trimesh::Material::TYPE_COUNT)
 					{
 						for (int i = 0; i < mapTypeCount; i++)
 						{
