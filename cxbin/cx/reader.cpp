@@ -158,7 +158,7 @@ namespace cxbin
 
 							out.materials[i].decode(matBuffer, size);
 
-							delete matBuffer;
+							delete [] matBuffer;
 							matBuffer = nullptr;
 						}
 					}
