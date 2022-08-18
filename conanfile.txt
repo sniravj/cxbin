@@ -1,5 +1,5 @@
 [requires]
-trimesh2/0.0.2
+trimesh2/0.0.3
 boost/0.0.2
 stringutil/0.0.2
 tinyxml/0.0.2
