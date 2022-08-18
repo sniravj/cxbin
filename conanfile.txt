@@ -1,0 +1,11 @@
+[requires]
+trimesh2/0.0.2
+boost/0.0.2
+stringutil/0.0.2
+tinyxml/0.0.2
+zlib/0.0.2
+zip/0.0.2
+lib3mf/0.0.2
+colladadom/0.0.2
+
+
