@@ -1,4 +1,5 @@
 __cc_find(Trimesh2)
+__cc_find(mmesh)
 __cc_find(Boost)
 __cc_find(Zlib)
 __cc_find(Zip)
