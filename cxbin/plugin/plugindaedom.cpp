@@ -72,11 +72,30 @@ namespace cxbin
 	void addVertices(trimesh::TriMesh* mesh, const domListOfFloats& str)
 	{
 		////218.608183 65.943044 844.069388 155.932865
+        if (str.getCount() % 3 != 0)
+        {
+            return;
+        }
+
 		mesh->vertices.reserve(mesh->vertices.size() + str.getCount() / 3);
 		for (size_t j = 0; j < str.getCount(); j += 3) {
 			mesh->vertices.push_back(trimesh::point(str.get(j), str.get(j + 1), str.get(j + 2)));
 		}
 	}
+
+    void addUvs(trimesh::TriMesh* mesh, const domListOfFloats& str)
+    {
+        ////218.608183 65.943044 844.069388 155.932865
+        if (str.getCount()%2 != 0)
+        {
+            return;
+        }
+
+        mesh->UVs.reserve(mesh->vertices.size() + str.getCount() / 2);
+        for (size_t j = 0; j < str.getCount(); j += 2) {
+            mesh->UVs.push_back(trimesh::vec2(str.get(j), str.get(j + 1)));
+        }
+    }
 
 	void addFaces(trimesh::TriMesh* mesh, const domListOfUInts& str, int nums, int step)
 	{
@@ -92,20 +111,31 @@ namespace cxbin
 	}
 
 
-	void addFaces(trimesh::TriMesh* mesh, domListOfUInts& vcounts, domListOfUInts& ps, int attrCount, int attrIndex)
+	void addFaces(trimesh::TriMesh* mesh, domListOfUInts& vcounts, domListOfUInts& ps, int attrCount, int attrIndex, int faceUvs)
 	{
 #if 1
 		int stride = attrCount;
+        int psize = ps.getCount();
 		int acc = 0;
 		std::vector<int>faceVertIdx;
-
-		for (int i = 0; i < vcounts.getCount(); i++) {
+        std::vector<int>faceUvsIdx;
+        bool hasUvs = faceUvs >= 0 ? true : false;
+        int count = vcounts.getCount();
+		for (int i = 0; i < count; i++) {
 
 			faceVertIdx.clear();
-
+            faceUvsIdx.clear();
 			int points = vcounts.get(i);
 			for (int j = 0; j < points; j++) {
-				faceVertIdx.push_back(ps.get(acc + j * stride + attrIndex));
+                
+                if (psize > acc + j * stride + attrIndex)
+				    faceVertIdx.push_back(ps.get(acc + j * stride + attrIndex));
+                
+                if (hasUvs)
+                {
+                    if (psize > acc + j * stride + faceUvs)
+                        faceUvsIdx.push_back(ps.get(acc + j * stride + faceUvs));
+                }
 			}
 
 			for (int p = 2; p < points; p++) {
@@ -114,7 +144,16 @@ namespace cxbin
 				tface[0] = faceVertIdx[0];
 				tface[1] = faceVertIdx[p - 1];
 				tface[2] = faceVertIdx[p];
-				mesh->faces.push_back(tface);
+                mesh->faces.push_back(tface);
+
+                if (hasUvs)
+                {
+                    trimesh::TriMesh::Face uface;
+                    uface[0] = faceUvsIdx[0];
+                    uface[1] = faceUvsIdx[p - 1];
+                    uface[2] = faceUvsIdx[p];
+                    mesh->faceUVs.push_back(tface);
+                }               
 			}
 
 			acc += points * stride;
@@ -214,6 +253,19 @@ namespace cxbin
 
 		std::vector<CObject*> ObjectShapes;
 		daeDatabase* data = dae.getDatabase();
+
+        int imageElementCount = (int)(data->getElementCount(NULL, "image", NULL));
+        for (int currentimage = 0; currentimage < imageElementCount; currentimage++)
+        {
+            domGeometry* thisGeometry = nullptr;
+            data->getElement((daeElement * *)& thisGeometry, currentimage, NULL, "image");
+            if (thisGeometry)
+            {
+                std::string td = thisGeometry->getId();
+                std::string img = thisGeometry->getChild("init_from")->getCharData();
+            }
+        }
+
 		int geometryElementCount = (int)(data->getElementCount(NULL, "geometry", NULL));
 		out.reserve(geometryElementCount);
 		for (int currentGeometry = 0; currentGeometry < geometryElementCount; currentGeometry++)
@@ -246,6 +298,9 @@ namespace cxbin
 								domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
 								int nums = 0;
 								int step = 0;
+                                int stepTEXCOORD = -1;
+                                std::string sourceV = "";
+                                std::string sourceM = "";
 
 								for (int j = 0; j < inputLocalOffsetArray.getCount(); ++j)
 								{
@@ -256,7 +311,13 @@ namespace cxbin
 										if (semantic == "VERTEX")
 										{
 											step = j;
+                                            sourceV = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
 										}
+                                        else if (semantic == "TEXCOORD")
+                                        {
+                                            stepTEXCOORD = j;
+                                            sourceM = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
+                                        }
 									}
 									if (inputLocalOffsetRef->hasAttribute("offset"))
 									{
@@ -265,18 +326,41 @@ namespace cxbin
 										int intValue = std::stoi(strValue);
 										nums = std::max(nums, intValue);
 									}
-
 								}
 
 								addFaces(addMesh, indexArrayValue, nums + 1, step);
 
-								//pShape->m_iTriangleNum += indexArray->getCount() / 6;
-								domFloat_arrayRef vertexArray = sourceArray[0]->getFloat_array();
-								pShape->m_iVertexNum = vertexArray->getCount() / 3;
+                                for (size_t i = 0; i < count; i++)
+                                {
+                                    domSourceRef& sourceIndex = sourceArray[i];
 
-								domListOfFloats& vertexArrayValue = vertexArray->getValue();
-								addVertices(addMesh, vertexArrayValue);
+                                    std::string str = sourceIndex->getId();
 
+                                    if (sourceV.find(str) != std::string::npos)
+                                    {
+                                        domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                                        domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                                        addVertices(addMesh, vertexArrayValue);
+                                    }
+                                    else if (sourceM.find(str) != std::string::npos)
+                                    {
+                                        domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                                        domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                                        addUvs(addMesh, vertexArrayValue);
+                                    }
+                                }
+
+                                //if (addMesh->vertices.empty())
+                                //{
+                                //    //pShape->m_iTriangleNum += indexArray->getCount() / 6;
+                                //    domFloat_arrayRef vertexArray = sourceArray[0]->getFloat_array();
+                                //    pShape->m_iVertexNum = vertexArray->getCount() / 3;
+
+                                //    domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                                //    addVertices(addMesh, vertexArrayValue);
+                                //}
 							}
 							out.push_back(addMesh);
 						}
@@ -287,12 +371,15 @@ namespace cxbin
 						if (polylistCount)
 						{
 							trimesh::TriMesh* addMesh = new trimesh::TriMesh();
+                            std::string sourceV = "";
+                            std::string sourceM = "";
 							for (int i = 0; i < polylistArray.getCount(); ++i)
 							{
 								domPolylistRef indexArray = polylistArray[i];
 								domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
 								int nums = 0;
 								int step = 0;
+                                int stepTEXCOORD = -1;
 
 								for (int j = 0; j < inputLocalOffsetArray.getCount(); ++j)
 								{
@@ -303,7 +390,13 @@ namespace cxbin
 										if (semantic == "VERTEX")
 										{
 											step = j;
-										}
+                                            sourceV = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
+                                        }
+                                        else if (semantic == "TEXCOORD")
+                                        {
+                                            stepTEXCOORD = j;
+                                            sourceM = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
+                                        }
 									}
 									if (inputLocalOffsetRef->hasAttribute("offset"))
 									{
@@ -316,17 +409,41 @@ namespace cxbin
 
 								ColladaDOM141::domPolylist::domVcountRef vcountRef = indexArray->getVcount();
 								domListOfUInts& listOfUIntsv = vcountRef->getValue();
-
 								domPRef pRef = indexArray->getP();
 								domListOfUInts& listOfUIntsp = pRef->getValue();
 
-								addFaces(addMesh, listOfUIntsv, listOfUIntsp, nums + 1, step);
+								addFaces(addMesh, listOfUIntsv, listOfUIntsp, nums + 1, step, stepTEXCOORD);
 
-								domFloat_arrayRef vertexArray = sourceArray[0]->getFloat_array();
+                                //if (addMesh->vertices.empty())
+                                //{
+                                //    domFloat_arrayRef vertexArray = sourceArray[0]->getFloat_array();
 
-								domListOfFloats& vertexArrayValue = vertexArray->getValue();
-								addVertices(addMesh, vertexArrayValue);
+                                //    domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                                //    addVertices(addMesh, vertexArrayValue);
+                                //}
 							}
+
+                            for (size_t i = 0; i < count; i++)
+                            {
+                                domSourceRef& sourceIndex = sourceArray[i];
+
+                                std::string str = sourceIndex->getId();
+
+                                if (sourceV.find(str) != std::string::npos)
+                                {
+                                    domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                                    domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                                    addVertices(addMesh, vertexArrayValue);
+                                }
+                                else if (sourceM.find(str) != std::string::npos)
+                                {
+                                    domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                                    domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                                    addUvs(addMesh, vertexArrayValue);
+                                }
+                            }
 							out.push_back(addMesh);
 						}
 
