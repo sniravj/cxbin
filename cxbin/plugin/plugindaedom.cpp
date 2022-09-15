@@ -440,6 +440,21 @@ namespace cxbin
         }
     }
 
+    void getVisualScenes(daeDatabase* data, std::map<std::string, std::string>& visualScenes, ccglobal::Tracer* tracer)
+    {
+
+        //int elementCount = (int)(data->getElementCount(NULL, "visual_scene", NULL));
+        //for (int currentimage = 0; currentimage < elementCount; currentimage++)
+        //{
+        //    domNode* thisGeometry = nullptr;
+        //    data->getElement((daeElement * *)& thisGeometry, currentimage, NULL, "effect");
+        //    if (thisGeometry)
+        //    {
+
+        //    }
+        //}
+    }
+
     void getMaterials(daeDatabase* data, std::map<std::string, std::string>& materials, ccglobal::Tracer* tracer)
     {
         int elementCount = (int)(data->getElementCount(NULL, "material", NULL));
@@ -570,6 +585,10 @@ namespace cxbin
         std::map<std::string, std::string> images;
         getImages(data, images, tracer);
 
+        //获取材质绑定数据
+        std::map<std::string, std::string> visualScenes;
+        //void getVisualScenes(data, visualScenes, tracer);
+
         //获取顶点、面、uvs、faceuvs
         getGeometry(data,out,tracer);
 
@@ -578,5 +597,33 @@ namespace cxbin
             tracer->success();
         }
         return !success;
+    }
+
+    std::vector<std::string> DaeDomLoader::associateFileList(FILE* f, ccglobal::Tracer* tracer)
+    {
+        std::vector<std::string> out;
+
+        DAE dae;
+        domCOLLADA* root = (domCOLLADA*)dae.open(modelPath);
+        if (!root)
+        {
+            if (tracer)
+                tracer->failed("dae dom File open failed");
+            return out;
+        }
+        std::vector<CObject*> ObjectShapes;
+        daeDatabase* data = dae.getDatabase();
+
+        //获取纹理图片
+        std::map<std::string, std::string> images;
+        getImages(data, images, tracer);
+
+        
+        std::map<std::string, std::string>::iterator iter = images.begin();
+        while(iter != images.end())
+        {
+            out.push_back(iter->second);
+        }
+        return out;
     }
 }

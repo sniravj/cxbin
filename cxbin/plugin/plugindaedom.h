@@ -13,7 +13,7 @@ namespace cxbin
 		std::string expectExtension() override;
 		bool tryLoad(FILE* f, size_t fileSize) override;
 		bool load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) override;
-
+        std::vector<std::string> associateFileList(FILE* f, ccglobal::Tracer* tracer) override;
 		std::vector<float> split(std::string str, std::string pattern);
 	};
 }
