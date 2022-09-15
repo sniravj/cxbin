@@ -20,7 +20,7 @@ namespace cxbin
 	{
     public:
         std::string modelPath;
-        
+        virtual std::vector<std::string> associateFileList(FILE* f, ccglobal::Tracer* tracer) {return std::vector<std::string>();}
 	public:
 		virtual ~LoaderImpl() {}
 

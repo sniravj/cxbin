@@ -154,6 +154,55 @@ namespace cxbin
 		return extension;
 	}
 
+    std::vector<std::string> CXBinManager::associateFileList(const std::string& fileName, ccglobal::Tracer* tracer)
+    {
+        std::vector<std::string> list;
+        FILE* f = fopen(fileName.c_str(), "rb");
+        if(!f)
+        {
+            LOGE("CXBinManager Open File [%s] Failed.", fileName.c_str());
+            return list;
+        }
+        
+        std::string extension = stringutil::extensionFromFileName(fileName, true);
+        size_t fileSize = getFileSize(f);
+
+        LoaderImpl* loader = nullptr;
+        if (extension.size() > 0)
+        {
+            std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(extension);
+            if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
+            {
+                loader = it->second;
+            }
+        }
+
+        if (!loader)
+        {
+            extension = "";
+            for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
+                 it != m_loaders.end(); ++it)
+            {
+                fseek(f, 0L, SEEK_SET);
+                if (it->second->tryLoad(f, fileSize))
+                {
+                    loader = it->second;
+                    extension = it->first;
+                    break;
+                }
+            }
+        }
+
+        if (loader) {
+            fseek(f, 0L, SEEK_SET);
+            list = loader->associateFileList(f, tracer);
+        }
+        
+        fclose(f);
+        
+        return list;
+    }
+
 	std::vector<trimesh::TriMesh*> CXBinManager::load(FILE* f, const std::string& extension,
 		ccglobal::Tracer* tracer, const std::string& fileName)
 	{
@@ -312,4 +361,6 @@ namespace cxbin
 	{
 		cxmanager.removeSaver(impl);
 	}
+
+    
 }
