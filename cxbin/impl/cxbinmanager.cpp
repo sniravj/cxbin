@@ -154,14 +154,22 @@ namespace cxbin
 		return extension;
 	}
 
-    std::vector<std::string> CXBinManager::associateFileList(const std::string& fileName, ccglobal::Tracer* tracer)
+    void CXBinManager::associateFileList(const std::string& fileName, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& out)
     {
-        std::vector<std::string> list;
         FILE* f = fopen(fileName.c_str(), "rb");
         if(!f)
         {
             LOGE("CXBinManager Open File [%s] Failed.", fileName.c_str());
-            return list;
+            
+            auto err = new cxbin::AssociateFileInfo();
+            err->code = CXBinLoaderCode::file_not_exist;
+            err->path = fileName;
+            err->msg = "file not exist";
+            
+            std::shared_ptr<AssociateFileInfo> info;
+            info.reset(err);
+            out.push_back(info);
+            return;
         }
         
         std::string extension = stringutil::extensionFromFileName(fileName, true);
@@ -195,12 +203,10 @@ namespace cxbin
 
         if (loader) {
             fseek(f, 0L, SEEK_SET);
-            list = loader->associateFileList(f, tracer);
+            loader->associateFileList(f, tracer, fileName, out);
         }
         
         fclose(f);
-        
-        return list;
     }
 
 	std::vector<trimesh::TriMesh*> CXBinManager::load(FILE* f, const std::string& extension,

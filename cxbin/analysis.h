@@ -19,8 +19,10 @@ namespace ccglobal
 
 namespace cxbin
 {
+    class AssociateFileInfo;
+
     CXBIN_API std::vector<std::pair<std::string, bool>> getMeshFileList(const std::string& dirName, ccglobal::Tracer* tracer);
-    CXBIN_API std::vector<std::string> getAssociateFileList(const std::string& filePath, ccglobal::Tracer* tracer);
+    CXBIN_API void getAssociateFileList(const std::string& filePath, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<cxbin::AssociateFileInfo>> &out);
 }
 
 
