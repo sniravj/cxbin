@@ -6,6 +6,8 @@
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
 #include "imageproc/imageloader.h"
+#include "boost/filesystem.hpp"   // 包含所有需要的 Boost.Filesystem 声明
+#include "boost/nowide/cstdio.hpp"
 
 namespace cxbin
 {
@@ -602,9 +604,224 @@ namespace cxbin
         return true;
     }
 
+    void ObjLoader::associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string& filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out)
+    {
+        const std::string& fileDir = filePath;
+
+        // size_t loc = modelPath.find_last_of("/");
+        // if (loc != std::string::npos) 
+        // {
+        //     std::vector<std::string> filenames;
+        //  fileDir = modelPath.substr(0, loc);
+        // get_filenames(fileDir, filenames);
+        //}
+        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+
+        while (1) {
+            if (tracer && tracer->interrupt())
+                return;
+            if (feof(f))
+                break;
+            char buf[MAX_OBJ_READLINE_LEN] = { 0 };
+            fgets(buf, MAX_OBJ_READLINE_LEN, f);
+            std::string str = buf;
+            if (LINE_IS("mtllib "))
+            {
+                auto mtlName = str.substr(7, str.length() - 7);
+                mtlName = trimStr(mtlName);
+                size_t loc = mtlName.find_last_of("/");
+                if (loc == std::string::npos)
+                {
+                    mtlName = fileDir + "/" + mtlName;
+                }
+                //mtl文件名
+
+                printf("mtl absoluteDir: %s\n", mtlName.c_str());
+                boost::filesystem::path path(mtlName);
+
+                if (!boost::filesystem::exists(path))
+                {
+                    associateInfor->path = mtlName;
+                    associateInfor->code = CXBinLoaderCode::file_not_exist;
+                    out.push_back(associateInfor);
+                    return;
+                }
+                else
+                {
+                    checkMtlCompleteness(mtlName, tracer, out);
+                    return;
+                }
+            }
+        }
+
+        //associateInfor->path ;
+        associateInfor->code = CXBinLoaderCode::file_not_exist;
+        out.push_back(associateInfor);
+
+        return;
+    }
+
+    int ObjLoader::checkMtlCompleteness(std::string mtlFileName, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& outFileinfo)
+    {
+        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+
+        FILE* f = fopen(mtlFileName.c_str(), "rb");
+        if (!f)
+        {
+        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+        associateInfor->path = mtlFileName;
+        associateInfor->code = CXBinLoaderCode::file_invalid;
+        outFileinfo.emplace_back(associateInfor);
+        return -1;
+        }
+
+        while (1) {
+            if (tracer && tracer->interrupt())
+            {
+                outFileinfo.clear();
+                return -1;
+            }
+            stringutil::skip_comments(f);
+            if (feof(f))
+                break;
+            char buf[1024];
+            GET_LINE();
+            std::string str = buf;
+            if (LINE_IS("map_Ka ")) {
+                std::string mapDestName;
+                std::string name = str.substr(7, str.length() - 7);
+                name = trimStr(name);
+                std::vector<std::string> strs;
+                componentsSeparatedByString(name, ' ', strs);
+                if (strs.size())
+                {
+                    mapDestName = strs[0];
+                    size_t loc = mapDestName.find_last_of("/");
+                    if (loc == std::string::npos)
+                    {
+                        loc = mtlFileName.find_last_of("/");
+                        if (loc != std::string::npos)
+                        {
+                            mapDestName = mtlFileName.substr(0, loc) + "/" + mapDestName;
+                        }
+                    }
+                    boost::filesystem::path path(mapDestName);
+                    std::shared_ptr<AssociateFileInfo>associateInfortemp(new AssociateFileInfo());
+                    associateInfortemp->path = mapDestName;
+                    associateInfortemp->code = CXBinLoaderCode::no_error;
+                    if (!boost::filesystem::exists(path))
+                    {
+                        associateInfortemp->code = CXBinLoaderCode::file_not_exist;
+                    }
+                    outFileinfo.emplace_back(associateInfor);
 
 
+                }
 
+            }
+            else if (LINE_IS("map_Kd ")) {
+                std::string mapDestName;
+                std::string name = str.substr(7, str.length() - 7);
+                name = trimStr(name);
+                std::vector<std::string> strs;
+                componentsSeparatedByString(name, ' ', strs);
+                if (strs.size())
+                {
+                    mapDestName = strs[0];
+                    size_t loc = mapDestName.find_last_of("/");
+                    if (loc == std::string::npos)
+                    {
+                        loc = mtlFileName.find_last_of("/");
+                        if (loc != std::string::npos)
+                        {
+                            mapDestName = mtlFileName.substr(0, loc) + "/" + mapDestName;
+                        }
+                    }
+                    boost::filesystem::path path(mapDestName);
+                    std::shared_ptr<AssociateFileInfo>associateInfortemp(new AssociateFileInfo());
+                    associateInfortemp->path = mapDestName;
+                    associateInfortemp->code = CXBinLoaderCode::no_error;
+                    if (!boost::filesystem::exists(path))
+                    {
+                        associateInfortemp->code = CXBinLoaderCode::file_not_exist;
+                    }
+                    outFileinfo.emplace_back(associateInfor);
+
+
+                }
+            }
+            else if (LINE_IS("map_Ks ")) {
+                std::string mapDestName;
+                std::string name = str.substr(7, str.length() - 7);
+                name = trimStr(name);
+                std::vector<std::string> strs;
+                componentsSeparatedByString(name, ' ', strs);
+                if (strs.size())
+                {
+                    mapDestName = strs[0];
+                    size_t loc = mapDestName.find_last_of("/");
+                    if (loc == std::string::npos)
+                    {
+                        loc = mtlFileName.find_last_of("/");
+                        if (loc != std::string::npos)
+                        {
+                            mapDestName = mtlFileName.substr(0, loc) + "/" + mapDestName;
+                        }
+                    }
+                    boost::filesystem::path path(mapDestName);
+                    std::shared_ptr<AssociateFileInfo>associateInfortemp(new AssociateFileInfo());
+                    associateInfortemp->path = mapDestName;
+                    associateInfortemp->code = CXBinLoaderCode::no_error;
+                    if (!boost::filesystem::exists(path))
+                    {
+                        associateInfortemp->code = CXBinLoaderCode::file_not_exist;
+                    }
+                    outFileinfo.emplace_back(associateInfor);
+
+
+                }
+            }
+            else if (LINE_IS("map_bump ")) {
+                std::string mapDestName;
+                std::string name = str.substr(9, str.length() - 9);
+                name = trimStr(name);
+                std::vector<std::string> strs;
+                componentsSeparatedByString(name, ' ', strs);
+                if (strs.size())
+                {
+                    mapDestName = strs[0];
+                    size_t loc = mapDestName.find_last_of("/");
+                    if (loc == std::string::npos)
+                    {
+                        loc = mtlFileName.find_last_of("/");
+                        if (loc != std::string::npos)
+                        {
+                            mapDestName = mtlFileName.substr(0, loc) + "/" + mapDestName;
+                        }
+                    }
+                    boost::filesystem::path path(mapDestName);
+                    std::shared_ptr<AssociateFileInfo>associateInfortemp(new AssociateFileInfo());
+                    associateInfortemp->path = mapDestName;
+                    associateInfortemp->code = CXBinLoaderCode::no_error;
+                    if (!boost::filesystem::exists(path))
+                    {
+                        associateInfortemp->code = CXBinLoaderCode::file_not_exist;
+                    }
+                    outFileinfo.emplace_back(associateInfor);
+
+
+                }
+
+            }
+        }
+        fclose(f);
+
+        associateInfor->path = mtlFileName;
+        associateInfor->code = CXBinLoaderCode::no_error;
+        outFileinfo.emplace_back(associateInfor);
+
+        return 0;
+    }
 	ObjSaver::ObjSaver()
 	{
 

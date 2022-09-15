@@ -16,10 +16,12 @@ namespace cxbin
 		std::string expectExtension() override;
 		bool tryLoad(FILE* f, size_t fileSize) override;
 		bool load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) override;
-        
+		void associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string& filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out) override;
+
     private:
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
 		bool loadMap(trimesh::TriMesh* mesh);
+		int checkMtlCompleteness(std::string filename, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& out);
     private:
 	};
 

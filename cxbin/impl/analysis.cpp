@@ -5,7 +5,6 @@
 //
 
 #include <iostream>
-#include <dirent.h>
 
 #include "cxbin/format.h"
 #include "cxbin/analysis.h"

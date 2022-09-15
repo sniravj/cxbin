@@ -3,7 +3,7 @@
 #include "cxbin/interface.h"
 #include <string>
 #include <vector>
-
+#include <memory>
 namespace ccglobal
 {
 	class Tracer;
