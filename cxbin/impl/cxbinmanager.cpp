@@ -166,8 +166,7 @@ namespace cxbin
             err->path = fileName;
             err->msg = "file not exist";
             
-            std::shared_ptr<AssociateFileInfo> info;
-            info.reset(err);
+            std::shared_ptr<AssociateFileInfo> info(err);
             out.push_back(info);
             return;
         }
