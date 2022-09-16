@@ -606,17 +606,16 @@ namespace cxbin
 
     void ObjLoader::associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string& filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out)
     {
-        const std::string& fileDir = filePath;
+         std::string fileDir = filePath;
 
-        // size_t loc = modelPath.find_last_of("/");
-        // if (loc != std::string::npos) 
-        // {
-        //     std::vector<std::string> filenames;
-        //  fileDir = modelPath.substr(0, loc);
-        // get_filenames(fileDir, filenames);
-        //}
-        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
-
+         size_t loc = filePath.find_last_of("/");
+         if (loc != std::string::npos)
+         {
+//             std::vector<std::string> filenames;
+             fileDir = filePath.substr(0, loc);
+//         get_filenames(fileDir, filenames);
+        }
+        
         while (1) {
             if (tracer && tracer->interrupt())
                 return;
@@ -639,40 +638,36 @@ namespace cxbin
                 printf("mtl absoluteDir: %s\n", mtlName.c_str());
                 boost::filesystem::path path(mtlName);
 
-                if (!boost::filesystem::exists(path))
+                std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+                associateInfor->path = mtlName;
+                
+                if (boost::filesystem::exists(path))
                 {
-                    associateInfor->path = mtlName;
-                    associateInfor->code = CXBinLoaderCode::file_not_exist;
+                    associateInfor->code = CXBinLoaderCode::no_error;
                     out.push_back(associateInfor);
-                    return;
-                }
-                else
-                {
+                    
                     checkMtlCompleteness(mtlName, tracer, out);
-                    return;
+                } else {
+                    associateInfor->code = CXBinLoaderCode::file_mtl_not_exist;
+                    out.push_back(associateInfor);
+                    
                 }
             }
         }
-
-        //associateInfor->path ;
-        associateInfor->code = CXBinLoaderCode::file_not_exist;
-        out.push_back(associateInfor);
-
-        return;
     }
 
     int ObjLoader::checkMtlCompleteness(std::string mtlFileName, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& outFileinfo)
     {
-        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+//        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
 
         FILE* f = fopen(mtlFileName.c_str(), "rb");
         if (!f)
         {
-        std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
-        associateInfor->path = mtlFileName;
-        associateInfor->code = CXBinLoaderCode::file_invalid;
-        outFileinfo.emplace_back(associateInfor);
-        return -1;
+            std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+            associateInfor->path = mtlFileName;
+            associateInfor->code = CXBinLoaderCode::file_invalid;
+            outFileinfo.emplace_back(associateInfor);
+            return -1;
         }
 
         while (1) {
@@ -713,7 +708,7 @@ namespace cxbin
                     {
                         associateInfortemp->code = CXBinLoaderCode::file_not_exist;
                     }
-                    outFileinfo.emplace_back(associateInfor);
+                    outFileinfo.push_back(associateInfortemp);
 
 
                 }
@@ -745,7 +740,7 @@ namespace cxbin
                     {
                         associateInfortemp->code = CXBinLoaderCode::file_not_exist;
                     }
-                    outFileinfo.emplace_back(associateInfor);
+                    outFileinfo.push_back(associateInfortemp);
 
 
                 }
@@ -776,7 +771,7 @@ namespace cxbin
                     {
                         associateInfortemp->code = CXBinLoaderCode::file_not_exist;
                     }
-                    outFileinfo.emplace_back(associateInfor);
+                    outFileinfo.push_back(associateInfortemp);
 
 
                 }
@@ -807,7 +802,7 @@ namespace cxbin
                     {
                         associateInfortemp->code = CXBinLoaderCode::file_not_exist;
                     }
-                    outFileinfo.emplace_back(associateInfor);
+                    outFileinfo.push_back(associateInfortemp);
 
 
                 }
@@ -816,12 +811,12 @@ namespace cxbin
         }
         fclose(f);
 
-        associateInfor->path = mtlFileName;
-        associateInfor->code = CXBinLoaderCode::no_error;
-        outFileinfo.emplace_back(associateInfor);
-
+//        associateInfor->path = mtlFileName;
+//        associateInfor->code = CXBinLoaderCode::no_error;
+//        outFileinfo.push_back(associateInfor);
         return 0;
     }
+
 	ObjSaver::ObjSaver()
 	{
 
