@@ -141,7 +141,6 @@ namespace cxbin
 		}
 	}
 
-
 	void addFaces(trimesh::TriMesh* mesh, domListOfUInts& vcounts, domListOfUInts& ps, int attrCount, int attrIndex, int faceUvs)
 	{
 #if 1
@@ -183,12 +182,16 @@ namespace cxbin
                     uface[0] = faceUvsIdx[0];
                     uface[1] = faceUvsIdx[p - 1];
                     uface[2] = faceUvsIdx[p];
-                    mesh->faceUVs.push_back(tface);
+                    mesh->faceUVs.push_back(uface);
                 }               
 			}
 
 			acc += points * stride;
 		}
+        if (hasUvs)
+        {
+            mesh->textureIDs.resize(mesh->faceUVs.size(),0);
+        }
 #else
 		std::vector<int> vertex;
 		for (int i = 0; i < ps.size(); i = i + 4)
@@ -217,8 +220,6 @@ namespace cxbin
 
 	}
 
-
-
     std::string DaeDomLoader::expectExtension()
     {
         return "dae";
@@ -241,6 +242,168 @@ namespace cxbin
 		}
 		return nullptr;
 	}
+
+    void getTriangles(domMesh* thisMesh, domSource_Array& sourceArray,std::vector<trimesh::TriMesh*>& out, std::vector<std::vector<std::string>>& mesh2material,const std::string& sourceV, ccglobal::Tracer* tracer)
+    {
+        domTriangles_Array& triangleArray = thisMesh->getTriangles_array();
+
+        size_t count = sourceArray.getCount();
+        size_t triangleCount = triangleArray.getCount();
+        if (triangleCount)
+        {
+            trimesh::TriMesh* addMesh = new trimesh::TriMesh();
+            std::vector<std::string> vmaterial;
+            for (int i = 0; i < triangleArray.getCount(); ++i)
+            {
+
+                domTrianglesRef indexArray = triangleArray[i];
+                domListOfUInts indexArrayValue = indexArray->getP()->getValue();
+
+                vmaterial.push_back(indexArray->getMaterial());
+
+                domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
+                int nums = 0;
+                int step = 0;
+                int stepTEXCOORD = -1;
+                //std::string sourceV = "";
+                std::string sourceM = "";
+
+                for (int j = 0; j < inputLocalOffsetArray.getCount(); ++j)
+                {
+                    domInputLocalOffsetRef& inputLocalOffsetRef = inputLocalOffsetArray[j];
+                    if (inputLocalOffsetRef->hasAttribute("semantic"))
+                    {
+                        std::string semantic = inputLocalOffsetArray[j]->getAttribute(daeString("semantic"));
+                        if (semantic == "VERTEX")
+                        {
+                            step = j;
+                            //sourceV = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
+                        }
+                        else if (semantic == "TEXCOORD")
+                        {
+                            stepTEXCOORD = j;
+                            sourceM = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
+                        }
+                    }
+                    if (inputLocalOffsetRef->hasAttribute("offset"))
+                    {
+                        std::string strValue;
+                        inputLocalOffsetArray[j]->getAttribute(daeString("offset"), strValue);
+                        int intValue = std::stoi(strValue);
+                        nums = std::max(nums, intValue);
+                    }
+                }
+
+                addFaces(addMesh, indexArrayValue, nums + 1, step);
+
+                
+                for (size_t i = 0; i < count; i++)
+                {
+                    domSourceRef& sourceIndex = sourceArray[i];
+
+                    std::string str = sourceIndex->getId();
+
+                    if (sourceV.find(str) != std::string::npos)
+                    {
+                        domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                        domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                        addVertices(addMesh, vertexArrayValue);
+                    }
+                    else if (sourceM.find(str) != std::string::npos)
+                    {
+                        domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                        domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                        addUvs(addMesh, vertexArrayValue);
+                    }
+                }
+            }
+            out.push_back(addMesh);
+            mesh2material.push_back(vmaterial);
+        }
+    }
+
+    void getPolylist(domMesh* thisMesh, domSource_Array& sourceArray, std::vector<trimesh::TriMesh*>& out, std::vector<std::vector<std::string>>& mesh2material, const std::string& sourceV, ccglobal::Tracer* tracer)
+    {
+        domPolylist_Array& polylistArray = thisMesh->getPolylist_array();
+
+        size_t count = sourceArray.getCount();
+        size_t polylistCount = polylistArray.getCount();
+        if (polylistCount)
+        {
+            trimesh::TriMesh* addMesh = new trimesh::TriMesh();
+            std::vector<std::string> vmaterial;
+            std::string sourceM = "";
+            for (int i = 0; i < polylistArray.getCount(); ++i)
+            {
+                domPolylistRef indexArray = polylistArray[i];
+
+                vmaterial.push_back(indexArray->getMaterial());
+
+                domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
+                int nums = 0;
+                int step = 0;
+                int stepTEXCOORD = -1;
+
+                for (int j = 0; j < inputLocalOffsetArray.getCount(); ++j)
+                {
+                    domInputLocalOffsetRef& inputLocalOffsetRef = inputLocalOffsetArray[j];
+                    if (inputLocalOffsetRef->hasAttribute("semantic"))
+                    {
+                        std::string semantic = inputLocalOffsetArray[j]->getAttribute(daeString("semantic"));
+                        if (semantic == "VERTEX")
+                        {
+                            step = j;
+                        }
+                        else if (semantic == "TEXCOORD")
+                        {
+                            stepTEXCOORD = j;
+                            sourceM = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
+                        }
+                    }
+                    if (inputLocalOffsetRef->hasAttribute("offset"))
+                    {
+                        std::string strValue;
+                        inputLocalOffsetArray[j]->getAttribute(daeString("offset"), strValue);
+                        int intValue = std::stoi(strValue);
+                        nums = std::max(nums, intValue);
+                    }
+                }
+
+                ColladaDOM141::domPolylist::domVcountRef vcountRef = indexArray->getVcount();
+                domListOfUInts& listOfUIntsv = vcountRef->getValue();
+                domPRef pRef = indexArray->getP();
+                domListOfUInts& listOfUIntsp = pRef->getValue();
+
+                addFaces(addMesh, listOfUIntsv, listOfUIntsp, nums + 1, step, stepTEXCOORD);
+            }
+
+            for (size_t i = 0; i < count; i++)
+            {
+                domSourceRef& sourceIndex = sourceArray[i];
+
+                std::string str = sourceIndex->getId();
+
+                if (sourceV.find(str) != std::string::npos)
+                {
+                    domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                    domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                    addVertices(addMesh, vertexArrayValue);
+                }
+                else if (sourceM.find(str) != std::string::npos)
+                {
+                    domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
+
+                    domListOfFloats& vertexArrayValue = vertexArray->getValue();
+                    addUvs(addMesh, vertexArrayValue);
+                }
+            }
+            out.push_back(addMesh);
+            mesh2material.push_back(vmaterial);
+        }
+    }
 
     void getGeometry(daeDatabase* data, std::vector<trimesh::TriMesh*>& out, std::vector<std::vector<std::string>>& mesh2material,ccglobal::Tracer* tracer)
     {
@@ -269,160 +432,8 @@ namespace cxbin
                     size_t count = sourceArray.getCount();
                     if (count > 0)
                     {
-                        domTriangles_Array& triangleArray = thisMesh->getTriangles_array();
-                        size_t triangleCount = triangleArray.getCount();
-                        if (triangleCount)
-                        {
-                            trimesh::TriMesh* addMesh = new trimesh::TriMesh();
-                            std::vector<std::string> vmaterial;
-                            for (int i = 0; i < triangleArray.getCount(); ++i)
-                            {
-
-                                domTrianglesRef indexArray = triangleArray[i];
-                                domListOfUInts indexArrayValue = indexArray->getP()->getValue();
-
-                                vmaterial.push_back(indexArray->getMaterial());
-
-                                domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
-                                int nums = 0;
-                                int step = 0;
-                                int stepTEXCOORD = -1;
-                                //std::string sourceV = "";
-                                std::string sourceM = "";
-
-                                for (int j = 0; j < inputLocalOffsetArray.getCount(); ++j)
-                                {
-                                    domInputLocalOffsetRef& inputLocalOffsetRef = inputLocalOffsetArray[j];
-                                    if (inputLocalOffsetRef->hasAttribute("semantic"))
-                                    {
-                                        std::string semantic = inputLocalOffsetArray[j]->getAttribute(daeString("semantic"));
-                                        if (semantic == "VERTEX")
-                                        {
-                                            step = j;
-                                            //sourceV = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
-                                        }
-                                        else if (semantic == "TEXCOORD")
-                                        {
-                                            stepTEXCOORD = j;
-                                            sourceM = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
-                                        }
-                                    }
-                                    if (inputLocalOffsetRef->hasAttribute("offset"))
-                                    {
-                                        std::string strValue;
-                                        inputLocalOffsetArray[j]->getAttribute(daeString("offset"), strValue);
-                                        int intValue = std::stoi(strValue);
-                                        nums = std::max(nums, intValue);
-                                    }
-                                }
-
-                                addFaces(addMesh, indexArrayValue, nums + 1, step);
-
-                                for (size_t i = 0; i < count; i++)
-                                {
-                                    domSourceRef& sourceIndex = sourceArray[i];
-
-                                    std::string str = sourceIndex->getId();
-
-                                    if (sourceV.find(str) != std::string::npos)
-                                    {
-                                        domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
-
-                                        domListOfFloats& vertexArrayValue = vertexArray->getValue();
-                                        addVertices(addMesh, vertexArrayValue);
-                                    }
-                                    else if (sourceM.find(str) != std::string::npos)
-                                    {
-                                        domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
-
-                                        domListOfFloats& vertexArrayValue = vertexArray->getValue();
-                                        addUvs(addMesh, vertexArrayValue);
-                                    }
-                                }
-                            }
-                            out.push_back(addMesh);
-                            mesh2material.push_back(vmaterial);
-                        }
-
-
-                        domPolylist_Array& polylistArray = thisMesh->getPolylist_array();
-                        size_t polylistCount = polylistArray.getCount();
-                        if (polylistCount)
-                        {
-                            trimesh::TriMesh* addMesh = new trimesh::TriMesh();
-                            std::vector<std::string> vmaterial;
-                            //std::string sourceV = "";
-                            std::string sourceM = "";
-                            for (int i = 0; i < polylistArray.getCount(); ++i)
-                            {
-                                domPolylistRef indexArray = polylistArray[i];
-
-                                vmaterial.push_back(indexArray->getMaterial());
-
-                                domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
-                                int nums = 0;
-                                int step = 0;
-                                int stepTEXCOORD = -1;
-
-                                for (int j = 0; j < inputLocalOffsetArray.getCount(); ++j)
-                                {
-                                    domInputLocalOffsetRef& inputLocalOffsetRef = inputLocalOffsetArray[j];
-                                    if (inputLocalOffsetRef->hasAttribute("semantic"))
-                                    {
-                                        std::string semantic = inputLocalOffsetArray[j]->getAttribute(daeString("semantic"));
-                                        if (semantic == "VERTEX")
-                                        {
-                                            step = j;
-                                            //sourceV = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
-                                        }
-                                        else if (semantic == "TEXCOORD")
-                                        {
-                                            stepTEXCOORD = j;
-                                            sourceM = inputLocalOffsetArray[j]->getAttribute(daeString("source"));
-                                        }
-                                    }
-                                    if (inputLocalOffsetRef->hasAttribute("offset"))
-                                    {
-                                        std::string strValue;
-                                        inputLocalOffsetArray[j]->getAttribute(daeString("offset"), strValue);
-                                        int intValue = std::stoi(strValue);
-                                        nums = std::max(nums, intValue);
-                                    }
-                                }
-
-                                ColladaDOM141::domPolylist::domVcountRef vcountRef = indexArray->getVcount();
-                                domListOfUInts& listOfUIntsv = vcountRef->getValue();
-                                domPRef pRef = indexArray->getP();
-                                domListOfUInts& listOfUIntsp = pRef->getValue();
-
-                                addFaces(addMesh, listOfUIntsv, listOfUIntsp, nums + 1, step, stepTEXCOORD);
-                            }
-
-                            for (size_t i = 0; i < count; i++)
-                            {
-                                domSourceRef& sourceIndex = sourceArray[i];
-
-                                std::string str = sourceIndex->getId();
-
-                                if (sourceV.find(str) != std::string::npos)
-                                {
-                                    domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
-
-                                    domListOfFloats& vertexArrayValue = vertexArray->getValue();
-                                    addVertices(addMesh, vertexArrayValue);
-                                }
-                                else if (sourceM.find(str) != std::string::npos)
-                                {
-                                    domFloat_arrayRef vertexArray = sourceIndex->getFloat_array();
-
-                                    domListOfFloats& vertexArrayValue = vertexArray->getValue();
-                                    addUvs(addMesh, vertexArrayValue);
-                                }
-                            }
-                            out.push_back(addMesh);
-                            mesh2material.push_back(vmaterial);
-                        }
-
+                        getTriangles(thisMesh, sourceArray, out, mesh2material, sourceV, tracer);
+                        getPolylist(thisMesh, sourceArray, out, mesh2material, sourceV, tracer);
                     }
                 }
             }
@@ -533,7 +544,7 @@ namespace cxbin
                 for (size_t i = 0; i < newparams.getCount(); i++)
                 {
                     domCommon_newparam_typeRef& newparam = newparams[i];
-                    std::string sid = newparam->getAttribute(daeString("sid"));
+                    std::string sid = newparam->getSid();
 
                     daeElementRefArray np1 = newparam->getChildren();
                     for (size_t j = 0; j < np1.getCount(); j++)
@@ -682,7 +693,7 @@ namespace cxbin
         }
     }
 
-    bool loadMap(trimesh::TriMesh* mesh)
+    bool loadMap(trimesh::TriMesh* mesh,const std::string strPath)
     {
         if (mesh == nullptr)
             return false;
@@ -701,11 +712,18 @@ namespace cxbin
             {
                 trimesh::Material& material = materials[i];
                 const std::string& fileName = material.map_filepaths[type];
+                const std::string& fileName2 = strPath + fileName;
                 if (!fileName.empty())
                 {
                     imgproc::ImageData* newimagedatetemp = new imgproc::ImageData;
                     newimagedatetemp->format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
                     imgproc::loadImage_freeImage(*newimagedatetemp, fileName);
+                    if (newimagedatetemp->valid() == false && !fileName.empty())
+                    {
+                        //try full path
+                        imgproc::loadImage_freeImage(*newimagedatetemp, fileName2);
+                    }
+
                     if (newimagedatetemp->valid() == false)
                     {
                         imagedataV[i] = nullptr;
@@ -838,13 +856,16 @@ namespace cxbin
         //组合纹理信息
         mergeData(data,out,mesh2material,visualScenes,images,effects,materials,tracer);
 
-        bool result = true;
+        std::string materialFileName = "";
+        size_t loc = modelPath.find_last_of("/") + 1;
+        if (loc != std::string::npos) {
+            materialFileName = modelPath.substr(0, loc);
+        }
         for (size_t i = 0; i < out.size(); i++)
         {
-            result = loadMap(out[i]);
-            if (!result)
+            if (!loadMap(out[i], materialFileName))
             {
-                int a = 0;
+                return !success;
             }
         }
 
