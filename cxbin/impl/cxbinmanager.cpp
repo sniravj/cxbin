@@ -204,6 +204,29 @@ namespace cxbin
         if (loader) {
             fseek(f, 0L, SEEK_SET);
             loader->associateFileList(f, tracer, fileName, out);
+			for (std::vector<std::shared_ptr<AssociateFileInfo>>::iterator item = out.begin(); item < out.end(); item++)
+			{
+				auto finditem = std::find_if(out.begin(), out.end(), 
+					[item](std::shared_ptr<AssociateFileInfo> srcitem)
+					{
+						if (srcitem != *item)
+						{
+							return (*item)->path == srcitem->path ? true : false;
+
+						}
+						else
+						{
+							return false;
+						}
+					});
+				if (finditem != out.end())
+				{
+					out.erase(item);
+					item = out.begin();
+				}
+			}
+
+
         }
         
         fclose(f);

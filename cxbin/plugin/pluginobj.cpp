@@ -105,6 +105,9 @@ namespace cxbin
 
 	bool ObjLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
     {
+        //std::vector<std::shared_ptr<AssociateFileInfo>> outfileinfo;
+        //associateFileList(f, tracer, modelPath, outfileinfo);
+
 		unsigned count = 0;
 		unsigned calltime = fileSize / 10;
 		int num = 0;
@@ -652,8 +655,11 @@ namespace cxbin
                     out.push_back(associateInfor);
                     
                 }
+                goto WHILE_END;
             }
         }
+    WHILE_END:
+        ;
     }
 
     int ObjLoader::checkMtlCompleteness(std::string mtlFileName, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& outFileinfo)
