@@ -2,11 +2,19 @@
 #include "pluginobj.h"
 
 #include "stringutil/filenameutil.h"
+
+#if __ANDROID__
+#define _LIBCPP_HAS_NO_OFF_T_FUNCTIONS
 #include "trimesh2/TriMesh.h"
+#include "boost/filesystem.hpp"   // 包含所有需要的 Boost.Filesystem 声明
+#else
+#include "trimesh2/TriMesh.h"
+#include "boost/filesystem.hpp"   // 包含所有需要的 Boost.Filesystem 声明
+#endif
+
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
 #include "imageproc/imageloader.h"
-#include "boost/filesystem.hpp"   // 包含所有需要的 Boost.Filesystem 声明
 #include "boost/nowide/cstdio.hpp"
 
 namespace cxbin

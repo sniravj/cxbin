@@ -2,7 +2,10 @@
 #define CXBIN_PLUGINOBJ_1630741230194_H
 #include "cxbin/loaderimpl.h"
 #include "cxbin/saverimpl.h"
-#include "trimesh2/TriMesh.h"
+
+namespace trimesh {
+	struct Material;
+}
 
 #define MAX_OBJ_READLINE_LEN 10240
 namespace cxbin
