@@ -4,6 +4,8 @@
 #include "trimesh2/TriMesh.h"
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
+#include "imageproc/imageloader.h"
+#include <map>
 
 namespace cxbin
 {
@@ -78,8 +80,104 @@ namespace cxbin
 		Lib3MF::PModel model = wrapper->CreateModel();
 		Lib3MF::PReader reader = model->QueryReader("3mf");
 		reader->ReadFromBuffer(Ibuffer);
-		Lib3MF::PMeshObjectIterator pmeshdata = model->GetMeshObjects();
 
+		//加载Uv坐标
+		std::map<int, int> resourceID_uvIndex;
+		std::vector<trimesh::vec2> tmp_UVs;
+		Lib3MF::PTexture2DGroupIterator texture2DGroupIt = model->GetTexture2DGroups();
+		trimesh::TriMesh* amesh = new trimesh::TriMesh();//out[0];
+		std::vector<imgproc::ImageData*> imagedataV;
+		while (texture2DGroupIt->MoveNext())
+		{
+			Lib3MF::PTexture2DGroup aTexture2DGroup = texture2DGroupIt->GetCurrentTexture2DGroup();
+			resourceID_uvIndex.insert(std::make_pair((int)aTexture2DGroup->GetUniqueResourceID(), tmp_UVs.size()));
+
+			int uvIcount = aTexture2DGroup->GetCount();
+			std::vector<Lib3MF_uint32> IDsBuffer;
+			aTexture2DGroup->GetAllPropertyIDs(IDsBuffer);
+			for (std::vector<Lib3MF_uint32>::iterator it = IDsBuffer.begin(); it != IDsBuffer.end(); it++)
+			{
+				Lib3MF::sTex2Coord aCoord = aTexture2DGroup->GetTex2Coord(*it);
+				tmp_UVs.push_back(trimesh::vec2(aCoord.m_U, aCoord.m_V));
+			}
+			
+			Lib3MF::PTexture2D aTexture2D = aTexture2DGroup->GetTexture2D();
+			Lib3MF::PAttachment aAttachment = aTexture2D->GetAttachment();
+
+			trimesh::Material amaterial;
+			amaterial.index = aTexture2DGroup->GetUniqueResourceID();
+			amesh->materials.push_back(amaterial);
+
+			std::vector<Lib3MF_uint8> BufferBuffer;
+			aAttachment->WriteToBuffer(BufferBuffer);
+			imgproc::ImageData* newimagedatetemp = new imgproc::ImageData;
+			newimagedatetemp->format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
+			imgproc::loadImageFromMem_freeImage(BufferBuffer.data(), BufferBuffer.size(), *newimagedatetemp);
+			imagedataV.push_back(newimagedatetemp);
+		}
+		std::swap(amesh->UVs, tmp_UVs);
+
+		//加载图片
+		int widthMax = 0;
+		int heightMax = 0;
+		int widthOffset = 0;
+		int heightOffset = 0;
+		imgproc::ImageData* imageData = nullptr;
+		int bytesPerPixel = 4;//FORMAT_RGBA_8888
+		if (imagedataV.size() > 0)
+		{
+			std::vector<std::pair<imgproc::ImageData::point, imgproc::ImageData::point>> imageOffset;
+			imageData = imgproc::constructNewFreeImage(imagedataV, imgproc::ImageDataFormat::FORMAT_RGBA_8888, imageOffset);
+			if (imageData != nullptr)
+			{
+				widthMax = imageData->width / bytesPerPixel;
+				heightMax = imageData->height;
+				for (int i = 0; i < amesh->materials.size(); i++)
+				{
+					if (imagedataV[i] != nullptr)
+					{
+						trimesh::Material& material = amesh->materials[i];
+						imgproc::ImageData::point startpos = imageOffset[i].first;
+						imgproc::ImageData::point endpos = imageOffset[i].second;
+						material.map_startUVs[trimesh::Material::DIFFUSE] = trimesh::vec2((float)startpos.x / widthMax, (float)startpos.y / heightMax);
+						material.map_endUVs[trimesh::Material::DIFFUSE] = trimesh::vec2((float)endpos.x / widthMax, (float)endpos.y / heightMax);
+					}
+				}
+
+				if (std::max(widthMax, heightMax) > 4096)
+				{
+					float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
+					imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
+				}
+
+				unsigned char* buffer;
+				unsigned bufferSize;
+				imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
+
+				amesh->map_bufferSize[trimesh::Material::DIFFUSE] = bufferSize;
+				amesh->map_buffers[trimesh::Material::DIFFUSE] = buffer;
+			}
+		}
+		for (int i = 0; i < imagedataV.size(); i++)
+		{
+			if (imagedataV[i])
+			{
+				delete imagedataV[i];
+				imagedataV[i] = nullptr;
+			}
+		}
+		imagedataV.clear();
+
+		if (imageData)
+		{
+			delete imageData;
+			imageData = nullptr;
+		}
+
+
+
+
+		Lib3MF::PMeshObjectIterator pmeshdata = model->GetMeshObjects();
 		while (pmeshdata->MoveNext())
 		{
 			if (tracer && tracer->interrupt())
@@ -88,11 +186,11 @@ namespace cxbin
 			Lib3MF::PMeshObject obj = pmeshdata->GetCurrentMeshObject();
 			int faceCount = obj->GetTriangleCount();
 			
-			trimesh::TriMesh* mesh = new trimesh::TriMesh();
-			out.push_back(mesh);
+			//trimesh::TriMesh* mesh = new trimesh::TriMesh();
+			//out.push_back(mesh);
 
-			mesh->faces.reserve(faceCount);
-			mesh->vertices.reserve(3 * faceCount);
+			amesh->faces.reserve(faceCount);
+			amesh->vertices.reserve(3 * faceCount);
 
 			int nfacets = faceCount;
 			int calltime = nfacets / 10;
@@ -112,14 +210,27 @@ namespace cxbin
 				Lib3MF::sPosition point2 = obj->GetVertex(faceIndex.m_Indices[1]);
 				Lib3MF::sPosition point3 = obj->GetVertex(faceIndex.m_Indices[2]);
 
-				int v = mesh->vertices.size();
-				mesh->vertices.push_back(trimesh::point(point1.m_Coordinates[0], point1.m_Coordinates[1], point1.m_Coordinates[2]));
-				mesh->vertices.push_back(trimesh::point(point2.m_Coordinates[0], point2.m_Coordinates[1], point2.m_Coordinates[2]));
-				mesh->vertices.push_back(trimesh::point(point3.m_Coordinates[0], point3.m_Coordinates[1], point3.m_Coordinates[2]));
-				mesh->faces.push_back(trimesh::TriMesh::Face(v, v + 1, v + 2));
+				int v = amesh->vertices.size();
+				amesh->vertices.push_back(trimesh::point(point1.m_Coordinates[0], point1.m_Coordinates[1], point1.m_Coordinates[2]));
+				amesh->vertices.push_back(trimesh::point(point2.m_Coordinates[0], point2.m_Coordinates[1], point2.m_Coordinates[2]));
+				amesh->vertices.push_back(trimesh::point(point3.m_Coordinates[0], point3.m_Coordinates[1], point3.m_Coordinates[2]));
+				amesh->faces.push_back(trimesh::TriMesh::Face(v, v + 1, v + 2));
+
+				//加载faceUVs
+				Lib3MF::sTriangleProperties aProperty;
+				obj->GetTriangleProperties(nIdx, aProperty);
+				std::map<int, int>::iterator it = resourceID_uvIndex.find((int)aProperty.m_ResourceID);
+				if (it != resourceID_uvIndex.end() && (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[1])
+												   && (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[2])
+												   && (aProperty.m_PropertyIDs[1] != aProperty.m_PropertyIDs[2]))
+				{
+						amesh->faceUVs.push_back(trimesh::TriMesh::Face(aProperty.m_PropertyIDs[0] + it->second - 1, aProperty.m_PropertyIDs[1] + it->second - 1, aProperty.m_PropertyIDs[2] + it->second - 1));
+						amesh->textureIDs.push_back(aProperty.m_ResourceID);
+				}
 			}	
 		}
 
+		out.push_back(amesh);
 		delete[]buffer;
 
 		if (tracer)
