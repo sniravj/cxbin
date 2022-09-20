@@ -202,7 +202,9 @@ namespace cxbin
 
         if (loader) {
             fseek(f, 0L, SEEK_SET);
+            loader->modelPath = fileName;
             loader->associateFileList(f, tracer, fileName, out);
+            loader->modelPath = "";
 			for (std::vector<std::shared_ptr<AssociateFileInfo>>::iterator item = out.begin(); item < out.end(); item++)
 			{
 				auto finditem = std::find_if(out.begin(), out.end(), 

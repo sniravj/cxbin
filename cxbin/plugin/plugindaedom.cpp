@@ -565,23 +565,39 @@ namespace cxbin
 
                 domProfile_COMMON::domTechniqueRef technique = thisMesh->getTechnique();
                 //domTechnique::dom  domPhongRef e=thisMesh->getPhong();
+                if (technique == nullptr) {
+                    return;
+                }
                 
                 domProfile_COMMON::domTechnique::domPhongRef pr = technique->getPhong();
-
+                if (pr == nullptr) {
+                    return;
+                }
                 
                 domCommon_color_or_texture_typeRef em = pr->getEmission();
-                getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                if (em) {
+                    getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                }
+                
 
                 domCommon_color_or_texture_typeRef am = pr->getAmbient();
-                getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
+                if (am) {
+                    getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
+                }
                 //daeeffect.ambient = am->getChild("color")->getCharData();
 
                 domCommon_color_or_texture_typeRef diff = pr->getDiffuse();
-                getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
+                if (diff) {
+                    getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
+                }
+                
                 //daeeffect.diffuse = diff->getChild("texture")->getAttribute(daeString("texture"));
 
                 domCommon_color_or_texture_typeRef sp = pr->getSpecular();
-                getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
+                if (sp) {
+                    getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
+                }
+                
                 //daeeffect.specular = am->getChild("color")->getCharData();            
 
                 //daeeffect.init_from = findValue(mnewparams, daeeffect.diffuse);
@@ -809,7 +825,7 @@ namespace cxbin
 			return false;
 		}
 
-		//return true;
+		return true;
 	}
 
     bool DaeDomLoader::tryLoad(FILE* f, size_t fileSize)
@@ -883,7 +899,7 @@ namespace cxbin
     void DaeDomLoader::associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string& filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out)
     {
         DAE dae;
-        domCOLLADA* root = (domCOLLADA*)dae.open(modelPath);
+        domCOLLADA* root = (domCOLLADA*)dae.open(filePath);
         if (!root)
         {
             if (tracer)
@@ -892,9 +908,9 @@ namespace cxbin
         }
 
         std::string imagesFileName = "";
-        size_t loc = modelPath.find_last_of("/") + 1;
+        size_t loc = filePath.find_last_of("/") + 1;
         if (loc != std::string::npos) {
-            imagesFileName = modelPath.substr(0, loc);
+            imagesFileName = filePath.substr(0, loc);
         }
 
         std::vector<CObject*> ObjectShapes;
@@ -926,6 +942,7 @@ namespace cxbin
                 else
                 {
                     associateInfor->code = CXBinLoaderCode::file_not_exist;
+                    associateInfor->path = strFullPath;
                     out.push_back(associateInfor);
                 }
             }
