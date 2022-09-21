@@ -83,14 +83,17 @@ namespace cxbin
 
 		//¼ÓÔØUv×ø±ê
 		std::map<int, int> resourceID_uvIndex;
+		std::map<int, int> resourceID_textrueIndex;
 		std::vector<trimesh::vec2> tmp_UVs;
 		Lib3MF::PTexture2DGroupIterator texture2DGroupIt = model->GetTexture2DGroups();
 		trimesh::TriMesh* amesh = new trimesh::TriMesh();//out[0];
 		std::vector<imgproc::ImageData*> imagedataV;
+		int textrueIndex = 0;
 		while (texture2DGroupIt->MoveNext())
 		{
 			Lib3MF::PTexture2DGroup aTexture2DGroup = texture2DGroupIt->GetCurrentTexture2DGroup();
 			resourceID_uvIndex.insert(std::make_pair((int)aTexture2DGroup->GetUniqueResourceID(), tmp_UVs.size()));
+			resourceID_textrueIndex.insert(std::make_pair((int)aTexture2DGroup->GetUniqueResourceID(), textrueIndex++));
 
 			int uvIcount = aTexture2DGroup->GetCount();
 			std::vector<Lib3MF_uint32> IDsBuffer;
@@ -105,7 +108,6 @@ namespace cxbin
 			Lib3MF::PAttachment aAttachment = aTexture2D->GetAttachment();
 
 			trimesh::Material amaterial;
-			amaterial.index = aTexture2DGroup->GetUniqueResourceID();
 			amesh->materials.push_back(amaterial);
 
 			std::vector<Lib3MF_uint8> BufferBuffer;
@@ -224,8 +226,12 @@ namespace cxbin
 												   && (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[2])
 												   && (aProperty.m_PropertyIDs[1] != aProperty.m_PropertyIDs[2]))
 				{
+					std::map<int, int>::iterator it2 = resourceID_textrueIndex.find((int)aProperty.m_ResourceID);
+					if (it2 !=resourceID_textrueIndex.end())
+					{
 						amesh->faceUVs.push_back(trimesh::TriMesh::Face(aProperty.m_PropertyIDs[0] + it->second - 1, aProperty.m_PropertyIDs[1] + it->second - 1, aProperty.m_PropertyIDs[2] + it->second - 1));
-						amesh->textureIDs.push_back(aProperty.m_ResourceID);
+						amesh->textureIDs.push_back(it2->second);
+					}
 				}
 			}	
 		}
