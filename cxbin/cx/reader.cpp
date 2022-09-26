@@ -333,6 +333,8 @@ namespace cxbin
 					dataPtr += mtlNameLen * sizeof(char);
 
 					out.mtlName = std::string(strData);
+					delete strData;
+					strData = nullptr;
 				}
 				if (mapTypeCount > 0 && mapTypeCount == trimesh::Material::TYPE_COUNT)
 				{
