@@ -187,7 +187,7 @@ namespace cxbin
 			return false;
 		}
 
-		//return true;
+		return true;
 	}
 
     bool DaeDomLoader::tryLoad(FILE* f, size_t fileSize)
