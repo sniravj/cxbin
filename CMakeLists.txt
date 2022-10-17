@@ -53,7 +53,7 @@ set(SRCS cxbin/interface.h
 
 		 )
 		 
-set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide imageproc mmesh)
+set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide imageproc mmesh freeimage)
 set(DEFS TIXML_USE_STL Z_PREFIX BOOST_ALL_NO_LIB)
 if(NOT CC_BC_WIN)
 	list(APPEND DEFS __USE_FILE_OFFSET64)
