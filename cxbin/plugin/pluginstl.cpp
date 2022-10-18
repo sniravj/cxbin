@@ -67,6 +67,9 @@ namespace cxbin
 			return is_stl;
 		}
 
+		if (fileSize > expectedBinaryFileSize)
+			return true;
+
 		return false;
 	}
 
