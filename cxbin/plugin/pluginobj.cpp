@@ -231,7 +231,8 @@ namespace cxbin
                 mtlName = str.substr(7, str.length()-7);
                 mtlName = trimStr(mtlName);
                 //mtl文件名
-                
+#if CC_SYSTEM_EMCC
+#else
                 size_t loc = modelPath.find_last_of("/")+1;
                 if (loc != std::string::npos) {
                     
@@ -239,7 +240,7 @@ namespace cxbin
                     printf("[mtl]: %s\n", materialFileName.c_str());
                     loadMtl(materialFileName, materials);
                 }
-                
+#endif
                 
             } 
             else if (LINE_IS("usemtl ")) {
@@ -325,23 +326,6 @@ namespace cxbin
                     //{
                     //    modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
                     //}
-                }
-                else if (ff.v.size() == 4)
-                {
-					modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
-                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[2], ff.v[3]));
-					if (ff.t.size() == 4)
-					{
-						modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
-                        modelmesh->textureIDs.emplace_back(ff.tInd);
-                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[2], ff.t[3]));
-						modelmesh->textureIDs.emplace_back(ff.tInd);
-					}
-					else
-					{
-						modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
-						modelmesh->textureIDs.emplace_back(-1);
-					}
                 }
             }
             std::swap(modelmesh->materials, materials);
@@ -452,6 +436,9 @@ namespace cxbin
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
                     size_t loc = fileName.find_last_of("/");
+#if CC_SYSTEM_EMCC
+                    matePtr->map_filepaths[trimesh::Material::AMBIENT] = fileName;
+#else
                     if (loc != std::string::npos) {
 
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
@@ -459,6 +446,7 @@ namespace cxbin
                         matePtr->map_filepaths[trimesh::Material::AMBIENT] = full;
 
                     }
+#endif   
 
                 }
                 
@@ -471,6 +459,9 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
+#if CC_SYSTEM_EMCC
+                    matePtr->map_filepaths[trimesh::Material::DIFFUSE] = fileName;
+#else
                     size_t loc = fileName.find_last_of("/");
                     if (loc != std::string::npos) {
 
@@ -479,6 +470,7 @@ namespace cxbin
                         matePtr->map_filepaths[trimesh::Material::DIFFUSE] = full;
 
                     }
+#endif
 
                 }
                 
@@ -491,6 +483,9 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
+#if CC_SYSTEM_EMCC
+                    matePtr->map_filepaths[trimesh::Material::SPECULAR] = fileName;
+#else
                     size_t loc = fileName.find_last_of("/");
                     if (loc != std::string::npos) {
 
@@ -499,6 +494,7 @@ namespace cxbin
                         matePtr->map_filepaths[trimesh::Material::SPECULAR] = full;
 
                     }
+#endif
                 }
                 
             } else if (LINE_IS("map_bump ")) {
@@ -510,12 +506,16 @@ namespace cxbin
                 std::vector<std::string> strs;
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
+#if CC_SYSTEM_EMCC
+                    matePtr->map_filepaths[trimesh::Material::NORMAL] = fileName;
+#else
                     size_t loc = fileName.find_last_of("/");
                     if (loc != std::string::npos) {
                         const std::string full = fileName.substr(0, loc) + "/" + strs[strs.size() - 1];
                         printf("[map_bump]: %s\n", full.c_str());
                         matePtr->map_filepaths[trimesh::Material::NORMAL] = full;
                     }
+#endif
                 }
             }
         }
