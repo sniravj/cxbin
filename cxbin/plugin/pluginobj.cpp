@@ -438,7 +438,7 @@ namespace cxbin
                 if (strs.size()) {
                     size_t loc = fileName.find_last_of("/");
 #if CC_SYSTEM_EMCC
-                    matePtr->map_filepaths[trimesh::Material::AMBIENT] = fileName;
+                    matePtr->map_filepaths[trimesh::Material::AMBIENT] = strs[strs.size() - 1];
 #else
                     if (loc != std::string::npos) {
 
@@ -461,7 +461,7 @@ namespace cxbin
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
 #if CC_SYSTEM_EMCC
-                    matePtr->map_filepaths[trimesh::Material::DIFFUSE] = fileName;
+                    matePtr->map_filepaths[trimesh::Material::DIFFUSE] = strs[strs.size() - 1];
 #else
                     size_t loc = fileName.find_last_of("/");
                     if (loc != std::string::npos) {
@@ -485,7 +485,7 @@ namespace cxbin
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
 #if CC_SYSTEM_EMCC
-                    matePtr->map_filepaths[trimesh::Material::SPECULAR] = fileName;
+                    matePtr->map_filepaths[trimesh::Material::SPECULAR] = strs[strs.size() - 1];
 #else
                     size_t loc = fileName.find_last_of("/");
                     if (loc != std::string::npos) {
@@ -508,7 +508,7 @@ namespace cxbin
                 componentsSeparatedByString(name, ' ', strs);
                 if (strs.size()) {
 #if CC_SYSTEM_EMCC
-                    matePtr->map_filepaths[trimesh::Material::NORMAL] = fileName;
+                    matePtr->map_filepaths[trimesh::Material::NORMAL] = strs[strs.size() - 1];
 #else
                     size_t loc = fileName.find_last_of("/");
                     if (loc != std::string::npos) {
