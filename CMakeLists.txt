@@ -77,6 +77,7 @@ if(TARGET colladadom)
 	list(APPEND SRCS cxbin/plugin/plugindaedom.h
 					 cxbin/plugin/plugindaedom.cpp
 			)
+
 	list(APPEND LIBS colladadom boost_filesystem)
 	list(APPEND DEFS DAE_USE_COLLDADA_DOM)
 else()

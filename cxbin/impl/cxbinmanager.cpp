@@ -226,7 +226,7 @@ namespace cxbin
 					}
 				}
                 mmesh::removeInvalidVertex(model);
-                mmesh::removeNorFaces(model, tracer);
+                //mmesh::removeNorFaces(model, tracer);
 			}
 		}
 

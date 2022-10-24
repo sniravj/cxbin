@@ -328,6 +328,23 @@ namespace cxbin
                     //    modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
                     //}
                 }
+                else if (ff.v.size() == 4)
+                {
+					modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
+                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[2], ff.v[3]));
+					if (ff.t.size() == 4)
+					{
+						modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
+                        modelmesh->textureIDs.emplace_back(ff.tInd);
+                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[2], ff.t[3]));
+						modelmesh->textureIDs.emplace_back(ff.tInd);
+					}
+					else
+					{
+						modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
+						modelmesh->textureIDs.emplace_back(-1);
+					}
+                }
             }
             std::swap(modelmesh->materials, materials);
             //if(materials.size()>0)
