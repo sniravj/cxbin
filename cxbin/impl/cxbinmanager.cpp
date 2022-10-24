@@ -32,13 +32,13 @@ namespace cxbin
 		registerLoaderImpl(&m_stlLoader);
 		registerLoaderImpl(&m_plyLoader);
 		registerLoaderImpl(&m_objLoader);
-#ifndef __WEB__
+
 		registerLoaderImpl(&m_offLoader);
 		registerLoaderImpl(&m_3dsLoader);
 		registerLoaderImpl(&m_wrlLoader);
 		registerLoaderImpl(&m_3mfLoader);
 		registerLoaderImpl(&m_daeLoader);
-#endif
+
 		registerLoaderImpl(&m_cxbinLoader);
 
 		registerSaverImpl(&m_cxbinSaver);

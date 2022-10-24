@@ -232,6 +232,7 @@ namespace cxbin
                 mtlName = trimStr(mtlName);
                 //mtl文件名
 #if CC_SYSTEM_EMCC
+                 loadMtl(mtlName, materials);
 #else
                 size_t loc = modelPath.find_last_of("/")+1;
                 if (loc != std::string::npos) {
