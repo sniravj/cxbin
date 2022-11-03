@@ -590,12 +590,19 @@ namespace cxbin
                         imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
 
+
+#ifdef WEB_PREVIEW
+                    mesh->map_bufferSize[type] = imageData->width * imageData->height;
+                    mesh->map_buffers[type] = imageData->data;
+                    imageData->data = nullptr;
+#else
                     unsigned char* buffer;
                     unsigned bufferSize;
                     imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
                     mesh->map_bufferSize[type] = bufferSize;
                     mesh->map_buffers[type] = buffer;
+#endif // WEB_PREVIEW
                 }
             }
 
