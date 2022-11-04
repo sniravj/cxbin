@@ -190,8 +190,6 @@ namespace cxbin
 								dataPtr += dataSize;
 							}
 
-<<<<<<< HEAD   (1cbc46 feature:[master]merge obj)
-=======
 #ifdef TRIMESH_MAPBUF_RGB
 							imgproc::ImageData bufferImage;
 							bufferImage.format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
@@ -207,13 +205,9 @@ namespace cxbin
 							out.map_bufferSize[i] = imgproc::encodeWH(bufferImage.width, bufferImage.height);
 							out.map_buffers[i] = bufferImage.data;
 #else
->>>>>>> CHANGE (f6c96d feature[cxbin]:将 WEB_PREVIEW 宏开关改为更直观的 TRIMESH_MAPBUF_RGB，将 )
 							out.map_bufferSize[i] = bufferSize;
 							out.map_buffers[i] = bufferData;
-<<<<<<< HEAD   (1cbc46 feature:[master]merge obj)
-=======
 #endif // TRIMESH_MAPBUF_RGB
->>>>>>> CHANGE (f6c96d feature[cxbin]:将 WEB_PREVIEW 宏开关改为更直观的 TRIMESH_MAPBUF_RGB，将 )
 						}
 					}
 
