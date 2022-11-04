@@ -15,7 +15,7 @@ namespace cxbin
 	{
 		bool success = false;
 
-		// Íø¸ñÊý¾Ý¿é
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
 		{
 			int vertNum = 0;
 			int faceNum = 0;
@@ -83,7 +83,7 @@ namespace cxbin
 	{
 		bool success = false;
 
-		// ÎÆÀíÊý¾Ý¿é
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
 		{
 			int UVNum = 0;
 			int faceUVNum = 0;
@@ -204,6 +204,7 @@ namespace cxbin
 
 							out.map_bufferSize[i] = imgproc::encodeWH(bufferImage.width, bufferImage.height);
 							out.map_buffers[i] = bufferImage.data;
+							bufferImage.data = nullptr;
 #else
 							out.map_bufferSize[i] = bufferSize;
 							out.map_buffers[i] = bufferData;
@@ -243,7 +244,7 @@ namespace cxbin
 		return true;
 	}
 
-	// version 1.0 ¾É°æ±¾
+	// version 1.0 ï¿½É°æ±¾
 	bool loadCXBin1_old(FILE* f, size_t fileSize, trimesh::TriMesh& out, ccglobal::Tracer* tracer)
 	{
 		bool success = false;
@@ -458,7 +459,7 @@ namespace cxbin
 				break;
 			}
 		}
-		// ¼æÈÝ cxbin 1.0 ¾É°æ±¾
+		// ï¿½ï¿½ï¿½ï¿½ cxbin 1.0 ï¿½É°æ±¾
 		else if (headCode == 1)
 		{
 			successFlag = loadCXBin1_old(f, fileSize, out, tracer);
