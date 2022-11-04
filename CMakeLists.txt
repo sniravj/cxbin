@@ -55,6 +55,10 @@ set(SRCS cxbin/interface.h
 		 
 set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide imageproc mmesh freeimage)
 set(DEFS TIXML_USE_STL Z_PREFIX BOOST_ALL_NO_LIB)
+<<<<<<< HEAD   (1cbc46 feature:[master]merge obj)
+=======
+
+>>>>>>> CHANGE (f6c96d feature[cxbin]:将 WEB_PREVIEW 宏开关改为更直观的 TRIMESH_MAPBUF_RGB，将 )
 if(NOT CC_BC_WIN)
 	list(APPEND DEFS __USE_FILE_OFFSET64)
 endif()

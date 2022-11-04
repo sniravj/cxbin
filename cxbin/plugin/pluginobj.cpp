@@ -608,12 +608,25 @@ namespace cxbin
                         imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
 
+<<<<<<< HEAD   (1cbc46 feature:[master]merge obj)
+=======
+                    
+#ifdef TRIMESH_MAPBUF_RGB
+                    mesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
+                    mesh->map_buffers[type] = imageData->data;
+                    imageData->data = nullptr;
+#else
+>>>>>>> CHANGE (f6c96d feature[cxbin]:将 WEB_PREVIEW 宏开关改为更直观的 TRIMESH_MAPBUF_RGB，将 )
                     unsigned char* buffer;
                     unsigned bufferSize;
                     imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
                     mesh->map_bufferSize[type] = bufferSize;
                     mesh->map_buffers[type] = buffer;
+<<<<<<< HEAD   (1cbc46 feature:[master]merge obj)
+=======
+#endif // TRIMESH_MAPBUF_RGB
+>>>>>>> CHANGE (f6c96d feature[cxbin]:将 WEB_PREVIEW 宏开关改为更直观的 TRIMESH_MAPBUF_RGB，将 )
                 }
             }
 
