@@ -190,7 +190,7 @@ namespace cxbin
 								dataPtr += dataSize;
 							}
 
-#ifdef WEB_PREVIEW
+#ifdef TRIMESH_MAPBUF_RGB
 							imgproc::ImageData bufferImage;
 							bufferImage.format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
 
@@ -202,12 +202,12 @@ namespace cxbin
 								bufferData = nullptr;
 							}
 
-							out.map_bufferSize[i] = bufferImage.width * bufferImage.height;
+							out.map_bufferSize[i] = imgproc::encodeWH(bufferImage.width, bufferImage.height);
 							out.map_buffers[i] = bufferImage.data;
 #else
 							out.map_bufferSize[i] = bufferSize;
 							out.map_buffers[i] = bufferData;
-#endif // WEB_PREVIEW
+#endif // TRIMESH_MAPBUF_RGB
 						}
 					}
 

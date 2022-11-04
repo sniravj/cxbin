@@ -590,9 +590,9 @@ namespace cxbin
                         imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
 
-
-#ifdef WEB_PREVIEW
-                    mesh->map_bufferSize[type] = imageData->width * imageData->height;
+                    
+#ifdef TRIMESH_MAPBUF_RGB
+                    mesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
                     mesh->map_buffers[type] = imageData->data;
                     imageData->data = nullptr;
 #else
@@ -602,7 +602,7 @@ namespace cxbin
 
                     mesh->map_bufferSize[type] = bufferSize;
                     mesh->map_buffers[type] = buffer;
-#endif // WEB_PREVIEW
+#endif // TRIMESH_MAPBUF_RGB
                 }
             }
 
