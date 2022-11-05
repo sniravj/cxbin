@@ -152,8 +152,8 @@ namespace cxbin
 					imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
 				}
 #ifdef TRIMESH_MAPBUF_RGB
-                    amesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
-                    amesh->map_buffers[type] = imageData->data;
+                    amesh->map_bufferSize[trimesh::Material::DIFFUSE] = imgproc::encodeWH(imageData->width, imageData->height);
+                    amesh->map_buffers[trimesh::Material::DIFFUSE] = imageData->data;
                     imageData->data = nullptr;
 #else
 				unsigned char* buffer;
