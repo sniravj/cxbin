@@ -381,7 +381,14 @@ namespace cxbin
 							bufferImage.height = height;
 							bufferImage.data = bufferData;
 							bufferImage.format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
-							imgproc::writeImage2Mem_freeImage(bufferImage, pngBuffer, pngBufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
+							#ifdef TRIMESH_MAPBUF_RGB
+								pngBufferSize = imgproc::encodeWH(bufferImage.width, bufferImage.height);
+								bufferImage.data = nullptr;
+								pngBuffer = bufferData;
+							#else
+								imgproc::writeImage2Mem_freeImage(bufferImage, pngBuffer, pngBufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
+							#endif
+							
 						}
 
 						out.map_bufferSize[i] = pngBufferSize;
