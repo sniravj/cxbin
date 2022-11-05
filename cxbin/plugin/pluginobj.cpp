@@ -557,6 +557,12 @@ namespace cxbin
             int widthOffset = 0;
             int heightOffset = 0;
             int bytesPerPixel = 4;//FORMAT_RGBA_8888
+#if CC_SYSTEM_EMCC
+            if(type!=2)
+            {
+                continue;
+            }
+#endif
             std::vector<imgproc::ImageData*> imagedataV(materials.size(), nullptr);
             for (int i = 0; i < materials.size(); i++)
             {

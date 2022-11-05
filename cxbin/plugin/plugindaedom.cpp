@@ -85,7 +85,7 @@ namespace cxbin
     {
         std::string::size_type pos;
         std::vector<float> result;
-        str += pattern;//À©Õ¹×Ö·û´®ÒÔ·½±ã²Ù×÷
+        str += pattern;//ï¿½ï¿½Õ¹ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ô·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         int size = str.size();
         for (int i = 0; i < size; i++)
         {
@@ -764,13 +764,18 @@ namespace cxbin
                         float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
                         imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
-
+#ifdef TRIMESH_MAPBUF_RGB
+                    mesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
+                    mesh->map_buffers[type] = imageData->data;
+                    imageData->data = nullptr;
+#else
                     unsigned char* buffer;
                     unsigned bufferSize;
                     imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
                     mesh->map_bufferSize[type] = bufferSize;
                     mesh->map_buffers[type] = buffer;
+#endif
                 }
             }
 
@@ -833,27 +838,27 @@ namespace cxbin
 		std::vector<CObject*> ObjectShapes;
 		daeDatabase* data = dae.getDatabase();
 
-        //»ñÈ¡ÎÆÀíÐ§¹ûÊý¾Ý
+        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         std::map<std::string, daeEffect> effects;
         getEffects(data, effects, tracer);
         
-        //»ñÈ¡²ÄÖÊÊý¾Ý
+        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         std::map<std::string, std::string> materials;
         getMaterials(data,materials,tracer);
 
-        //»ñÈ¡ÎÆÀíÍ¼Æ¬
+        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Í¼Æ¬
         std::map<std::string, std::string> images;
         getImages(data, images, tracer);
 
-        //Ìí¼Ó²ÄÖÊ°ó¶¨½Ó¿Ú
+        //ï¿½ï¿½ï¿½Ó²ï¿½ï¿½Ê°ó¶¨½Ó¿ï¿½
         std::map<std::string, std::string> visualScenes;
         getVisualScenes(data,visualScenes, tracer);
 
-        //»ñÈ¡¶¥µã¡¢Ãæ¡¢uvs¡¢faceuvs
+        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ã¡¢ï¿½æ¡¢uvsï¿½ï¿½faceuvs
         std::vector<std::vector<std::string>> mesh2material;
         getGeometry(data,out, mesh2material,tracer);
 
-        //×éºÏÎÆÀíÐÅÏ¢
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
         mergeData(data,out,mesh2material,visualScenes,images,effects,materials,tracer);
 
         std::string materialFileName = "";

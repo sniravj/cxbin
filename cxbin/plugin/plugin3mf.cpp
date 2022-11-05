@@ -81,7 +81,7 @@ namespace cxbin
 		Lib3MF::PReader reader = model->QueryReader("3mf");
 		reader->ReadFromBuffer(Ibuffer);
 
-		//¼ÓÔØUv×ø±ê
+		//ï¿½ï¿½ï¿½ï¿½Uvï¿½ï¿½ï¿½ï¿½
 		std::map<int, int> resourceID_uvIndex;
 		std::map<int, int> resourceID_textrueIndex;
 		std::vector<trimesh::vec2> tmp_UVs;
@@ -119,7 +119,7 @@ namespace cxbin
 		}
 		std::swap(amesh->UVs, tmp_UVs);
 
-		//¼ÓÔØÍ¼Æ¬
+		//ï¿½ï¿½ï¿½ï¿½Í¼Æ¬
 		int widthMax = 0;
 		int heightMax = 0;
 		int widthOffset = 0;
@@ -151,13 +151,18 @@ namespace cxbin
 					float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
 					imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
 				}
-
+#ifdef TRIMESH_MAPBUF_RGB
+                    amesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
+                    amesh->map_buffers[type] = imageData->data;
+                    imageData->data = nullptr;
+#else
 				unsigned char* buffer;
 				unsigned bufferSize;
 				imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
 				amesh->map_bufferSize[trimesh::Material::DIFFUSE] = bufferSize;
 				amesh->map_buffers[trimesh::Material::DIFFUSE] = buffer;
+#endif
 			}
 		}
 		for (int i = 0; i < imagedataV.size(); i++)
@@ -218,7 +223,7 @@ namespace cxbin
 				amesh->vertices.push_back(trimesh::point(point3.m_Coordinates[0], point3.m_Coordinates[1], point3.m_Coordinates[2]));
 				amesh->faces.push_back(trimesh::TriMesh::Face(v, v + 1, v + 2));
 
-				//¼ÓÔØfaceUVs
+				//ï¿½ï¿½ï¿½ï¿½faceUVs
 				Lib3MF::sTriangleProperties aProperty;
 				obj->GetTriangleProperties(nIdx, aProperty);
 				std::map<int, int>::iterator it = resourceID_uvIndex.find((int)aProperty.m_ResourceID);
