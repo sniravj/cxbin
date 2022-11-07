@@ -194,7 +194,7 @@ namespace cxbin
 							imgproc::ImageData bufferImage;
 							bufferImage.format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
 
-							if (bufferData)
+ 							if (bufferData)
 							{
 								imgproc::loadImageFromMem_freeImage(bufferData, dataSize, bufferImage, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
@@ -204,6 +204,7 @@ namespace cxbin
 
 							out.map_bufferSize[i] = imgproc::encodeWH(bufferImage.width, bufferImage.height);
 							out.map_buffers[i] = bufferImage.data;
+							bufferImage.data = nullptr;
 #else
 							out.map_bufferSize[i] = bufferSize;
 							out.map_buffers[i] = bufferData;
