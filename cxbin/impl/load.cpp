@@ -63,9 +63,16 @@ namespace cxbin
 
 		if (tracer && models.size() > 0)
 		{
+            for (trimesh::TriMesh* m : models)
+                m->clear_normals();
+
 			tracer->progress(1.0f);
 			tracer->success();
 		}
+
+        //clear normal
+        for (trimesh::TriMesh* m : models)
+            m->clear_normals();
 
 		if(f)
 			fclose(f);
