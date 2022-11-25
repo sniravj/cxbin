@@ -613,7 +613,7 @@ namespace cxbin
                         float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
                         imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
-               
+
 #ifdef TRIMESH_MAPBUF_RGB
                     mesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
                     mesh->map_buffers[type] = imageData->data;
