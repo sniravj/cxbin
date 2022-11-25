@@ -194,7 +194,7 @@ namespace cxbin
 							imgproc::ImageData bufferImage;
 							bufferImage.format = imgproc::ImageDataFormat::FORMAT_RGBA_8888;
 
-							if (bufferData)
+ 							if (bufferData)
 							{
 								imgproc::loadImageFromMem_freeImage(bufferData, dataSize, bufferImage, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
@@ -350,6 +350,7 @@ namespace cxbin
 					dataPtr += mtlNameLen * sizeof(char);
 
 					out.mtlName = std::string(strData);
+
 					delete strData;
 					strData = nullptr;
 				}
@@ -371,6 +372,10 @@ namespace cxbin
 							dataPtr += bufferSize;
 						}
 
+#ifdef  WEB_PREVIEW
+						out.map_bufferSize[i] = bufferSize;
+						out.map_buffers[i] = bufferData;
+#else
 						unsigned char* pngBuffer = nullptr;
 						unsigned pngBufferSize = 0;
 
@@ -393,6 +398,7 @@ namespace cxbin
 
 						out.map_bufferSize[i] = pngBufferSize;
 						out.map_buffers[i] = pngBuffer;
+#endif //  WEB_PREVIEW
 					}
 				}
 
