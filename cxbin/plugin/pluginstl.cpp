@@ -90,7 +90,27 @@ namespace cxbin
 				return false;
 		}
 
+		//判断模型格式是不是带BOM的UTF8文件
 		fseek(f, nNumWhiteSpace, SEEK_SET);
+		char buffer[3];
+		if (fread(buffer, 3, 1, f) != 1)
+		{
+			return false;
+		}
+		else
+		{
+			bool bRet = buffer[0] == (char)0xEF && buffer[1] == (char)0xBB && buffer[2] == (char)0xBF;
+			if (bRet)
+			{
+				fseek(f, nNumWhiteSpace+4, SEEK_SET);
+			}
+			else
+			{
+				fseek(f, nNumWhiteSpace, SEEK_SET);
+			}
+		}
+		
+		
 		char chBuffer[6];
 		if (fread(chBuffer, 5, 1, f) != 1)
 			return false;
