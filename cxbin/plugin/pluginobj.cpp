@@ -585,6 +585,9 @@ namespace cxbin
             int heightOffset = 0;
             int bytesPerPixel = 4;//FORMAT_RGBA_8888
             std::vector<imgproc::ImageData*> imagedataV(materials.size(), nullptr);
+            
+            int sizeOf4k = 0;
+            
             for (int i = 0; i < materials.size(); i++)
             {
                 trimesh::Material& material = materials[i];
@@ -605,10 +608,38 @@ namespace cxbin
                         //material.startUV = trimesh::vec2(width0ffset, heightoffset);
                         //material.endUV = trimesh::vec2(width0ffset + imagedataV[i]->width / bytesPerPixel, heightoffset + imagedataV[i]->height);
                         heightOffset += newimagedatetemp->height;
+                        
+                        if (newimagedatetemp->height >= 4000) {
+                            sizeOf4k ++;
+                        }
+                        
                     }
                 }
             }
 
+            if (sizeOf4k >= 6) {
+                
+                for (int i = 0; i < imagedataV.size(); i++)
+                {
+                    imgproc::ImageData *temp = imagedataV[i];
+                    
+                    if (temp == nullptr) {
+                        continue;
+                    }
+                    
+                    if (temp->valid()) {
+                        int w = temp->width / 4, h = temp->height;
+                        float scalevalue = (float)1024.0 / std::max(w, h);
+                        
+                        imgproc::ImageData* scaled = imgproc::scaleFreeImage(temp, scalevalue, scalevalue);
+                        
+                        delete temp;
+                        imagedataV[i] = scaled;
+                        
+                    }
+                }
+            }
+            
             if (imagedataV.size() > 0)
             {
                 std::vector<std::pair<imgproc::ImageData::point, imgproc::ImageData::point>> imageOffset;
