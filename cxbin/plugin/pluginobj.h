@@ -20,6 +20,12 @@ namespace cxbin
     private:
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
 		bool loadMap(trimesh::TriMesh* mesh);
+<<<<<<< HEAD   (765c5c fix[config] 解决模型格式带BOM的UTF8文件解析)
+=======
+		int checkMtlCompleteness(std::string filename, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& out);
+        
+        void removeRepeatMaterial(trimesh::TriMesh* mesh);
+>>>>>>> CHANGE (7e37aa fix[cxbin]:纹理合并内存优化)
     private:
 	};
 

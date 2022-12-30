@@ -543,11 +543,60 @@ namespace cxbin
         return true;
     }
 
+    //材质去重
+    void ObjLoader::removeRepeatMaterial(trimesh::TriMesh* mesh)
+    {
+        std::vector<trimesh::Material>& materials = mesh->materials;
+        std::vector<trimesh::Material> out;
+        std::map<int, int> textureIDMap;
+        
+        for (int i = 0; i < materials.size(); i++)
+        {
+            trimesh::Material& material = materials[i];
+            const std::string& fileName = material.map_filepaths[trimesh::Material::MapType::DIFFUSE];
+            if (!fileName.empty()) {
+                
+                bool exist = false;
+                
+                for (int j = 0; j < out.size(); j ++) {
+                    trimesh::Material& mat = out[j];
+                    const std::string& sub = mat.map_filepaths[trimesh::Material::MapType::DIFFUSE];
+                    if (fileName == sub) {
+                        exist = true;
+                        textureIDMap[i] = j;
+                        break;
+                    }
+                }
+                
+                if (!exist) {
+                    out.push_back(material);
+                    
+                    size_t idx = out.size() - 1;
+                    textureIDMap[i] = (int)idx;
+                }
+            }
+        }
+        
+        
+        //修改顶点所属材质的索引
+        std::vector<int>& tIDs = mesh->textureIDs;
+        for (int i = 0; i < tIDs.size(); i++) {
+            int &id = tIDs.at(i);
+            id = textureIDMap[id];
+        }
+        
+        materials.clear();
+        materials = out;
+    }
+
+
     bool ObjLoader::loadMap(trimesh::TriMesh* mesh)
     {
         if (mesh == nullptr)
             return false;
 
+        removeRepeatMaterial(mesh);
+        
         std::vector<trimesh::Material>& materials = mesh->materials;
         for (int type = 0; type < trimesh::Material::TYPE_COUNT; type++)
         {
@@ -583,7 +632,7 @@ namespace cxbin
                         imagedataV[i] = newimagedatetemp;
                         //material.startUV = trimesh::vec2(width0ffset, heightoffset);
                         //material.endUV = trimesh::vec2(width0ffset + imagedataV[i]->width / bytesPerPixel, heightoffset + imagedataV[i]->height);
-                        heightOffset += imagedataV[i]->height;
+                        heightOffset += newimagedatetemp->height;
                     }
                 }
             }
@@ -611,7 +660,10 @@ namespace cxbin
                     if (std::max(widthMax, heightMax) > 4096)
                     {
                         float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
-                        imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
+                        
+                        imgproc::ImageData* scaled = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
+                        delete imageData;
+                        imageData = scaled;
                     }
 
 #ifdef TRIMESH_MAPBUF_RGB
