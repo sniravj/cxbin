@@ -25,6 +25,8 @@ namespace cxbin
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
 		bool loadMap(trimesh::TriMesh* mesh);
 		int checkMtlCompleteness(std::string filename, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& out);
+        
+        void removeRepeatMaterial(trimesh::TriMesh* mesh);
     private:
 	};
 
