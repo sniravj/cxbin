@@ -2,7 +2,10 @@
 #define CXBIN_PLUGINOBJ_1630741230194_H
 #include "cxbin/loaderimpl.h"
 #include "cxbin/saverimpl.h"
-#include "trimesh2/TriMesh.h"
+
+namespace trimesh {
+	struct Material;
+}
 
 #define MAX_OBJ_READLINE_LEN 10240
 namespace cxbin
@@ -16,7 +19,8 @@ namespace cxbin
 		std::string expectExtension() override;
 		bool tryLoad(FILE* f, size_t fileSize) override;
 		bool load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer) override;
-        
+		void associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string& filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out) override;
+
     private:
         bool loadMtl(const std::string& fileName, std::vector<trimesh::Material>& out);
 		bool loadMap(trimesh::TriMesh* mesh);

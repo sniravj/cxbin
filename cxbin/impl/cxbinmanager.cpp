@@ -154,6 +154,85 @@ namespace cxbin
 		return extension;
 	}
 
+    void CXBinManager::associateFileList(const std::string& fileName, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& out)
+    {
+        FILE* f = fopen(fileName.c_str(), "rb");
+        if(!f)
+        {
+            LOGE("CXBinManager Open File [%s] Failed.", fileName.c_str());
+            
+            auto err = new cxbin::AssociateFileInfo();
+            err->code = CXBinLoaderCode::file_not_exist;
+            err->path = fileName;
+            err->msg = "file not exist";
+            
+            std::shared_ptr<AssociateFileInfo> info(err);
+            out.push_back(info);
+            return;
+        }
+        
+        std::string extension = stringutil::extensionFromFileName(fileName, true);
+        size_t fileSize = getFileSize(f);
+
+        LoaderImpl* loader = nullptr;
+        if (extension.size() > 0)
+        {
+            std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(extension);
+            if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
+            {
+                loader = it->second;
+            }
+        }
+
+        if (!loader)
+        {
+            extension = "";
+            for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
+                 it != m_loaders.end(); ++it)
+            {
+                fseek(f, 0L, SEEK_SET);
+                if (it->second->tryLoad(f, fileSize))
+                {
+                    loader = it->second;
+                    extension = it->first;
+                    break;
+                }
+            }
+        }
+
+        if (loader) {
+            fseek(f, 0L, SEEK_SET);
+            loader->modelPath = fileName;
+            loader->associateFileList(f, tracer, fileName, out);
+            loader->modelPath = "";
+			for (std::vector<std::shared_ptr<AssociateFileInfo>>::iterator item = out.begin(); item < out.end(); item++)
+			{
+				auto finditem = std::find_if(out.begin(), out.end(), 
+					[item](std::shared_ptr<AssociateFileInfo> srcitem)
+					{
+						if (srcitem != *item)
+						{
+							return (*item)->path == srcitem->path ? true : false;
+
+						}
+						else
+						{
+							return false;
+						}
+					});
+				if (finditem != out.end())
+				{
+					out.erase(item);
+					item = out.begin();
+				}
+			}
+
+
+        }
+        
+        fclose(f);
+    }
+
 	std::vector<trimesh::TriMesh*> CXBinManager::load(FILE* f, const std::string& extension,
 		ccglobal::Tracer* tracer, const std::string& fileName)
 	{
@@ -312,4 +391,6 @@ namespace cxbin
 	{
 		cxmanager.removeSaver(impl);
 	}
+
+    
 }

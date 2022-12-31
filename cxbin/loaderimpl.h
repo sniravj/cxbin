@@ -3,7 +3,7 @@
 #include "cxbin/interface.h"
 #include <string>
 #include <vector>
-
+#include <memory>
 namespace ccglobal
 {
 	class Tracer;
@@ -16,11 +16,12 @@ namespace trimesh
 
 namespace cxbin
 {
+
 	class LoaderImpl
 	{
     public:
         std::string modelPath;
-        
+        virtual void associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string &filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out);
 	public:
 		virtual ~LoaderImpl() {}
 

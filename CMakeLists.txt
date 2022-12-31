@@ -21,6 +21,7 @@ set(SRCS cxbin/interface.h
 		 cxbin/loaderimpl.h
 		 cxbin/saverimpl.h
 		 cxbin/format.h
+		 cxbin/analysis.h
 		 cxbin/impl/load.cpp
 		 cxbin/impl/save.cpp
 		 cxbin/impl/convert.cpp
@@ -29,6 +30,8 @@ set(SRCS cxbin/interface.h
 		 cxbin/impl/inner.h
 		 cxbin/impl/inner.cpp
 		 cxbin/impl/format.cpp
+		 cxbin/impl/analysis.cpp
+		 cxbin/impl/loaderimpl.cpp
 		 cxbin/plugin/pluginstl.h
 		 cxbin/plugin/pluginstl.cpp
 		 cxbin/plugin/pluginply.h
@@ -53,7 +56,7 @@ set(SRCS cxbin/interface.h
 
 		 )
 		 
-set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide imageproc mmesh freeImage)
+set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide boost_file_system imageproc mmesh)
 set(DEFS TIXML_USE_STL Z_PREFIX BOOST_ALL_NO_LIB)
 
 if(CC_BC_EMCC)
@@ -82,8 +85,13 @@ if(TARGET colladadom)
 	list(APPEND SRCS cxbin/plugin/plugindaedom.h
 					 cxbin/plugin/plugindaedom.cpp
 			)
-
-	list(APPEND LIBS colladadom boost_filesystem)
+	list(APPEND LIBS colladadom)
+    if(TARGET boost_file_system)
+        list(APPEND LIBS boost_file_system)
+    endif()
+    if(TARGET boost_filesystem)
+        list(APPEND LIBS boost_filesystem)
+    endif()
 	list(APPEND DEFS DAE_USE_COLLDADA_DOM)
 else()
 	list(APPEND SRCS cxbin/plugin/plugindae.h

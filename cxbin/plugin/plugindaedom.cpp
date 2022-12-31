@@ -85,7 +85,7 @@ namespace cxbin
     {
         std::string::size_type pos;
         std::vector<float> result;
-        str += pattern;//ï¿½ï¿½Õ¹ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ô·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        str += pattern;//????????????????
         int size = str.size();
         for (int i = 0; i < size; i++)
         {
@@ -565,23 +565,43 @@ namespace cxbin
 
                 domProfile_COMMON::domTechniqueRef technique = thisMesh->getTechnique();
                 //domTechnique::dom  domPhongRef e=thisMesh->getPhong();
+                if (technique == nullptr) {
+                    return;
+                }
                 
                 domProfile_COMMON::domTechnique::domPhongRef pr = technique->getPhong();
+                if (pr == nullptr) {
+                    return;
+                }
+                
+                domCommon_color_or_texture_typeRef em = pr->getEmission();
+                if (em) {
+                    getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                }
+                
 
                 
                 domCommon_color_or_texture_typeRef em = pr->getEmission();
                 getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
 
                 domCommon_color_or_texture_typeRef am = pr->getAmbient();
-                getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
+                if (am) {
+                    getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
+                }
                 //daeeffect.ambient = am->getChild("color")->getCharData();
 
                 domCommon_color_or_texture_typeRef diff = pr->getDiffuse();
-                getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
+                if (diff) {
+                    getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
+                }
+                
                 //daeeffect.diffuse = diff->getChild("texture")->getAttribute(daeString("texture"));
 
                 domCommon_color_or_texture_typeRef sp = pr->getSpecular();
-                getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
+                if (sp) {
+                    getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
+                }
+                
                 //daeeffect.specular = am->getChild("color")->getCharData();            
 
                 //daeeffect.init_from = findValue(mnewparams, daeeffect.diffuse);
@@ -764,18 +784,13 @@ namespace cxbin
                         float scalevalue = (float)4096.0 / std::max(widthMax, heightMax);
                         imageData = imgproc::scaleFreeImage(imageData, scalevalue, scalevalue);
                     }
-#ifdef TRIMESH_MAPBUF_RGB
-                    mesh->map_bufferSize[type] = imgproc::encodeWH(imageData->width, imageData->height);
-                    mesh->map_buffers[type] = imageData->data;
-                    imageData->data = nullptr;
-#else
+
                     unsigned char* buffer;
                     unsigned bufferSize;
                     imgproc::writeImage2Mem_freeImage(*imageData, buffer, bufferSize, imgproc::ImageFormat::IMG_FORMAT_PNG);
 
                     mesh->map_bufferSize[type] = bufferSize;
                     mesh->map_buffers[type] = buffer;
-#endif
                 }
             }
 
@@ -838,27 +853,27 @@ namespace cxbin
 		std::vector<CObject*> ObjectShapes;
 		daeDatabase* data = dae.getDatabase();
 
-        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        //???????§¹??????
         std::map<std::string, daeEffect> effects;
         getEffects(data, effects, tracer);
         
-        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        //???????????
         std::map<std::string, std::string> materials;
         getMaterials(data,materials,tracer);
 
-        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Í¼Æ¬
+        //?????????
         std::map<std::string, std::string> images;
         getImages(data, images, tracer);
 
-        //ï¿½ï¿½ï¿½Ó²ï¿½ï¿½Ê°ó¶¨½Ó¿ï¿½
+        //Ìí¼Ó²ÄÖÊ°ó¶¨½Ó¿Ú
         std::map<std::string, std::string> visualScenes;
         getVisualScenes(data,visualScenes, tracer);
 
-        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ã¡¢ï¿½æ¡¢uvsï¿½ï¿½faceuvs
+        //»ñÈ¡¶¥µã¡¢Ãæ¡¢uvs¡¢faceuvs
         std::vector<std::vector<std::string>> mesh2material;
         getGeometry(data,out, mesh2material,tracer);
 
-        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+        //×éºÏÎÆÀíÐÅÏ¢
         mergeData(data,out,mesh2material,visualScenes,images,effects,materials,tracer);
 
         std::string materialFileName = "";
@@ -874,11 +889,69 @@ namespace cxbin
             }
         }
 
+        //just for test
+        //std::vector<std::shared_ptr<AssociateFileInfo>> out1;
+        //associateFileList(f, tracer, modelPath, out1);
 
         if (tracer)
         {
             tracer->success();
         }
         return !success;
+    }
+
+    void DaeDomLoader::associateFileList(FILE* f, ccglobal::Tracer* tracer, const std::string& filePath, std::vector<std::shared_ptr<AssociateFileInfo>>& out)
+    {
+        DAE dae;
+        domCOLLADA* root = (domCOLLADA*)dae.open(filePath);
+        if (!root)
+        {
+            if (tracer)
+                tracer->failed("dae dom File open failed");
+            return ;
+        }
+
+        std::string imagesFileName = "";
+        size_t loc = filePath.find_last_of("/") + 1;
+        if (loc != std::string::npos) {
+            imagesFileName = filePath.substr(0, loc);
+        }
+
+        std::vector<CObject*> ObjectShapes;
+        daeDatabase* data = dae.getDatabase();
+
+        std::map<std::string, std::string> images;
+        getImages(data, images, tracer);
+
+        std::map<std::string, std::string>::iterator iter = images.begin();
+        while (iter != images.end())
+        {
+
+            std::shared_ptr<AssociateFileInfo>associateInfor(new AssociateFileInfo());
+            if (boost::filesystem::exists(iter->second))
+            {
+                associateInfor->code = CXBinLoaderCode::no_error;
+                associateInfor->path = iter->second;
+                out.push_back(associateInfor);
+            }
+            else {
+
+                const std::string strFullPath = imagesFileName + iter->second;
+                if (boost::filesystem::exists(strFullPath))
+                {
+                    associateInfor->code = CXBinLoaderCode::no_error;
+                    associateInfor->path = strFullPath;
+                    out.push_back(associateInfor);
+                }
+                else
+                {
+                    associateInfor->code = CXBinLoaderCode::file_not_exist;
+                    associateInfor->path = strFullPath;
+                    out.push_back(associateInfor);
+                }
+            }
+
+            iter++;
+        }
     }
 }

@@ -38,6 +38,7 @@ namespace cxbin
 		std::vector<trimesh::TriMesh*> load(FILE* f, const std::string& extension, ccglobal::Tracer* tracer, const std::string& fileName);
 		bool save(trimesh::TriMesh* mesh, const std::string& fileName, const std::string& extension, ccglobal::Tracer* tracer);
 		std::string testFormat(const std::string& fileName);
+        void associateFileList(const std::string& fileName, ccglobal::Tracer* tracer, std::vector<std::shared_ptr<AssociateFileInfo>>& out);
 	protected:
 		std::map<std::string, LoaderImpl*> m_loaders;
 		std::map<std::string, SaverImpl*> m_savers;
