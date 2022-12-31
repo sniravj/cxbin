@@ -581,8 +581,8 @@ namespace cxbin
                 
 
                 
-                domCommon_color_or_texture_typeRef em = pr->getEmission();
-                getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                //domCommon_color_or_texture_typeRef em = pr->getEmission();
+                //getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
 
                 domCommon_color_or_texture_typeRef am = pr->getAmbient();
                 if (am) {
@@ -853,7 +853,7 @@ namespace cxbin
 		std::vector<CObject*> ObjectShapes;
 		daeDatabase* data = dae.getDatabase();
 
-        //???????§¹??????
+        //???????ï¿½ï¿½??????
         std::map<std::string, daeEffect> effects;
         getEffects(data, effects, tracer);
         
@@ -865,15 +865,15 @@ namespace cxbin
         std::map<std::string, std::string> images;
         getImages(data, images, tracer);
 
-        //Ìí¼Ó²ÄÖÊ°ó¶¨½Ó¿Ú
+        //ï¿½ï¿½ï¿½Ó²ï¿½ï¿½Ê°ó¶¨½Ó¿ï¿½
         std::map<std::string, std::string> visualScenes;
         getVisualScenes(data,visualScenes, tracer);
 
-        //»ñÈ¡¶¥µã¡¢Ãæ¡¢uvs¡¢faceuvs
+        //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ã¡¢ï¿½æ¡¢uvsï¿½ï¿½faceuvs
         std::vector<std::vector<std::string>> mesh2material;
         getGeometry(data,out, mesh2material,tracer);
 
-        //×éºÏÎÆÀíÐÅÏ¢
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
         mergeData(data,out,mesh2material,visualScenes,images,effects,materials,tracer);
 
         std::string materialFileName = "";
