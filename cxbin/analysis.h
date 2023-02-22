@@ -9,7 +9,7 @@
 
 #include <vector>
 #include <string>
-
+#include <memory>
 #include "cxbin/interface.h"
 
 namespace ccglobal
