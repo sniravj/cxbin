@@ -124,7 +124,38 @@ namespace cxbin
 					}
 				}
 
+                if (ch == '[')
+                {
+                    fseek(f, -13, SEEK_CUR);
+                    char buf3[13 + 1] = { 0 };
+                    buf3[13] = 0;
+                    fread(buf3, 1, 13, f);
+                    std::string  strtemp = buf3;
+                    if (strtemp.find("normalIndex") != std::string::npos)
+                    {
+                        do {
+                            ch = fgetc(f);
+                            report(1);
+                        } while (ch != ']');
+                    }
+                }
 
+                if (ch == '[')
+                {
+                    fseek(f, -12, SEEK_CUR);
+                    char buf3[12 + 1] = { 0 };
+                    buf3[12] = 0;
+                    fread(buf3, 1, 12, f);
+                    std::string  strtemp = buf3;
+                    if (strtemp.find("colorIndex") != std::string::npos)
+                    {
+                        do {
+                            ch = fgetc(f);
+                            report(1);
+                        } while (ch != ']');
+                    }
+                }
+                
 				if (ch == '[')
 				{
 					fseek(f, -9, SEEK_CUR);
@@ -152,75 +183,90 @@ namespace cxbin
 						bHavePoint = true;
 						points.clear();
 					}
-
-					if (strtemp.find("Index") != std::string::npos && bHavePoint)
-					{
-						std::vector<int> index;
-						ch = fgetc(f);
-						while (ch != ']')
-						{
-							if (ch != ' ' && ch != ',' && ch != '\n')
-							{
-								fseek(f, -1, SEEK_CUR);
-								fscanf(f, "%d", &u);
-								if (u != -1)
-								{
-									index.push_back(u);
-								}
-								else
-								{
-									if (index.size() == 3)
-									{
-										face aface;
-										aface.vertexIndex[0] = index[0];
-										aface.vertexIndex[1] = index[1];
-										aface.vertexIndex[2] = index[2];
-										faces.push_back(aface);
-										index.clear();
-									}
-									else if (index.size() == 4)
-									{
-										face aface;
-										aface.vertexIndex[0] = index[0];
-										aface.vertexIndex[1] = index[1];
-										aface.vertexIndex[2] = index[2];
-										faces.push_back(aface);
-										aface.vertexIndex[0] = index[0];
-										aface.vertexIndex[1] = index[2];
-										aface.vertexIndex[2] = index[3];
-										faces.push_back(aface);
-										index.clear();
-									}
-									else if (index.size() > 4)
-									{
-										for (int n = 2; n < index.size(); n++)
-										{
-											face aface;
-											aface.vertexIndex[0] = index[0];
-											aface.vertexIndex[1] = index[n - 1];
-											aface.vertexIndex[2] = index[n];
-											faces.push_back(aface);
-										}
-										index.clear();
-									}
-									else
-									{
-										index.clear();
-									}
-								}
-							}
-
-							ch = fgetc(f);
-
-							report(8);
-						}
-						facess.push_back(faces);
-						faces.clear();
-						polygons_Indexx.push_back(polygons_Index);
-						polygons_Index.clear();
-						bHavePoint = false;
-					}
 				}
+                
+                if (ch == '[')
+                {
+                    fseek(f, -12, SEEK_CUR);
+                    char buf[12 + 1] = { 0 };
+                    buf[12] = 0;
+                    fread(buf, 1, 12, f);
+                    std::string strtemp = buf;
+                    
+                    bool isCoordIndex = strtemp.find("coordIndex") != std::string::npos;
+                    if (!isCoordIndex) {
+                        isCoordIndex = strtemp.find("Index") != std::string::npos;
+                    }
+                    
+                    if (isCoordIndex && bHavePoint)
+                    {
+                        std::vector<int> index;
+                        ch = fgetc(f);
+                        while (ch != ']')
+                        {
+                            if (ch != ' ' && ch != ',' && ch != '\n')
+                            {
+                                fseek(f, -1, SEEK_CUR);
+                                fscanf(f, "%d", &u);
+                                if (u != -1)
+                                {
+                                    index.push_back(u);
+                                }
+                                else
+                                {
+                                    if (index.size() == 3)
+                                    {
+                                        face aface;
+                                        aface.vertexIndex[0] = index[0];
+                                        aface.vertexIndex[1] = index[1];
+                                        aface.vertexIndex[2] = index[2];
+                                        faces.push_back(aface);
+                                        index.clear();
+                                    }
+                                    else if (index.size() == 4)
+                                    {
+                                        face aface;
+                                        aface.vertexIndex[0] = index[0];
+                                        aface.vertexIndex[1] = index[1];
+                                        aface.vertexIndex[2] = index[2];
+                                        faces.push_back(aface);
+                                        aface.vertexIndex[0] = index[0];
+                                        aface.vertexIndex[1] = index[2];
+                                        aface.vertexIndex[2] = index[3];
+                                        faces.push_back(aface);
+                                        index.clear();
+                                    }
+                                    else if (index.size() > 4)
+                                    {
+                                        for (int n = 2; n < index.size(); n++)
+                                        {
+                                            face aface;
+                                            aface.vertexIndex[0] = index[0];
+                                            aface.vertexIndex[1] = index[n - 1];
+                                            aface.vertexIndex[2] = index[n];
+                                            faces.push_back(aface);
+                                        }
+                                        index.clear();
+                                    }
+                                    else
+                                    {
+                                        index.clear();
+                                    }
+                                }
+                            }
+
+                            ch = fgetc(f);
+
+                            report(8);
+                        }
+                        facess.push_back(faces);
+                        faces.clear();
+                        polygons_Indexx.push_back(polygons_Index);
+                        polygons_Index.clear();
+                        bHavePoint = false;
+                    }
+                }
+                
 				break;
 			}
 		}
