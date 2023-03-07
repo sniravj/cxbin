@@ -56,7 +56,7 @@ set(SRCS cxbin/interface.h
 
 		 )
 		 
-set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide imageproc mmesh freeImage)
+set(LIBS trimesh2 stringutil tinyxml zlib boost_nowide imageproc mmesh freeimage)
 set(DEFS TIXML_USE_STL Z_PREFIX BOOST_ALL_NO_LIB)
 
 if(CC_BC_EMCC)
@@ -92,6 +92,10 @@ else()
 	list(APPEND SRCS cxbin/plugin/plugindae.h
 					 cxbin/plugin/plugindae.cpp
 			)
+endif()
+
+if(CC_GLOBAL_FORCE_STATIC)
+	list(APPEND DEFS FREEIMAGE_LIB)
 endif()
 
 __add_common_library(cxbin)
