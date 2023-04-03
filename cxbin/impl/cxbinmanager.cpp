@@ -10,6 +10,8 @@
 #include "ccglobal/platform.h"
 #include "mmesh/trimesh/trimeshutil.h"
 
+#include "boost/nowide/cstdio.hpp"
+
 namespace cxbin
 {
 	size_t getFileSize(FILE* file)
@@ -348,7 +350,8 @@ namespace cxbin
 			formartPrint(tracer, "CXBinManager::save. use cxbin extension.");
 		}
 
-		FILE* f = fopen(realFileName.c_str(), "wb");
+		//FILE* f = fopen(realFileName.c_str(), "wb");
+        FILE* f = boost::nowide::fopen(realFileName.c_str(), "wb");
 
 		//formartPrint(tracer, "CXBinManager::save. save file %s.", realFileName.c_str());
 		if (!f) {

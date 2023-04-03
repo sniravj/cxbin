@@ -25,9 +25,50 @@ namespace cxbin
 		return "stl";
 	}
 
+    bool write_stl_w(trimesh::TriMesh* mesh, FILE* f)
+    {
+#if defined(__ANDROID__)
+        LOGI("write_stl.\n");
+#endif
+        bool need_swap = trimesh::we_are_big_endian();
+        char header[80];
+        memset(header, ' ', 80);
+        FWRITE(header, 80, 1, f);
+
+        int nfaces = mesh->faces.size();
+        if (need_swap)
+            trimesh::swap_int(nfaces);
+        FWRITE(&nfaces, 4, 1, f);
+
+        for (size_t i = 0; i < mesh->faces.size(); i++) {
+            float fbuf[12];
+            trimesh::vec tn = mesh->trinorm(i);
+            trimesh::normalize(tn);
+            fbuf[0] = tn[0]; fbuf[1] = tn[1]; fbuf[2] = tn[2];
+            fbuf[3] = mesh->vertices[mesh->faces[i][0]][0];
+            fbuf[4] = mesh->vertices[mesh->faces[i][0]][1];
+            fbuf[5] = mesh->vertices[mesh->faces[i][0]][2];
+            fbuf[6] = mesh->vertices[mesh->faces[i][1]][0];
+            fbuf[7] = mesh->vertices[mesh->faces[i][1]][1];
+            fbuf[8] = mesh->vertices[mesh->faces[i][1]][2];
+            fbuf[9] = mesh->vertices[mesh->faces[i][2]][0];
+            fbuf[10] = mesh->vertices[mesh->faces[i][2]][1];
+            fbuf[11] = mesh->vertices[mesh->faces[i][2]][2];
+            if (need_swap) {
+                for (int j = 0; j < 12; j++)
+                    trimesh::swap_float(fbuf[j]);
+            }
+            FWRITE(fbuf, 48, 1, f);
+            unsigned char att[2] = { 0, 0 };
+            FWRITE(att, 2, 1, f);
+        }
+        return true;
+    }
+
 	bool StlSaver::save(FILE* f, trimesh::TriMesh* out, ccglobal::Tracer* tracer, std::string fileName)
 	{
-		return out->write(fileName);
+		//return out->write(f,fileName.c_str());
+        return write_stl_w(out,f);
 	}
 
 	// A valid binary STL buffer should consist of the following elements, in order:
