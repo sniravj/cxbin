@@ -191,7 +191,63 @@ namespace cxbin
 			trimesh::transpose(xf);
 			return xf;
 		};
+
+		auto processMesh = [&amesh, &tracer, &resourceID_uvIndex, &resourceID_textrueIndex](Lib3MF::PMeshObject mesh, const trimesh::fxform& xf) {
+			if (!mesh)
+				return;
+
+			int faceCount = mesh->GetTriangleCount();
+
+			amesh->faces.reserve(faceCount);
+			amesh->vertices.reserve(3 * faceCount);
+
+			int nfacets = faceCount;
+			int calltime = nfacets / 10;
+			if (calltime <= 0)
+				calltime = nfacets;
+			for (int nIdx = 0; nIdx < faceCount; nIdx++)
+			{
+				if (tracer && nIdx % calltime == 1)
+				{
+					tracer->progress((float)nIdx / (float)nfacets);
+				}
+				if (tracer && tracer->interrupt())
+					return;
+
+				Lib3MF::sTriangle faceIndex = mesh->GetTriangle(nIdx);
+				Lib3MF::sPosition point1 = mesh->GetVertex(faceIndex.m_Indices[0]);
+				Lib3MF::sPosition point2 = mesh->GetVertex(faceIndex.m_Indices[1]);
+				Lib3MF::sPosition point3 = mesh->GetVertex(faceIndex.m_Indices[2]);
+
+				trimesh::vec3 v1 = xf * trimesh::point(point1.m_Coordinates[0], point1.m_Coordinates[1], point1.m_Coordinates[2]);
+				trimesh::vec3 v2 = xf * trimesh::point(point2.m_Coordinates[0], point2.m_Coordinates[1], point2.m_Coordinates[2]);
+				trimesh::vec3 v3 = xf * trimesh::point(point3.m_Coordinates[0], point3.m_Coordinates[1], point3.m_Coordinates[2]);
+
+				int v = amesh->vertices.size();
+				amesh->vertices.push_back(v1);
+				amesh->vertices.push_back(v2);
+				amesh->vertices.push_back(v3);
+				amesh->faces.push_back(trimesh::TriMesh::Face(v, v + 1, v + 2));
+
+				//����faceUVs
+				Lib3MF::sTriangleProperties aProperty;
+				mesh->GetTriangleProperties(nIdx, aProperty);
+				std::map<int, int>::iterator it = resourceID_uvIndex.find((int)aProperty.m_ResourceID);
+				if (it != resourceID_uvIndex.end() && (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[1])
+					&& (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[2])
+					&& (aProperty.m_PropertyIDs[1] != aProperty.m_PropertyIDs[2]))
+				{
+					std::map<int, int>::iterator it2 = resourceID_textrueIndex.find((int)aProperty.m_ResourceID);
+					if (it2 != resourceID_textrueIndex.end())
+					{
+						amesh->faceUVs.push_back(trimesh::TriMesh::Face(aProperty.m_PropertyIDs[0] + it->second - 1, aProperty.m_PropertyIDs[1] + it->second - 1, aProperty.m_PropertyIDs[2] + it->second - 1));
+						amesh->textureIDs.push_back(it2->second);
+					}
+				}
+			}
+		};
 #if 1
+
 		Lib3MF::PBuildItemIterator items = model->GetBuildItems();
 		while (items->MoveNext())
 		{
@@ -201,68 +257,35 @@ namespace cxbin
 			Lib3MF::PBuildItem item = items->GetCurrent();
 			Lib3MF::sTransform t = item->GetObjectTransform();
 			trimesh::fxform xf = t2xf(t);
-			Lib3MF::PComponentsObject comp = model->GetComponentsObjectByID(item->GetObjectResourceID());
-			if (!comp)
-				continue;
 
-			Lib3MF_uint32 count = comp->GetComponentCount();
-			for (Lib3MF_uint32 i = 0; i < count; ++i)
+			Lib3MF_uint32 id = item->GetObjectResourceID();
+
+			Lib3MF::PComponentsObjectIterator components = model->GetComponentsObjects();
+			Lib3MF::PMeshObjectIterator meshes = model->GetMeshObjects();
+
+			while (components->MoveNext())
 			{
-				Lib3MF::PComponent c = comp->GetComponent(i);
-				//Lib3MF::sTransform t = c->GetTransform();
-				Lib3MF::PMeshObject mesh = model->GetMeshObjectByID(c->GetObjectResourceID());
-
-				if (!mesh)
-					continue;
-
-				int faceCount = mesh->GetTriangleCount();
-
-				amesh->faces.reserve(faceCount);
-				amesh->vertices.reserve(3 * faceCount);
-				
-				int nfacets = faceCount;
-				int calltime = nfacets / 10;
-				if (calltime <= 0)
-					calltime = nfacets;
-				for (int nIdx = 0; nIdx < faceCount; nIdx++)
+				Lib3MF::PComponentsObject comp = components->GetCurrentComponentsObject();
+				if (comp->GetResourceID() == id)
 				{
-					if (tracer && nIdx % calltime == 1)
+					Lib3MF_uint32 count = comp->GetComponentCount();
+					for (Lib3MF_uint32 i = 0; i < count; ++i)
 					{
-						tracer->progress((float)nIdx / (float)nfacets);
-					}
-					if (tracer && tracer->interrupt())
-						return false;
-				
-					Lib3MF::sTriangle faceIndex = mesh->GetTriangle(nIdx);
-					Lib3MF::sPosition point1 = mesh->GetVertex(faceIndex.m_Indices[0]);
-					Lib3MF::sPosition point2 = mesh->GetVertex(faceIndex.m_Indices[1]);
-					Lib3MF::sPosition point3 = mesh->GetVertex(faceIndex.m_Indices[2]);
+						Lib3MF::PComponent c = comp->GetComponent(i);
+						//Lib3MF::sTransform t = c->GetTransform();
+						Lib3MF::PMeshObject mesh = model->GetMeshObjectByID(c->GetObjectResourceID());
 
-					trimesh::vec3 v1 = xf * trimesh::point(point1.m_Coordinates[0], point1.m_Coordinates[1], point1.m_Coordinates[2]);
-					trimesh::vec3 v2 = xf * trimesh::point(point2.m_Coordinates[0], point2.m_Coordinates[1], point2.m_Coordinates[2]);
-					trimesh::vec3 v3 = xf * trimesh::point(point3.m_Coordinates[0], point3.m_Coordinates[1], point3.m_Coordinates[2]);
-
-					int v = amesh->vertices.size();
-					amesh->vertices.push_back(v1);
-					amesh->vertices.push_back(v2);
-					amesh->vertices.push_back(v3);
-					amesh->faces.push_back(trimesh::TriMesh::Face(v, v + 1, v + 2));
-				
-					//����faceUVs
-					Lib3MF::sTriangleProperties aProperty;
-					mesh->GetTriangleProperties(nIdx, aProperty);
-					std::map<int, int>::iterator it = resourceID_uvIndex.find((int)aProperty.m_ResourceID);
-					if (it != resourceID_uvIndex.end() && (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[1])
-						&& (aProperty.m_PropertyIDs[0] != aProperty.m_PropertyIDs[2])
-						&& (aProperty.m_PropertyIDs[1] != aProperty.m_PropertyIDs[2]))
-					{
-						std::map<int, int>::iterator it2 = resourceID_textrueIndex.find((int)aProperty.m_ResourceID);
-						if (it2 != resourceID_textrueIndex.end())
-						{
-							amesh->faceUVs.push_back(trimesh::TriMesh::Face(aProperty.m_PropertyIDs[0] + it->second - 1, aProperty.m_PropertyIDs[1] + it->second - 1, aProperty.m_PropertyIDs[2] + it->second - 1));
-							amesh->textureIDs.push_back(it2->second);
-						}
+						processMesh(mesh, xf);
 					}
+				}
+			}
+
+			while (meshes->MoveNext())
+			{
+				Lib3MF::PMeshObject mesh = meshes->GetCurrentMeshObject();
+				if (mesh->GetResourceID() == id)
+				{
+					processMesh(mesh, xf);
 				}
 			}
 		}
