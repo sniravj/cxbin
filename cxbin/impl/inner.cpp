@@ -373,7 +373,7 @@ namespace cxbin
 
 	// Read a bunch of faces from an ASCII file
 	bool read_faces_asc(FILE* f, trimesh::TriMesh* mesh, int nfaces,
-		int face_len, int face_count, int face_idx, bool read_to_eol /* = false */)
+		int face_len, int face_count, int face_idx,bool read_to_eol /* = false */)
 	{
 		if (nfaces < 0 || face_idx < 0)
 			return false;
@@ -405,6 +405,164 @@ namespace cxbin
 					if (!fscanf(f, " %d", &this_face_count)) {
 						//dprintf("Couldn't read vertex count for face %d\n", i);
 						return false;
+					}
+				}
+				else {
+					GET_WORD();
+				}
+			}
+			tess(mesh->vertices, thisface, mesh->faces);
+			if (read_to_eol) {
+				while (1) {
+					int c = fgetc(f);
+					if (c == EOF || c == '\n')
+						break;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	// Read nfaces faces from a binary file.
+// face_len = total length of face record, *not counting the indices*
+//  (Yes, this is bizarre, but there is potentially a variable # of indices...)
+// face_count = offset within record of the count of indices in this face
+//  (If this is -1, does not read a count and assumes triangles)
+// face_idx = offset within record of the indices themselves
+	bool read_faces_bin_with_color(FILE* f, trimesh::TriMesh* mesh, bool need_swap,
+		int nfaces, int face_len, int face_count, int face_idx,
+		int face_color, bool face_float_color)
+	{
+		if (nfaces < 0 || face_idx < 0)
+			return false;
+
+		if (nfaces == 0)
+			return true;
+
+		//dprintf("\n  Reading %d faces... ", nfaces);
+
+		int old_nfaces = mesh->faces.size();
+		int new_nfaces = old_nfaces + nfaces;
+		mesh->faces.reserve(new_nfaces);
+
+		if (face_color > 0)
+			mesh->colors.resize(new_nfaces);
+
+		// face_len doesn't include the indices themeselves, since that's
+		// potentially variable-length
+		int face_skip = face_len - face_idx;
+		if (face_color)
+			face_color -= face_idx;
+
+		std::vector<unsigned char> buf(std::max(face_idx, face_skip));
+		std::vector<int> thisface;
+		for (int i = 0; i < nfaces; i++) {
+			COND_READ(face_idx > 0, buf[0], face_idx);
+
+			unsigned this_ninds = 3;
+			if (face_count >= 0) {
+				// Read count - either 1 or 4 bytes
+				if (face_idx - face_count == 4) {
+					this_ninds = *(unsigned*)&(buf[face_count]);
+					if (need_swap)
+						trimesh::swap_unsigned(this_ninds);
+				}
+				else {
+					this_ninds = buf[face_count];
+				}
+			}
+			thisface.resize(this_ninds);
+			COND_READ(true, thisface[0], 4 * this_ninds);
+			if (need_swap) {
+				for (size_t j = 0; j < thisface.size(); j++)
+					trimesh::swap_int(thisface[j]);
+			}
+			tess(mesh->vertices, thisface, mesh->faces);
+
+			for (int j = face_idx; j < face_len; j++)
+			{
+				if (j == face_color && face_float_color) {
+					float r, g, b;
+					if (fscanf(f, "%f %f %f", &r, &g, &b) != 3)
+						return false;
+					mesh->colors[i] = trimesh::Color(r, g, b);
+					j += 2;
+				}
+				else if (j == face_color && !face_float_color) {
+					unsigned char r, g, b;
+					if (fscanf(f, "%c %c %c", &r, &g, &b) != 3)
+						return false;
+					mesh->colors[i] = trimesh::Color(r, g, b);
+					j += 2;
+				}
+				else {
+					COND_READ(face_skip > 0, buf[0], 1);
+				}
+
+			}
+			//COND_READ(face_skip > 0, buf[0], face_skip);
+		}
+
+		return true;
+	}
+
+
+	// Read a bunch of faces from an ASCII file
+	bool read_faces_asc_with_color(FILE* f, trimesh::TriMesh* mesh, int nfaces,
+		int face_len, int face_count, int face_idx,
+		int face_color, bool face_float_color, bool read_to_eol /* = false */)
+	{
+		if (nfaces < 0 || face_idx < 0)
+			return false;
+
+		if (nfaces == 0)
+			return true;
+
+		int old_nfaces = mesh->faces.size();
+		int new_nfaces = old_nfaces + nfaces;
+		mesh->faces.reserve(new_nfaces);
+
+		if (face_color > 0)
+			mesh->colors.resize(new_nfaces);
+
+		char buf[1024];
+		stringutil::skip_comments(f);
+		//dprintf("\n  Reading %d faces... ", nfaces);
+		std::vector<int> thisface;
+		for (int i = 0; i < nfaces; i++) {
+			thisface.clear();
+			int this_face_count = 3;
+			for (int j = 0; j < face_len + this_face_count; j++) {
+				if (j >= face_idx && j < face_idx + this_face_count) {
+					thisface.push_back(0);
+					if (!fscanf(f, " %d", &(thisface.back()))) {
+						//dprintf("Couldn't read vertex index %d for face %d\n",
+						//	j - face_idx, i);
+						return false;
+					}
+				}
+				else if (j == face_count) {
+					if (!fscanf(f, " %d", &this_face_count)) {
+						//dprintf("Couldn't read vertex count for face %d\n", i);
+						return false;
+					}
+				}
+				else if (j == face_color - 1 + this_face_count)
+				{
+					if (face_float_color) {
+						float r, g, b;
+						if (fscanf(f, "%f %f %f", &r, &g, &b) != 3)
+							return false;
+						mesh->colors[i] = trimesh::Color(r, g, b);
+						j += 2;
+					}
+					else if (!face_float_color) {
+						int r, g, b;
+						if (fscanf(f, "%d %d %d", &r, &g, &b) != 3)
+							return false;
+						mesh->colors[i] = trimesh::Color(r, g, b);
+						j += 2;
 					}
 				}
 				else {

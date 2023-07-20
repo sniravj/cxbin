@@ -401,6 +401,7 @@ namespace cxbin
 		int vert_len = 0, vert_pos = -1, vert_norm = -1;
 		int vert_color = -1, vert_conf = -1;
 		int face_len = 0, face_count = -1, face_idx = -1;
+		int face_color = -1, face_float_color = false;
 
 		if (!parsePlyFormat(f, binary, need_swap))
 		{
@@ -528,6 +529,18 @@ namespace cxbin
 						tracer->failed("property failed");
 					return false;
 				}
+
+				if (LINE_IS("property uchar diffuse_red") ||
+					LINE_IS("property uint8 diffuse_red") ||
+					LINE_IS("property uchar red") ||
+					LINE_IS("property uint8 red"))
+					face_color = face_len;
+				if (LINE_IS("property float diffuse_red") ||
+					LINE_IS("property float32 diffuse_red") ||
+					LINE_IS("property float red") ||
+					LINE_IS("property float32 red"))
+					face_color = face_len, face_float_color = true;
+
 				GET_LINE();
 			}
 		}
@@ -671,8 +684,9 @@ namespace cxbin
 		}
 		else if (nfaces) {
 			if (binary) {
-				if (!read_faces_bin(f, model, need_swap, nfaces,
-					face_len, face_count, face_idx))
+				if (!read_faces_bin_with_color(f, model, need_swap, nfaces,
+					face_len, face_count, face_idx,
+					face_color, face_float_color))
 				{
 					if (tracer)
 						tracer->failed("read faces bin failed");
@@ -680,8 +694,8 @@ namespace cxbin
 				}
 			}
 			else {
-				if (!read_faces_asc(f, model, nfaces,
-					face_len, face_count, face_idx, false))
+				if (!read_faces_asc_with_color(f, model, nfaces,
+					face_len, face_count, face_idx, face_color, face_float_color, false))
 				{
 					if (tracer)
 						tracer->failed("read faces asc failed");
