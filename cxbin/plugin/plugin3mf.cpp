@@ -5,7 +5,7 @@
 #include "trimesh2/XForm.h"
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
-#include "imageproc/imageloader.h"
+#include "cxbin/impl/imageloader.h"
 #include <map>
 
 namespace cxbin

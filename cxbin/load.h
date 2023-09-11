@@ -1,18 +1,11 @@
 #ifndef CXBIN_LOAD_1630734417275_H
 #define CXBIN_LOAD_1630734417275_H
 #include "cxbin/interface.h"
+#include "trimesh2/TriMesh.h"
 #include <vector>
 #include <string>
 
-namespace ccglobal
-{
-	class Tracer;
-}
-
-namespace trimesh
-{
-	class TriMesh;
-}
+#include "ccglobal/tracer.h"
 
 namespace cxbin
 {

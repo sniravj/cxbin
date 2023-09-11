@@ -6,7 +6,7 @@
 #include "trimesh2/endianutil.h"
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
-#include "imageproc/imageloader.h"
+#include "cxbin/impl/imageloader.h"
 
 
 namespace cxbin

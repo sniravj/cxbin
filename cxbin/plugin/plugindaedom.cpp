@@ -25,7 +25,7 @@
 #include <dom/domAny.h>
 #include <dom/domPolylist.h>
 
-#include "imageproc/imageloader.h"
+#include "cxbin/impl/imageloader.h"
 
 using namespace ColladaDOM141;
 

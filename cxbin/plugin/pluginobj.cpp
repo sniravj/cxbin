@@ -14,7 +14,7 @@
 
 #include "cxbin/convert.h"
 #include "ccglobal/tracer.h"
-#include "imageproc/imageloader.h"
+#include "cxbin/impl/imageloader.h"
 #include "boost/nowide/cstdio.hpp"
 
 namespace cxbin
