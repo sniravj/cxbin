@@ -3,7 +3,7 @@
 #include "cxbin/convert.h"
 
 #include "cxbin/impl/cxbinmanager.h"
-#include "stringutil/filenameutil.h"
+#include "util.h"
 #include "cxbin/impl/inner.h"
 #include <assert.h>
 
@@ -58,7 +58,7 @@ namespace cxbin
 		}
 
 		const std::string _fileName = fileName;
-		std::string extension = stringutil::extensionFromFileName(_fileName, true);
+		std::string extension = extensionFromFileName(_fileName, true);
 		models = cxmanager.load(f, extension, tracer, _fileName);
 
 		if (tracer && models.size() > 0)

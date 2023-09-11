@@ -3,8 +3,7 @@
 #include "ccglobal/tracer.h"
 #include "ccglobal/spycc.h"
 
-#include "stringutil/util.h"
-#include "stringutil/filenameutil.h"
+#include "cxbin/impl/util.h"
 #include "trimesh2/endianutil.h"
 #include "trimesh2/TriMesh.h"
 
@@ -251,8 +250,8 @@ namespace cxbin
 			
 			if (sourceLine.find("vertex") != std::string::npos)
 			{
-				sourceLine = stringutil::trimHeadTail(sourceLine);
-				std::vector<std::string> segs = stringutil::splitString(sourceLine, " ");
+				sourceLine = trimHeadTail(sourceLine);
+				std::vector<std::string> segs = splitString(sourceLine, " ");
 				if (segs.size() != 4)
 				{
 					parseError = true;

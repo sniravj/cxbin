@@ -1,6 +1,6 @@
 #include "inner.h"
 
-#include "stringutil/filenameutil.h"
+#include "util.h"
 #include "trimesh2/endianutil.h"
 #include "cxbin/convert.h"
 
@@ -30,7 +30,7 @@ namespace cxbin
 			mesh->confidences.resize(new_nverts);
 
 		char buf[1024];
-		stringutil::skip_comments(f);
+		skip_comments(f);
 		//dprintf("\n  Reading %d vertices... ", nverts);
 		for (int i = old_nverts; i < new_nverts; i++) {
 			for (int j = 0; j < vert_len; j++) {
@@ -297,7 +297,7 @@ namespace cxbin
 	// Read triangle strips from an ASCII file
 	bool read_strips_asc(FILE* f, trimesh::TriMesh* mesh)
 	{
-		stringutil::skip_comments(f);
+		skip_comments(f);
 		int striplen;
 		if (fscanf(f, "%d", &striplen) != 1)
 			return false;
@@ -306,7 +306,7 @@ namespace cxbin
 		mesh->tstrips.resize(new_striplen);
 
 		//dprintf("\n  Reading triangle strips... ");
-		stringutil::skip_comments(f);
+		skip_comments(f);
 		for (int i = old_striplen; i < new_striplen; i++)
 			if (fscanf(f, "%d", &mesh->tstrips[i]) != 1)
 				return false;
@@ -386,7 +386,7 @@ namespace cxbin
 		mesh->faces.reserve(new_nfaces);
 
 		char buf[1024];
-		stringutil::skip_comments(f);
+		skip_comments(f);
 		//dprintf("\n  Reading %d faces... ", nfaces);
 		std::vector<int> thisface;
 		for (int i = 0; i < nfaces; i++) {
@@ -527,7 +527,7 @@ namespace cxbin
 			mesh->colors.resize(new_nfaces);
 
 		char buf[1024];
-		stringutil::skip_comments(f);
+		skip_comments(f);
 		//dprintf("\n  Reading %d faces... ", nfaces);
 		std::vector<int> thisface;
 		for (int i = 0; i < nfaces; i++) {

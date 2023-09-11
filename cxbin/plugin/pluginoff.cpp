@@ -1,6 +1,6 @@
 #include "pluginoff.h"
 
-#include "stringutil/filenameutil.h"
+#include "cxbin/impl/util.h"
 #include "trimesh2/TriMesh.h"
 #include "cxbin/impl/inner.h"
 #include "ccglobal/tracer.h"
@@ -43,7 +43,7 @@ namespace cxbin
 
 	bool OffLoader::load(FILE* f, size_t fileSize, std::vector<trimesh::TriMesh*>& out, ccglobal::Tracer* tracer)
 	{
-		stringutil::skip_comments(f);
+		skip_comments(f);
 		char buf[1024];
 		GET_LINE();
 		GET_LINE();

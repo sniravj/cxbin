@@ -1,19 +1,93 @@
 #include "cxbinmanager.h"
 #include "cxbin/loaderimpl.h"
 #include "cxbin/convert.h"
-#include "stringutil/filenameutil.h"
+#include "util.h"
 
 #include "trimesh2/TriMesh.h"
 
 #include "ccglobal/tracer.h"
 #include "ccglobal/log.h"
 #include "ccglobal/platform.h"
-#include "mmesh/trimesh/trimeshutil.h"
 
 #include "boost/nowide/cstdio.hpp"
 
 namespace cxbin
 {
+	void removeInvalidVertex(trimesh::TriMesh* mesh)
+	{
+		if (!mesh)
+			return;
+
+		int vnum = (int)mesh->vertices.size();
+		int fnum = (int)mesh->faces.size();
+		if (vnum == 0 || fnum == 0)
+			return;
+
+		int index = 0;
+		std::vector<int> flags(vnum, -1);
+
+		auto ff = [](const trimesh::vec3& v)->bool {
+			for (int i = 0; i < 3; ++i)
+			{
+				if (std::isnan(v[i]))
+					return true;
+
+				if (!std::isnormal(v[i]))
+				{
+					if (v[i] != 0.0f)
+						return true;
+				}
+
+				if (std::abs(v[i]) > 1e+10)
+					return true;
+			}
+			return false;
+		};
+		for (int i = 0; i < vnum; ++i)
+		{
+			const trimesh::vec3& v = mesh->vertices.at(i);
+			if (ff(v))
+			{
+#if _DEBUG
+				printf("error vertex [%f %f %f]\n", v.x, v.y, v.z);
+#endif
+			}
+			else
+			{
+				flags.at(i) = index;
+				mesh->vertices.at(index) = v;
+				++index;
+			}
+		}
+
+		if (index != vnum)  //have invlid
+		{
+			if (index > 0)
+				mesh->vertices.resize(index);
+			else
+				mesh->vertices.clear();
+
+			int findex = 0;
+			for (int i = 0; i < fnum; ++i)
+			{
+				trimesh::TriMesh::Face f = mesh->faces.at(i);
+				if ((flags[f.x] >= 0) && (flags[f.y] >= 0) && (flags[f.z] >= 0))
+				{
+					f.x = flags[f.x];
+					f.y = flags[f.y];
+					f.z = flags[f.z];
+					mesh->faces.at(findex) = f;
+					++findex;
+				}
+			}
+
+			if (findex > 0)
+				mesh->faces.resize(findex);
+			else
+				mesh->faces.clear();
+		}
+	}
+
 	size_t getFileSize(FILE* file)
 	{
 		if (!file)
@@ -116,7 +190,7 @@ namespace cxbin
 	std::string CXBinManager::testFormat(const std::string& fileName)
 	{
 		FILE* f = fopen(fileName.c_str(), "rb");
-		std::string extension = stringutil::extensionFromFileName(fileName, true);
+		std::string extension = extensionFromFileName(fileName, true);
 
 		if(!f)
 		{
@@ -173,7 +247,7 @@ namespace cxbin
             return;
         }
         
-        std::string extension = stringutil::extensionFromFileName(fileName, true);
+        std::string extension = extensionFromFileName(fileName, true);
         size_t fileSize = getFileSize(f);
 
         LoaderImpl* loader = nullptr;
@@ -306,8 +380,7 @@ namespace cxbin
 						break;
 					}
 				}
-                mmesh::removeInvalidVertex(model);
-                //mmesh::removeNorFaces(model, tracer);
+                removeInvalidVertex(model);
 			}
 		}
 

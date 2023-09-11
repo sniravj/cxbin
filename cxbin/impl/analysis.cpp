@@ -8,7 +8,7 @@
 
 #include "cxbin/format.h"
 #include "cxbin/analysis.h"
-#include "stringutil/filenameutil.h"
+#include "util.h"
 #include "ccglobal/tracer.h"
 #include "cxbinmanager.h"
 
@@ -38,7 +38,7 @@ namespace cxbin
                 std::string sub = itr->path().string();
                 printf("文件:%s\n", sub.c_str());
 
-                std::string extension = stringutil::extensionFromFileName(sub);
+                std::string extension = extensionFromFileName(sub);
                 cxbin::MeshFileFormat extFormat = extension2Format(extension);
 
                 cxbin::MeshFileFormat f = cxbin::testMeshFileFormat(sub);

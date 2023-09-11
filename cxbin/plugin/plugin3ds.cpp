@@ -2,7 +2,7 @@
 
 #include "trimesh2/TriMesh.h"
 #include "trimesh2/endianutil.h"
-#include "stringutil/filenameutil.h"
+#include "cxbin/impl/util.h"
 #include "cxbin/impl/inner.h"
 #include "ccglobal/tracer.h"
 

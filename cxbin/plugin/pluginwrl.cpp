@@ -1,6 +1,5 @@
 #include "pluginwrl.h"
 
-#include "stringutil/filenameutil.h"
 #include "trimesh2/TriMesh.h"
 #include "ccglobal/tracer.h"
 

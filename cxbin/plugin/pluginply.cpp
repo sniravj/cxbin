@@ -4,7 +4,7 @@
 #include "trimesh2/Color.h"
 
 #include "cxbin/convert.h"
-#include "stringutil/filenameutil.h"
+#include "cxbin/impl/util.h"
 #include "cxbin/impl/inner.h"
 #include "ccglobal/tracer.h"
 
@@ -297,8 +297,6 @@ namespace cxbin
 	// Return the length in bytes of a ply property type, 0 if can't parse
 	int ply_type_len(const char* buf, bool binary)
 	{
-		using namespace stringutil;
-
 		if (begins_with(buf, "char") ||
 			begins_with(buf, "uchar") ||
 			begins_with(buf, "int8") ||

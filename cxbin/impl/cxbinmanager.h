@@ -12,7 +12,6 @@
 #include "cxbin/plugin/plugin3ds.h"
 #include "cxbin/plugin/pluginwrl.h"
 #include "cxbin/plugin/plugin3mf.h"
-#include "cxbin/plugin/plugindae.h"
 #include "cxbin/plugin/plugincxbin.h"
 #include "cxbin/plugin/plugindaedom.h"
 
@@ -52,12 +51,8 @@ namespace cxbin
 		WrlLoader m_wrlLoader;
 		_3mfLoader m_3mfLoader;
 
-
-#ifdef DAE_USE_COLLDADA_DOM
 		DaeDomLoader m_daeLoader;
-#else
-		DaeLoader m_daeLoader;
-#endif
+
 		CXBinLoader m_cxbinLoader;
 
 		CXBinSaver m_cxbinSaver;

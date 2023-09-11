@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "pluginobj.h"
 
-#include "stringutil/filenameutil.h"
+#include "cxbin/impl/util.h"
 
 #if __ANDROID__
 #define _LIBCPP_HAS_NO_OFF_T_FUNCTIONS
@@ -49,7 +49,7 @@ namespace cxbin
 		bool isObj = false;
 		int times = 0;
 		while (1) {
-			stringutil::skip_comments(f);
+			skip_comments(f);
 			if (feof(f))
 				break;
 			char buf[1024];
@@ -385,7 +385,7 @@ namespace cxbin
         trimesh::Material *matePtr = nullptr;
         bool isValid = false;
         while (1) {
-            stringutil::skip_comments(f);
+            skip_comments(f);
             if (feof(f))
                 break;
             char buf[1024];
@@ -820,7 +820,7 @@ namespace cxbin
                 outFileinfo.clear();
                 return -1;
             }
-            stringutil::skip_comments(f);
+            skip_comments(f);
             if (feof(f))
                 break;
             char buf[1024];
