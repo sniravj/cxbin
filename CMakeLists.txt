@@ -95,7 +95,7 @@ if(TARGET colladadom_static)
 	__cc_find(tinyxml)
 	__assert_target(tinyxml)
 
-	list(APPEND LIBS colladadom_static tinyxml pcre_local pcrecpp_local pcreposix_local)
+	list(APPEND LIBS colladadom_static tinyxml pcre_local pcrecpp_local pcreposix_local colladadom141)
 	list(APPEND DEFS DAE_USE_COLLDADA_DOM)
 endif()
 
