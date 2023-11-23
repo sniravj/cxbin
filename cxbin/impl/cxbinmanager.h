@@ -11,7 +11,12 @@
 #include "cxbin/plugin/pluginoff.h"
 #include "cxbin/plugin/plugin3ds.h"
 #include "cxbin/plugin/pluginwrl.h"
+#if USE_EXPAT_3MF
+#include "cxbin/plugin/plugin3mf-expat.h"
+#else
 #include "cxbin/plugin/plugin3mf.h"
+#endif
+
 #include "cxbin/plugin/plugincxbin.h"
 #include "cxbin/plugin/plugindaedom.h"
 

@@ -1,0 +1,7 @@
+trimesh2/0.0.3
+boost/0.0.2
+tinyxml/0.0.3
+lib3mf_static/1.0.0
+freeimage_static/1.0.0
+colladadom_static/1.0.0
+expat/0.0.1

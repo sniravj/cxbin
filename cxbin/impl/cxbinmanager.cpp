@@ -204,9 +204,11 @@ namespace cxbin
 		if (extension.size() > 0)
 		{
 			std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(extension);
-			if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
+			if (it != m_loaders.end())
 			{
-				loader = it->second;
+				it->second->modelPath = fileName;
+				if(it->second->tryLoad(f, fileSize))
+					loader = it->second;
 			}
 		}
 
@@ -216,6 +218,7 @@ namespace cxbin
 			for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
 				 it != m_loaders.end(); ++it)
 			{
+				it->second->modelPath = fileName;
 				fseek(f, 0L, SEEK_SET);
 				if (it->second->tryLoad(f, fileSize))
 				{
@@ -327,10 +330,15 @@ namespace cxbin
 			if (use_ext.size() > 0)
 			{
 				std::map<std::string, LoaderImpl*>::iterator it = m_loaders.find(use_ext);
-				if (it != m_loaders.end() && it->second->tryLoad(f, fileSize))
+				if (it != m_loaders.end())
 				{
-					loader = it->second;
-					formartPrint(tracer, "CXBinManager::load : Use Plugin [%s]", it->first.c_str());
+					it->second->modelPath = fileName;
+
+					if (it->second->tryLoad(f, fileSize))
+					{
+						loader = it->second;
+						formartPrint(tracer, "CXBinManager::load : Use Plugin [%s]", it->first.c_str());
+					}
 				}
 			}
 
@@ -339,6 +347,7 @@ namespace cxbin
 				for (std::map<std::string, LoaderImpl*>::iterator it = m_loaders.begin();
 					it != m_loaders.end(); ++it)
 				{
+					it->second->modelPath = fileName;
 					formartPrint(tracer, "CXBinManager::load : Try plugin [%s]", it->first.c_str());
 					fseek(f, 0L, SEEK_SET);
 					if (it->second->tryLoad(f, fileSize))

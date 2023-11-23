@@ -7,6 +7,7 @@ __assert_target(zlib_static)
 __cc_find(boost_header)
 
 __cc_find(lib3mf_static)
+__cc_find(expat)
 
 __cc_find(colladadom_static)
 
@@ -63,7 +64,13 @@ set(SRCS cxbin/interface.h
 		 cxbin/cx/reader.cpp
 		 cxbin/cx/cxutil.h
 		 cxbin/cx/cxutil.cpp
-
+		 cxbin/plugin/3mf/3mfimproter.h
+		 cxbin/plugin/3mf/3mfimproter.cpp
+		 cxbin/plugin/3mf/miniz.h
+		 cxbin/plugin/3mf/miniz.cpp
+		 cxbin/plugin/3mf/miniz_extension.h
+		 cxbin/plugin/3mf/miniz_extension.cpp
+		 cxbin/plugin/3mf/I18N.h
 		 )
 		 
 set(LIBS zlib_static freeimage_static boost_header
@@ -80,7 +87,15 @@ if(NOT CC_BC_WIN)
 	list(APPEND DEFS __USE_FILE_OFFSET64)
 endif()
 
-if(TARGET lib3mf_static)
+if(TARGET expat)
+	message(STATUS "BUILD 3mf expat")
+	list(APPEND DEFS USE_EXPAT_3MF)
+	list(APPEND LIBS expat)
+	list(APPEND SRCS cxbin/plugin/plugin3mf-expat.h
+					 cxbin/plugin/plugin3mf-expat.cpp
+					 )
+elseif(TARGET lib3mf_static)
+	message(STATUS "BUILD 3mf lib3mf")
 	list(APPEND LIBS lib3mf_static)
 	list(APPEND SRCS cxbin/plugin/plugin3mf.h
 					 cxbin/plugin/plugin3mf.cpp
