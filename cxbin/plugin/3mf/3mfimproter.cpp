@@ -1449,8 +1449,6 @@ namespace cxbin
 
         mz_zip_archive_file_stat stat;
 
-        std::string m_name = boost::filesystem::path(filename).stem().string();
-
          // BBS: load relationships
         if (!_extract_xml_from_archive(archive, RELATIONSHIPS_FILE, _handle_start_relationships_element, _handle_end_relationships_element))
             return false;
