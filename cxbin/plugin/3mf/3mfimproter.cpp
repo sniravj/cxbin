@@ -5,10 +5,10 @@
 #include <boost/filesystem/string_file.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/nowide/convert.hpp>
+#include <sstream>
 
 namespace cxbin
 {
-
     const std::string RELATIONSHIPS_FILE = "_rels/.rels";
     static constexpr const char* RELATIONSHIP_TAG = "Relationship";
     static constexpr const char* TARGET_ATTR = "Target";
@@ -65,6 +65,8 @@ namespace cxbin
 
     static constexpr const char* OBJECT_UUID_SUFFIX = "-41cb-4c03-9d28-80fed5dfa1dc";
 
+    const char* BBS_3MF_VERSION1 = "bamboo_slicer:Version3mf"; // definition of the metadata name saved into .model file
+    const char* BBS_3MF_VERSION = "BambuStudio:3mfVersion"; //compatible with prusa currently
 
     const unsigned int BBS_VALID_OBJECT_TYPES_COUNT = 2;
     const char* BBS_VALID_OBJECT_TYPES[] =
@@ -167,7 +169,6 @@ namespace cxbin
         }
     };
 
-
     const char* _BBS_3MF_Importer::bbs_get_attribute_value_charptr(const char** attributes, unsigned int attributes_size, const char* attribute_key)
     {
         if ((attributes == nullptr) || (attributes_size == 0) || (attributes_size % 2 != 0) || (attribute_key == nullptr))
@@ -181,7 +182,20 @@ namespace cxbin
         return nullptr;
     }
 
-    std::string _BBS_3MF_Importer::bbs_get_attribute_value_string(const char** attributes, unsigned int attributes_size, const char* attribute_key)
+    const char* bbs_get_attribute_value_charptr(const char** attributes, unsigned int attributes_size, const char* attribute_key)
+    {
+        if ((attributes == nullptr) || (attributes_size == 0) || (attributes_size % 2 != 0) || (attribute_key == nullptr))
+            return nullptr;
+
+        for (unsigned int a = 0; a < attributes_size; a += 2) {
+            if (::strcmp(attributes[a], attribute_key) == 0)
+                return attributes[a + 1];
+        }
+
+        return nullptr;
+    }
+
+    std::string bbs_get_attribute_value_string(const char** attributes, unsigned int attributes_size, const char* attribute_key)
     {
         const char* text = bbs_get_attribute_value_charptr(attributes, attributes_size, attribute_key);
         return (text != nullptr) ? text : "";
@@ -371,7 +385,7 @@ namespace cxbin
             });
     }
 
-    float _BBS_3MF_Importer::bbs_get_unit_factor(const std::string& unit)
+    float bbs_get_unit_factor(const std::string& unit)
     {
         const char* text = unit.c_str();
 
@@ -390,7 +404,7 @@ namespace cxbin
             return 1.0f;
     }
 
-    float _BBS_3MF_Importer::bbs_get_attribute_value_float(const char** attributes, unsigned int attributes_size, const char* attribute_key)
+    float bbs_get_attribute_value_float(const char** attributes, unsigned int attributes_size, const char* attribute_key)
     {
         float value = 0.0f;
         const char* text = bbs_get_attribute_value_charptr(attributes, attributes_size, attribute_key);
@@ -403,7 +417,7 @@ namespace cxbin
     }
 
 
-    int _BBS_3MF_Importer::bbs_get_attribute_value_int(const char** attributes, unsigned int attributes_size, const char* attribute_key)
+    int bbs_get_attribute_value_int(const char** attributes, unsigned int attributes_size, const char* attribute_key)
     {
         int value = 0;
         const char* text = bbs_get_attribute_value_charptr(attributes, attributes_size, attribute_key);
@@ -431,7 +445,7 @@ namespace cxbin
         return true;
     }
 
-    bool _BBS_3MF_Importer::bbs_is_valid_object_type(const std::string& type)
+    bool bbs_is_valid_object_type(const std::string& type)
     {
         // if the type is empty defaults to "model" (see specification)
         if (type.empty())
@@ -553,6 +567,18 @@ namespace cxbin
         return true;
     }
 
+    bool _BBS_3MF_Importer::_handle_start_metadata(const char** attributes, unsigned int num_attributes)
+    {
+        m_curr_characters.clear();
+
+        std::string name = bbs_get_attribute_value_string(attributes, num_attributes, NAME_ATTR);
+        if (!name.empty()) {
+            m_curr_metadata_name = name;
+        }
+
+        return true;
+    }
+
     bool _BBS_3MF_Importer::_handle_start_components(const char** attributes, unsigned int num_attributes)
     {
         // reset current components
@@ -621,8 +647,8 @@ namespace cxbin
         //    res = _handle_start_build(attributes, num_attributes);
         //else if (::strcmp(ITEM_TAG, name) == 0)
         //    res = _handle_start_item(attributes, num_attributes);
-        //else if (::strcmp(METADATA_TAG, name) == 0)
-        //    res = _handle_start_metadata(attributes, num_attributes);
+        else if (::strcmp(METADATA_TAG, name) == 0)
+            res = _handle_start_metadata(attributes, num_attributes);
 
         if (!res)
             _stop_xml_parser();
@@ -937,6 +963,475 @@ namespace cxbin
         return true;
     }
 
+    bool bbs_get_attribute_value_bool(const char** attributes, unsigned int attributes_size, const char* attribute_key)
+    {
+        const char* text = bbs_get_attribute_value_charptr(attributes, attributes_size, attribute_key);
+        return (text != nullptr) ? (bool)::atoi(text) : true;
+    }
+
+    /* functions of ObjectImporter */
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_model(const char** attributes, unsigned int num_attributes)
+    {
+        object_unit_factor = bbs_get_unit_factor(bbs_get_attribute_value_string(attributes, num_attributes, UNIT_ATTR));
+
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_model()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_resources(const char** attributes, unsigned int num_attributes)
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_resources()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_object(const char** attributes, unsigned int num_attributes)
+    {
+        // reset current object data
+        if (current_object) {
+            delete current_object;
+            current_object = nullptr;
+        }
+
+        std::string object_type = bbs_get_attribute_value_string(attributes, num_attributes, TYPE_ATTR);
+
+        if (bbs_is_valid_object_type(object_type)) {
+            if (!current_object) {
+                current_object = new CurrentObject();
+            }
+
+            current_object->id = bbs_get_attribute_value_int(attributes, num_attributes, ID_ATTR);
+            current_object->name = bbs_get_attribute_value_string(attributes, num_attributes, NAME_ATTR);
+
+            current_object->uuid = bbs_get_attribute_value_string(attributes, num_attributes, PUUID_ATTR);
+            current_object->pid = bbs_get_attribute_value_int(attributes, num_attributes, PID_ATTR);
+        }
+
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_object()
+    {
+        if (!current_object || (current_object->id == -1)) {
+            //top_importer->add_error("Found invalid object for " + object_path);
+            return false;
+        }
+        else {
+            if (is_bbl_3mf && boost::ends_with(current_object->uuid, OBJECT_UUID_SUFFIX) && top_importer->m_load_restore) {
+                std::istringstream iss(current_object->uuid);
+                int backup_id;
+                bool need_replace = false;
+                if (iss >> std::hex >> backup_id) {
+                    need_replace = (current_object->id != backup_id);
+                    current_object->id = backup_id;
+                }
+                //if (need_replace)
+                {
+                    for (int index = 0; index < current_object->components.size(); index++)
+                    {
+                        int temp_id = (index + 1) << 16 | backup_id;
+                        Component& component = current_object->components[index];
+                        std::string new_path = component.object_id.first;
+                        Id new_id = std::make_pair(new_path, temp_id);
+                        IdToCurrentObjectMap::iterator object_it = object_list.find(component.object_id);
+                        if (object_it != object_list.end()) {
+                            CurrentObject new_object;
+                            new_object.geometry = std::move(object_it->second.geometry);
+                            new_object.id = temp_id;
+                            new_object.model_object_idx = object_it->second.model_object_idx;
+                            new_object.name = object_it->second.name;
+                            new_object.uuid = object_it->second.uuid;
+
+                            object_list.erase(object_it);
+                            object_list.insert({ new_id, std::move(new_object) });
+                        }
+                        else {
+                            //top_importer->add_error("can not find object for component, id=" + std::to_string(component.object_id.second));
+                            delete current_object;
+                            current_object = nullptr;
+                            return false;
+                        }
+
+                        component.object_id.second = temp_id;
+                    }
+                }
+            }
+            Id id = std::make_pair(object_path, current_object->id);
+            if (object_list.find(id) == object_list.end()) {
+                object_list.insert({ id, std::move(*current_object) });
+                delete current_object;
+                current_object = nullptr;
+            }
+            else {
+                //top_importer->add_error("Found object with duplicate id for " + object_path);
+                delete current_object;
+                current_object = nullptr;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_color_group(const char** attributes, unsigned int num_attributes)
+    {
+        object_current_color_group = bbs_get_attribute_value_int(attributes, num_attributes, ID_ATTR);
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_color_group()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_color(const char** attributes, unsigned int num_attributes)
+    {
+        std::string color = bbs_get_attribute_value_string(attributes, num_attributes, COLOR_ATTR);
+        object_group_id_to_color[object_current_color_group] = color;
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_color()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_mesh(const char** attributes, unsigned int num_attributes)
+    {
+        // reset current geometry
+        if (current_object)
+            current_object->geometry.reset();
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_mesh()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_vertices(const char** attributes, unsigned int num_attributes)
+    {
+        // reset current vertices
+        if (current_object)
+            current_object->geometry.vertices.clear();
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_vertices()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_vertex(const char** attributes, unsigned int num_attributes)
+    {
+        // appends the vertex coordinates
+        // missing values are set equal to ZERO
+        if (current_object)
+            current_object->geometry.vertices.emplace_back(
+                object_unit_factor * bbs_get_attribute_value_float(attributes, num_attributes, X_ATTR),
+                object_unit_factor * bbs_get_attribute_value_float(attributes, num_attributes, Y_ATTR),
+                object_unit_factor * bbs_get_attribute_value_float(attributes, num_attributes, Z_ATTR));
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_vertex()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_triangles(const char** attributes, unsigned int num_attributes)
+    {
+        // reset current triangles
+        if (current_object)
+            current_object->geometry.triangles.clear();
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_triangles()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_triangle(const char** attributes, unsigned int num_attributes)
+    {
+        // we are ignoring the following attributes:
+        // p1
+        // p2
+        // p3
+        // pid
+        // see specifications
+
+        // appends the triangle's vertices indices
+        // missing values are set equal to ZERO
+        if (current_object) {
+            current_object->geometry.triangles.emplace_back(
+                bbs_get_attribute_value_int(attributes, num_attributes, V1_ATTR),
+                bbs_get_attribute_value_int(attributes, num_attributes, V2_ATTR),
+                bbs_get_attribute_value_int(attributes, num_attributes, V3_ATTR));
+
+            current_object->geometry.custom_supports.push_back(bbs_get_attribute_value_string(attributes, num_attributes, CUSTOM_SUPPORTS_ATTR));
+            current_object->geometry.custom_seam.push_back(bbs_get_attribute_value_string(attributes, num_attributes, CUSTOM_SEAM_ATTR));
+            current_object->geometry.mmu_segmentation.push_back(bbs_get_attribute_value_string(attributes, num_attributes, MMU_SEGMENTATION_ATTR));
+            // BBS
+            current_object->geometry.face_properties.push_back(bbs_get_attribute_value_string(attributes, num_attributes, FACE_PROPERTY_ATTR));
+        }
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_triangle()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_components(const char** attributes, unsigned int num_attributes)
+    {
+        // reset current components
+        if (current_object)
+            current_object->components.clear();
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_components()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_component(const char** attributes, unsigned int num_attributes)
+    {
+        int object_id = bbs_get_attribute_value_int(attributes, num_attributes, OBJECTID_ATTR);
+        trimesh::fxform transform; // = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
+
+        /*Id id = std::make_pair(m_sub_model_path, object_id);
+        IdToModelObjectMap::iterator object_item = m_objects.find(id);
+        if (object_item == m_objects.end()) {
+            IdToAliasesMap::iterator alias_item = m_objects_aliases.find(id);
+            if (alias_item == m_objects_aliases.end()) {
+                add_error("Found component with invalid object id");
+                return false;
+            }
+        }*/
+
+        if (current_object) {
+            Id id = std::make_pair(object_path, object_id);
+            current_object->components.emplace_back(id, transform);
+        }
+
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_component()
+    {
+        // do nothing
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_metadata(const char** attributes, unsigned int num_attributes)
+    {
+        obj_curr_metadata_name.clear();
+
+        std::string name = bbs_get_attribute_value_string(attributes, num_attributes, NAME_ATTR);
+        if (!name.empty()) {
+            obj_curr_metadata_name = name;
+        }
+
+        return true;
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_handle_object_end_metadata()
+    {
+        if ((obj_curr_metadata_name == BBS_3MF_VERSION) || (obj_curr_metadata_name == BBS_3MF_VERSION1)) {
+            is_bbl_3mf = true;
+        }
+        return true;
+    }
+    void _BBS_3MF_Importer::ObjectImporter::_handle_object_start_model_xml_element(const char* name, const char** attributes)
+    {
+        if (object_xml_parser == nullptr)
+            return;
+
+        bool res = true;
+        unsigned int num_attributes = (unsigned int)XML_GetSpecifiedAttributeCount(object_xml_parser);
+
+        if (::strcmp(MODEL_TAG, name) == 0)
+            res = _handle_object_start_model(attributes, num_attributes);
+        else if (::strcmp(RESOURCES_TAG, name) == 0)
+            res = _handle_object_start_resources(attributes, num_attributes);
+        else if (::strcmp(OBJECT_TAG, name) == 0)
+            res = _handle_object_start_object(attributes, num_attributes);
+        else if (::strcmp(COLOR_GROUP_TAG, name) == 0)
+            res = _handle_object_start_color_group(attributes, num_attributes);
+        else if (::strcmp(COLOR_TAG, name) == 0)
+            res = _handle_object_start_color(attributes, num_attributes);
+        else if (::strcmp(MESH_TAG, name) == 0)
+            res = _handle_object_start_mesh(attributes, num_attributes);
+        else if (::strcmp(VERTICES_TAG, name) == 0)
+            res = _handle_object_start_vertices(attributes, num_attributes);
+        else if (::strcmp(VERTEX_TAG, name) == 0)
+            res = _handle_object_start_vertex(attributes, num_attributes);
+        else if (::strcmp(TRIANGLES_TAG, name) == 0)
+            res = _handle_object_start_triangles(attributes, num_attributes);
+        else if (::strcmp(TRIANGLE_TAG, name) == 0)
+            res = _handle_object_start_triangle(attributes, num_attributes);
+        else if (::strcmp(COMPONENTS_TAG, name) == 0)
+            res = _handle_object_start_components(attributes, num_attributes);
+        else if (::strcmp(COMPONENT_TAG, name) == 0)
+            res = _handle_object_start_component(attributes, num_attributes);
+        else if (::strcmp(METADATA_TAG, name) == 0)
+            res = _handle_object_start_metadata(attributes, num_attributes);
+
+        if (!res)
+            _stop_object_xml_parser();
+    }
+
+    void _BBS_3MF_Importer::ObjectImporter::_handle_object_end_model_xml_element(const char* name)
+    {
+        if (object_xml_parser == nullptr)
+            return;
+
+        bool res = true;
+
+        if (::strcmp(MODEL_TAG, name) == 0)
+            res = _handle_object_end_model();
+        else if (::strcmp(RESOURCES_TAG, name) == 0)
+            res = _handle_object_end_resources();
+        else if (::strcmp(OBJECT_TAG, name) == 0)
+            res = _handle_object_end_object();
+        else if (::strcmp(COLOR_GROUP_TAG, name) == 0)
+            res = _handle_object_end_color_group();
+        else if (::strcmp(COLOR_TAG, name) == 0)
+            res = _handle_object_end_color();
+        else if (::strcmp(MESH_TAG, name) == 0)
+            res = _handle_object_end_mesh();
+        else if (::strcmp(VERTICES_TAG, name) == 0)
+            res = _handle_object_end_vertices();
+        else if (::strcmp(VERTEX_TAG, name) == 0)
+            res = _handle_object_end_vertex();
+        else if (::strcmp(TRIANGLES_TAG, name) == 0)
+            res = _handle_object_end_triangles();
+        else if (::strcmp(TRIANGLE_TAG, name) == 0)
+            res = _handle_object_end_triangle();
+        else if (::strcmp(COMPONENTS_TAG, name) == 0)
+            res = _handle_object_end_components();
+        else if (::strcmp(COMPONENT_TAG, name) == 0)
+            res = _handle_object_end_component();
+        else if (::strcmp(METADATA_TAG, name) == 0)
+            res = _handle_object_end_metadata();
+
+        if (!res)
+            _stop_object_xml_parser();
+    }
+
+    void _BBS_3MF_Importer::ObjectImporter::_handle_object_xml_characters(const XML_Char* s, int len)
+    {
+        obj_curr_characters.append(s, len);
+    }
+
+    void XMLCALL _BBS_3MF_Importer::ObjectImporter::_handle_object_start_model_xml_element(void* userData, const char* name, const char** attributes)
+    {
+        ObjectImporter* importer = (ObjectImporter*)userData;
+        if (importer != nullptr)
+            importer->_handle_object_start_model_xml_element(name, attributes);
+    }
+
+    void XMLCALL _BBS_3MF_Importer::ObjectImporter::_handle_object_end_model_xml_element(void* userData, const char* name)
+    {
+        ObjectImporter* importer = (ObjectImporter*)userData;
+        if (importer != nullptr)
+            importer->_handle_object_end_model_xml_element(name);
+    }
+
+    void XMLCALL _BBS_3MF_Importer::ObjectImporter::_handle_object_xml_characters(void* userData, const XML_Char* s, int len)
+    {
+        ObjectImporter* importer = (ObjectImporter*)userData;
+        if (importer != nullptr)
+            importer->_handle_object_xml_characters(s, len);
+    }
+
+    bool _BBS_3MF_Importer::ObjectImporter::_extract_object_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat)
+    {
+        if (stat.m_uncomp_size == 0) {
+            //top_importer->add_error("Found invalid size for " + object_path);
+            return false;
+        }
+
+        object_xml_parser = XML_ParserCreate(nullptr);
+        if (object_xml_parser == nullptr) {
+            //top_importer->add_error("Unable to create parser for " + object_path);
+            return false;
+        }
+
+        XML_SetUserData(object_xml_parser, (void*)this);
+        XML_SetElementHandler(object_xml_parser, _BBS_3MF_Importer::ObjectImporter::_handle_object_start_model_xml_element, _BBS_3MF_Importer::ObjectImporter::_handle_object_end_model_xml_element);
+        XML_SetCharacterDataHandler(object_xml_parser, _BBS_3MF_Importer::ObjectImporter::_handle_object_xml_characters);
+
+        struct CallbackData
+        {
+            XML_Parser& parser;
+            _BBS_3MF_Importer::ObjectImporter& importer;
+            const mz_zip_archive_file_stat& stat;
+
+            CallbackData(XML_Parser& parser, _BBS_3MF_Importer::ObjectImporter& importer, const mz_zip_archive_file_stat& stat) : parser(parser), importer(importer), stat(stat) {}
+        };
+
+        CallbackData data(object_xml_parser, *this, stat);
+
+        mz_bool res = 0;
+
+        try
+        {
+            mz_file_write_func callback = [](void* pOpaque, mz_uint64 file_ofs, const void* pBuf, size_t n)->size_t {
+                CallbackData* data = (CallbackData*)pOpaque;
+                if (!XML_Parse(data->parser, (const char*)pBuf, (int)n, (file_ofs + n == data->stat.m_uncomp_size) ? 1 : 0) || data->importer.object_parse_error()) {
+                    char error_buf[1024];
+                    ::sprintf(error_buf, "Error (%s) while parsing '%s' at line %d", data->importer.object_parse_error_message(), data->stat.m_filename, (int)XML_GetCurrentLineNumber(data->parser));
+                    //throw Slic3r::FileIOError(error_buf);
+                }
+                return n;
+            };
+            void* opaque = &data;
+            res = mz_zip_reader_extract_to_callback(&archive, stat.m_file_index, callback, opaque, 0);
+        }
+        //catch (const version_error& e)
+        //{
+        //    // rethrow the exception
+        //    std::string error_message = std::string(e.what()) + " for " + object_path;
+        //    //throw Slic3r::FileIOError(error_message);
+        //}
+        catch (std::exception& e)
+        {
+            std::string error_message = std::string(e.what()) + " for " + object_path;
+            //top_importer->add_error(error_message);
+            return false;
+        }
+
+        if (res == 0) {
+            //top_importer->add_error("Error while extracting model data from zip archive for " + object_path);
+            return false;
+        }
+
+        return true;
+    }
+
+
+
     bool _BBS_3MF_Importer::load3MF(const std::string& filename)
     {
         m_xml_parser = nullptr;
@@ -972,6 +1467,43 @@ namespace cxbin
         //check whether sub relation file is exist or not
         int sub_index = mz_zip_reader_locate_file(&archive, sub_rels.c_str(), nullptr, 0);
 
+        if (sub_index != -1)
+        {
+            _extract_xml_from_archive(archive, sub_rels, _handle_start_relationships_element, _handle_end_relationships_element);
+            int index = 0;
+
+            for (auto path : m_sub_model_paths) {
+                ObjectImporter* object_importer = new ObjectImporter(this, filename, path);
+                m_object_importers.push_back(object_importer);
+            }
+
+            bool object_load_result = true;
+            for (int i = 0; i < m_object_importers.size(); i++)
+            {
+                bool result = m_object_importers[i]->extract_object_model();
+                {
+                    object_load_result &= result;
+                }
+            }
+
+            if (!object_load_result) {
+                //BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", loading sub-objects error\n");
+                return false;
+            }
+
+            //merge these objects into one
+            for (auto obj_importer : m_object_importers) {
+                for (const IdToCurrentObjectMap::value_type& obj : obj_importer->object_list)
+                    m_current_objects.insert({ std::move(obj.first), std::move(obj.second) });
+                for (auto group_color : obj_importer->object_group_id_to_color)
+                    m_group_id_to_color.insert(std::move(group_color));
+
+                delete obj_importer;
+            }
+            m_object_importers.clear();
+
+
+        }
 
         //extract model files
         if (!_extract_from_archive(archive, m_start_part_path, [this](mz_zip_archive& archive, const mz_zip_archive_file_stat& stat) {
