@@ -32,15 +32,15 @@ namespace cxbin
         struct Component
         {
             Id object_id;
-            trimesh::fxform transform;
+            trimesh::xform transform;
 
             explicit Component(Id object_id)
                 : object_id(object_id)
-                , transform(trimesh::fxform())
+                , transform(trimesh::xform::identity())
             {
             }
 
-            Component(Id object_id, const trimesh::fxform& transform)
+            Component(Id object_id, const trimesh::xform& transform)
                 : object_id(object_id)
                 , transform(transform)
             {
@@ -121,6 +121,8 @@ namespace cxbin
         std::string m_name;
         float m_unit_factor;
         CurrentObject* m_curr_object{ nullptr };
+
+        std::map<std::string, trimesh::xform> ModelPos;
         typedef std::map<Id, CurrentObject> IdToCurrentObjectMap;
         IdToCurrentObjectMap m_current_objects;
         int m_current_color_group{ -1 };
@@ -325,6 +327,10 @@ namespace cxbin
         bool _handle_start_components(const char** attributes, unsigned int num_attributes);
 
         bool _handle_start_component(const char** attributes, unsigned int num_attributes);
+
+        //bool _create_object_instance(std::string const& path, int object_id, const trimesh::xform& transform, const bool printable, unsigned int recur_counter);
+
+        bool _handle_start_item(const char** attributes, unsigned int num_attributes);
 
         void _handle_start_model_xml_element(const char* name, const char** attributes);
 

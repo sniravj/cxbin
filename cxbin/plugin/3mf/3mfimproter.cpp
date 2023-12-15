@@ -7,6 +7,8 @@
 #include <boost/nowide/convert.hpp>
 #include <sstream>
 
+#include "trimesh2/TriMesh_algo.h"
+
 namespace cxbin
 {
     const std::string RELATIONSHIPS_FILE = "_rels/.rels";
@@ -50,6 +52,7 @@ namespace cxbin
     static constexpr const char* V1_ATTR = "v1";
     static constexpr const char* V2_ATTR = "v2";
     static constexpr const char* V3_ATTR = "v3";
+    static constexpr const char* PPATH_ATTR = "p:path";
     static constexpr const char* OBJECTID_ATTR = "objectid";
     static constexpr const char* TRANSFORM_ATTR = "transform";
     static constexpr const char* PID_ATTR = "pid";
@@ -587,11 +590,51 @@ namespace cxbin
         return true;
     }
 
+    void Stringsplit(std::string str, const char split, std::vector<std::string>& res)
+    {
+        std::istringstream iss(str);	// 输入流
+        std::string token;			// 接收缓冲区
+        while (getline(iss, token, split))	// 以split为分隔符
+        {
+            res.push_back(token);
+        }
+    }
+
+    trimesh::xform bbs_get_transform_from_3mf_specs_string(const std::string& mat_str)
+    {
+        // check: https://3mf.io/3d-manufacturing-format/ or https://github.com/3MFConsortium/spec_core/blob/master/3MF%20Core%20Specification.md
+        // to see how matrices are stored inside 3mf according to specifications
+        trimesh::xform ret = trimesh::xform::identity();
+
+        if (mat_str.empty())
+            // empty string means default identity matrix
+            return ret;
+
+        std::vector<std::string> mat_elements_str;
+        //boost::split(mat_elements_str, mat_str, boost::is_any_of(" "), boost::token_compress_on);
+        Stringsplit(mat_str, ' ', mat_elements_str);
+
+        unsigned int size = (unsigned int)mat_elements_str.size();
+        if (size != 12)
+            // invalid data, return identity matrix
+            return ret;
+
+        unsigned int i = 0;
+        // matrices are stored into 3mf files as 4x3
+        // we need to transpose them
+        for (int c = 0; c < 4; ++c) {
+            for (int r = 0; r < 3; ++r) {
+                ret(r, c) = std::atof(mat_elements_str[i++].c_str());
+            }
+        }
+        return ret;
+    }
+
     bool _BBS_3MF_Importer::_handle_start_component(const char** attributes, unsigned int num_attributes)
     {
-        //std::string path = bbs_get_attribute_value_string(attributes, num_attributes, PPATH_ATTR);
-        //int         object_id = bbs_get_attribute_value_int(attributes, num_attributes, OBJECTID_ATTR);
-        //Transform3d transform = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
+        std::string path = bbs_get_attribute_value_string(attributes, num_attributes, PPATH_ATTR);
+        int         object_id = bbs_get_attribute_value_int(attributes, num_attributes, OBJECTID_ATTR);
+        trimesh::xform transform = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
 
         ///*Id id = std::make_pair(m_sub_model_path, object_id);
         //IdToModelObjectMap::iterator object_item = m_objects.find(id);
@@ -603,10 +646,36 @@ namespace cxbin
         //    }
         //}*/
 
-        //if (m_curr_object) {
-        //    Id id = std::make_pair(m_sub_model_path.empty() ? path : m_sub_model_path, object_id);
-        //    m_curr_object->components.emplace_back(id, transform);
-        //}
+        if (m_curr_object) {
+            Id id = std::make_pair(m_sub_model_path.empty() ? path : m_sub_model_path, object_id);
+            m_curr_object->components.emplace_back(id, transform);
+        }
+
+        //ModelPos.insert(std::make_pair(object_id, transform));
+        return true;
+    }
+
+    bool bbs_get_attribute_value_bool(const char** attributes, unsigned int attributes_size, const char* attribute_key)
+    {
+        const char* text = bbs_get_attribute_value_charptr(attributes, attributes_size, attribute_key);
+        return (text != nullptr) ? (bool)::atoi(text) : true;
+    }
+
+    bool _BBS_3MF_Importer::_handle_start_item(const char** attributes, unsigned int num_attributes)
+    {
+        // we are ignoring the following attributes
+        // thumbnail
+        // partnumber
+        // pid
+        // pindex
+        // see specifications
+
+        int object_id = bbs_get_attribute_value_int(attributes, num_attributes, OBJECTID_ATTR);
+        std::string path = bbs_get_attribute_value_string(attributes, num_attributes, PPATH_ATTR);
+        trimesh::xform transform = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
+        int printable = bbs_get_attribute_value_bool(attributes, num_attributes, PRINTABLE_ATTR);
+
+        ModelPos.insert(std::make_pair(path, transform));
 
         return true;
     }
@@ -639,14 +708,14 @@ namespace cxbin
             res = _handle_start_triangles(attributes, num_attributes);
         else if (::strcmp(TRIANGLE_TAG, name) == 0)
             res = _handle_start_triangle(attributes, num_attributes);
-        //else if (::strcmp(COMPONENTS_TAG, name) == 0)
-        //    res = _handle_start_components(attributes, num_attributes);
-        //else if (::strcmp(COMPONENT_TAG, name) == 0)
-        //    res = _handle_start_component(attributes, num_attributes);
+        else if (::strcmp(COMPONENTS_TAG, name) == 0)
+            res = _handle_start_components(attributes, num_attributes);
+        else if (::strcmp(COMPONENT_TAG, name) == 0)
+            res = _handle_start_component(attributes, num_attributes);
         //else if (::strcmp(BUILD_TAG, name) == 0)
         //    res = _handle_start_build(attributes, num_attributes);
-        //else if (::strcmp(ITEM_TAG, name) == 0)
-        //    res = _handle_start_item(attributes, num_attributes);
+        else if (::strcmp(ITEM_TAG, name) == 0)
+            res = _handle_start_item(attributes, num_attributes);
         else if (::strcmp(METADATA_TAG, name) == 0)
             res = _handle_start_metadata(attributes, num_attributes);
 
@@ -963,12 +1032,6 @@ namespace cxbin
         return true;
     }
 
-    bool bbs_get_attribute_value_bool(const char** attributes, unsigned int attributes_size, const char* attribute_key)
-    {
-        const char* text = bbs_get_attribute_value_charptr(attributes, attributes_size, attribute_key);
-        return (text != nullptr) ? (bool)::atoi(text) : true;
-    }
-
     /* functions of ObjectImporter */
     bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_model(const char** attributes, unsigned int num_attributes)
     {
@@ -1217,7 +1280,7 @@ namespace cxbin
     bool _BBS_3MF_Importer::ObjectImporter::_handle_object_start_component(const char** attributes, unsigned int num_attributes)
     {
         int object_id = bbs_get_attribute_value_int(attributes, num_attributes, OBJECTID_ATTR);
-        trimesh::fxform transform; // = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
+        trimesh::xform transform = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
 
         /*Id id = std::make_pair(m_sub_model_path, object_id);
         IdToModelObjectMap::iterator object_item = m_objects.find(id);
@@ -1527,12 +1590,22 @@ namespace cxbin
         if (m_current_objects.empty())
         {
             return false;
-        }
-
+        } 
+        std::map<int, trimesh::xform> _current_objects;
+        std::map<int, int> objectid2Object;
         for (auto iter = m_current_objects.begin() ;iter != m_current_objects.end();)
         {
             if (iter->second.geometry.vertices.empty() || iter->second.geometry.triangles.empty())
             {
+                for (auto component : iter->second.components)
+                {
+                    objectid2Object.insert(std::make_pair(component.object_id.second,iter->first.second));
+                    if (component.transform != trimesh::xform::identity())
+                    {
+                        _current_objects.insert(std::make_pair(component.object_id.second, component.transform));
+                    }
+                }
+
                 iter = m_current_objects.erase(iter);
             }
             else
@@ -1550,6 +1623,22 @@ namespace cxbin
             trimesh::TriMesh* mesh = new trimesh::TriMesh();
             mesh->vertices = iter->second.geometry.vertices;
             mesh->faces = iter->second.geometry.triangles;
+
+            auto _iter1 = objectid2Object.find(iter->first.second);
+            if (_iter1 != objectid2Object.end())
+            {
+                auto _iter2 = _current_objects.find(_iter1->second);
+                if (_iter2 != _current_objects.end())
+                {
+                    trimesh::apply_xform(mesh, _iter2->second);
+                }
+            }
+
+            auto _iter = ModelPos.find(iter->first.first);
+            if (_iter != ModelPos.end())
+            {
+                trimesh::apply_xform(mesh, _iter->second);
+            }
             meshs.push_back(mesh);
 
             colors.push_back(iter->second.geometry.mmu_segmentation);
