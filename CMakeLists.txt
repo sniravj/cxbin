@@ -14,7 +14,7 @@ __cc_find(colladadom_static)
 __cc_find(freeimage_static)
 __assert_target(freeimage_static)
 
-__conan_import(boost dll COMPONENT boost_nowide boost_filesystem)
+__conan_import(boost_static lib COMPONENT boost_nowide boost_filesystem)
 __assert_target(boost_nowide)
 __assert_target(boost_filesystem)
 
