@@ -128,20 +128,22 @@ namespace cxbin
         }
     }
 
-	void addFaces(trimesh::TriMesh* mesh, const domListOfUInts& str, int nums, int step)
+    void addFaces(trimesh::TriMesh* mesh, const domListOfUInts& str, int nums, int step, std::vector<int>& materialFaces)
 	{
-		mesh->faces.reserve(mesh->faces.size() + str.getCount() / 3);
+        materialFaces.reserve(str.getCount() / 3);
+        mesh->faces.reserve(mesh->faces.size() + str.getCount() / 3);
 		for (int i = 0; i < str.getCount() && (i + step + nums * 2) < str.getCount(); i = i + nums * 3)
 		{
 			trimesh::TriMesh::Face tface;
 			tface[0] = str.get(i + step);
 			tface[1] = str.get(i + step + nums);
 			tface[2] = str.get(i + step + nums * 2);
-			mesh->faces.push_back(tface);
+            materialFaces.emplace_back(mesh->faces.size());
+            mesh->faces.emplace_back(tface);
 		}
 	}
 
-	void addFaces(trimesh::TriMesh* mesh, domListOfUInts& vcounts, domListOfUInts& ps, int attrCount, int attrIndex, int faceUvs)
+	void addFaces(trimesh::TriMesh* mesh, domListOfUInts& vcounts, domListOfUInts& ps, int attrCount, int attrIndex, int faceUvs, std::vector<int>& materialFaces)
 	{
 #if 1
 		int stride = attrCount;
@@ -169,12 +171,12 @@ namespace cxbin
 			}
 
 			for (int p = 2; p < points; p++) {
-
 				trimesh::TriMesh::Face tface;
 				tface[0] = faceVertIdx[0];
 				tface[1] = faceVertIdx[p - 1];
 				tface[2] = faceVertIdx[p];
-                mesh->faces.push_back(tface);
+                materialFaces.emplace_back(mesh->faces.size());
+                mesh->faces.emplace_back(tface);
 
                 if (hasUvs)
                 {
@@ -209,8 +211,8 @@ namespace cxbin
 				tface[0] = vertex[i];
 				tface[1] = vertex[i + j];
 				tface[2] = vertex[i + j + 1];
-
-				mesh->faces.push_back(tface);
+                materialFaces.emplace_back(mesh->faces.size());
+                mesh->faces.emplace_back(tface);
 			}
 
 			i += vcounts[index];
@@ -243,7 +245,7 @@ namespace cxbin
 		return nullptr;
 	}
 
-    void getTriangles(domMesh* thisMesh, domSource_Array& sourceArray,std::vector<trimesh::TriMesh*>& out, std::vector<std::vector<std::string>>& mesh2material,const std::string& sourceV, ccglobal::Tracer* tracer)
+    void getTriangles(domMesh* thisMesh, domSource_Array& sourceArray,std::vector<trimesh::TriMesh*>& out, std::vector<std::map<std::string,std::vector<int>>>& mesh2material,const std::string& sourceV, ccglobal::Tracer* tracer)
     {
         domTriangles_Array& triangleArray = thisMesh->getTriangles_array();
 
@@ -252,15 +254,14 @@ namespace cxbin
         if (triangleCount)
         {
             trimesh::TriMesh* addMesh = new trimesh::TriMesh();
-            std::vector<std::string> vmaterial;
+            std::map<std::string, std::vector<int>> vmaterial;
             for (int i = 0; i < triangleArray.getCount(); ++i)
             {
 
                 domTrianglesRef indexArray = triangleArray[i];
                 domListOfUInts indexArrayValue = indexArray->getP()->getValue();
-
-                vmaterial.push_back(indexArray->getMaterial());
-
+                std::string material = indexArray->getMaterial();
+                int numbers = indexArrayValue.getCount();
                 domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
                 int nums = 0;
                 int step = 0;
@@ -294,8 +295,9 @@ namespace cxbin
                     }
                 }
 
-                addFaces(addMesh, indexArrayValue, nums + 1, step);
-
+                std::vector<int> materialFaces;
+                addFaces(addMesh, indexArrayValue, nums + 1, step, materialFaces);
+                vmaterial.emplace(material, materialFaces);
                 
                 for (size_t i = 0; i < count; i++)
                 {
@@ -319,12 +321,12 @@ namespace cxbin
                     }
                 }
             }
-            out.push_back(addMesh);
-            mesh2material.push_back(vmaterial);
+            out.emplace_back(addMesh);
+            mesh2material.emplace_back(vmaterial);
         }
     }
 
-    void getPolylist(domMesh* thisMesh, domSource_Array& sourceArray, std::vector<trimesh::TriMesh*>& out, std::vector<std::vector<std::string>>& mesh2material, const std::string& sourceV, ccglobal::Tracer* tracer)
+    void getPolylist(domMesh* thisMesh, domSource_Array& sourceArray, std::vector<trimesh::TriMesh*>& out, std::vector<std::map<std::string,std::vector<int>>>& mesh2material, const std::string& sourceV, ccglobal::Tracer* tracer)
     {
         domPolylist_Array& polylistArray = thisMesh->getPolylist_array();
 
@@ -333,14 +335,12 @@ namespace cxbin
         if (polylistCount)
         {
             trimesh::TriMesh* addMesh = new trimesh::TriMesh();
-            std::vector<std::string> vmaterial;
+            std::map<std::string, std::vector<int>> vmaterial;
             std::string sourceM = "";
             for (int i = 0; i < polylistArray.getCount(); ++i)
             {
                 domPolylistRef indexArray = polylistArray[i];
-
-                vmaterial.push_back(indexArray->getMaterial());
-
+                std::string material = indexArray->getMaterial();
                 domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
                 int nums = 0;
                 int step = 0;
@@ -375,8 +375,9 @@ namespace cxbin
                 domListOfUInts& listOfUIntsv = vcountRef->getValue();
                 domPRef pRef = indexArray->getP();
                 domListOfUInts& listOfUIntsp = pRef->getValue();
-
-                addFaces(addMesh, listOfUIntsv, listOfUIntsp, nums + 1, step, stepTEXCOORD);
+                std::vector<int> materialFaces;
+                addFaces(addMesh, listOfUIntsv, listOfUIntsp, nums + 1, step, stepTEXCOORD, materialFaces);
+                vmaterial.emplace(material, materialFaces);
             }
 
             for (size_t i = 0; i < count; i++)
@@ -400,12 +401,12 @@ namespace cxbin
                     addUvs(addMesh, vertexArrayValue);
                 }
             }
-            out.push_back(addMesh);
-            mesh2material.push_back(vmaterial);
+            out.emplace_back(addMesh);
+            mesh2material.emplace_back(vmaterial);
         }
     }
 
-    void getGeometry(daeDatabase* data, std::vector<trimesh::TriMesh*>& out, std::vector<std::vector<std::string>>& mesh2material,ccglobal::Tracer* tracer)
+    void getGeometry(daeDatabase* data, std::vector<trimesh::TriMesh*>& out, std::vector<std::map<std::string,std::vector<int>>>& mesh2material,ccglobal::Tracer* tracer)
     {
         int geometryElementCount = (int)(data->getElementCount(NULL, "geometry", NULL));
         out.reserve(geometryElementCount);
@@ -568,43 +569,58 @@ namespace cxbin
                 if (technique == nullptr) {
                     return;
                 }
-                
-                domProfile_COMMON::domTechnique::domPhongRef pr = technique->getPhong();
-                if (pr == nullptr) {
+                auto lambert = technique->getLambert();
+                std::string name = typeid(lambert).name();
+                domProfile_COMMON::domTechnique::domPhongRef phongPr = technique->getPhong();
+                domProfile_COMMON::domTechnique::domLambertRef lambertPr = technique->getLambert();
+                if (phongPr == nullptr && lambertPr == nullptr) {
                     return;
                 }
-                
-                domCommon_color_or_texture_typeRef em = pr->getEmission();
-                if (em) {
-                    getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                if (phongPr) {
+                    domCommon_color_or_texture_typeRef em = phongPr->getEmission();
+                    if (em) {
+                        getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                    }
+
+                    domCommon_color_or_texture_typeRef am = phongPr->getAmbient();
+                    if (am) {
+                        getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
+                    }
+                    
+                    domCommon_color_or_texture_typeRef diff = phongPr->getDiffuse();
+                    if (diff) {
+                        getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
+                    }
+
+                    domCommon_color_or_texture_typeRef sp = phongPr->getSpecular();
+                    if (sp) {
+                        getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
+                    }         
+
+                    //daeeffect.init_from = findValue(mnewparams, daeeffect.diffuse);
+                } else if (lambertPr) {
+                    domCommon_color_or_texture_typeRef em = lambertPr->getEmission();
+                    if (em) {
+                        getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
+                    }
+
+                    domCommon_color_or_texture_typeRef am = lambertPr->getAmbient();
+                    if (am) {
+                        getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
+                    }
+
+                    domCommon_color_or_texture_typeRef diff = lambertPr->getDiffuse();
+                    if (diff) {
+                        getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
+                    }
+
+                    //domCommon_color_or_texture_typeRef sp = lambertPr->getSpecular();
+                    //if (sp) {
+                    //    getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
+                    //}
+
+                    //daeeffect.init_from = findValue(mnewparams, daeeffect.diffuse);
                 }
-                
-
-                
-                //domCommon_color_or_texture_typeRef em = pr->getEmission();
-                //getPhone(em, mnewparams, daeeffect.emission, daeeffect.emissiontexture);
-
-                domCommon_color_or_texture_typeRef am = pr->getAmbient();
-                if (am) {
-                    getPhone(am, mnewparams, daeeffect.ambient, daeeffect.ambienttexture);
-                }
-                //daeeffect.ambient = am->getChild("color")->getCharData();
-
-                domCommon_color_or_texture_typeRef diff = pr->getDiffuse();
-                if (diff) {
-                    getPhone(diff, mnewparams, daeeffect.diffuse, daeeffect.diffusetexture);
-                }
-                
-                //daeeffect.diffuse = diff->getChild("texture")->getAttribute(daeString("texture"));
-
-                domCommon_color_or_texture_typeRef sp = pr->getSpecular();
-                if (sp) {
-                    getPhone(sp, mnewparams, daeeffect.specular, daeeffect.speculartexture);
-                }
-                
-                //daeeffect.specular = am->getChild("color")->getCharData();            
-
-                //daeeffect.init_from = findValue(mnewparams, daeeffect.diffuse);
 
                 effects.insert(std::pair<std::string, daeEffect>(id, daeeffect));
             }
@@ -658,7 +674,7 @@ namespace cxbin
     }
 
     void mergeData(daeDatabase* data,std::vector<trimesh::TriMesh*>& out
-        , std::vector<std::vector<std::string>>& mesh2materials
+        , std::vector<std::map<std::string,std::vector<int>>>& mesh2materials
         , std::map<std::string, std::string>& visualScenes
         , std::map<std::string, std::string>& images
         , std::map<std::string, daeEffect>& effects
@@ -668,47 +684,46 @@ namespace cxbin
         for (size_t i = 0; i < out.size(); i++)
         {
             trimesh::TriMesh* mesh = out[i];
-            std::vector<std::string> mesh2material = mesh2materials[i];
+            std::vector<trimesh::Color>& meshColors = mesh->colors;
+            std::vector<trimesh::Material>& meshMaterials = mesh->materials;
+            std::map<std::string, std::vector<int>> mesh2material = mesh2materials[i];
             std::string m = "";
-            for (size_t j = 0; j < mesh2material.size(); j++)
-            {
-                m = findValue(visualScenes, mesh2material[j]);
-                if (!m.empty())
-                {
+            std::vector<int> materFaces;
+            meshMaterials.resize(mesh->faces.size());
+            meshColors.resize(mesh->faces.size());
+            for (auto mat = mesh2material.begin(); mat != mesh2material.end(); ++mat) {
+                m = findValue(visualScenes, mat->first);
+                if (!m.empty()) {
                     m = findValue(materials, m);
-                    break;
-                }
-            }
-            
-            std::map<std::string, daeEffect>::iterator iter = effects.find(m);
-            if (iter != effects.end())
-            {
-                std::vector<trimesh::Material>& materials = mesh->materials;
-                trimesh::Material meterial;
-                
-                if (!iter->second.ambient.empty())
-                    meterial.ambient= getFloatMaterial(iter->second.ambient, tracer);
-                if (!iter->second.emission.empty())
-                    meterial.emission = getFloatMaterial(iter->second.ambient, tracer);
-                if (!iter->second.diffuse.empty())
-                    meterial.diffuse = getFloatMaterial(iter->second.ambient, tracer);
-                if (!iter->second.specular.empty())
-                    meterial.specular = getFloatMaterial(iter->second.ambient, tracer);
+                    materFaces = mat->second;
+                    std::map<std::string, daeEffect>::iterator iter = effects.find(m);
+                    if (iter != effects.end()) {
+                        trimesh::Color color;
+                        trimesh::Material meterial;
+                        if (!iter->second.ambient.empty())
+                            meterial.ambient = getFloatMaterial(iter->second.ambient, tracer);
+                        if (!iter->second.emission.empty())
+                            meterial.emission = getFloatMaterial(iter->second.emission, tracer);
+                        if (!iter->second.diffuse.empty())
+                            meterial.diffuse = getFloatMaterial(iter->second.diffuse, tracer);
+                        if (!iter->second.specular.empty())
+                            meterial.specular = getFloatMaterial(iter->second.specular, tracer);
 
-                if (!iter->second.ambienttexture.empty())
-                {
-                    meterial.map_filepaths[trimesh::Material::MapType::AMBIENT] = findValue(images, iter->second.ambienttexture);
+                        if (!iter->second.ambienttexture.empty()) {
+                            meterial.map_filepaths[trimesh::Material::MapType::AMBIENT] = findValue(images, iter->second.ambienttexture);
+                        } else if (!iter->second.diffusetexture.empty()) {
+                            meterial.map_filepaths[trimesh::Material::MapType::DIFFUSE] = findValue(images, iter->second.diffusetexture);
+                        } else if (!iter->second.speculartexture.empty()) {
+                            meterial.map_filepaths[trimesh::Material::MapType::SPECULAR] = findValue(images, iter->second.speculartexture);
+                        }
+                        //根据不同光照模型计算材质颜色
+                        color = meterial.emission + meterial.ambient + meterial.diffuse + meterial.specular;
+                        for (const auto& f : materFaces) {
+                            meshMaterials[f] = meterial;
+                            meshColors[f] = color;
+                        }
+                    }
                 }
-                else if (!iter->second.diffusetexture.empty())
-                {
-                    meterial.map_filepaths[trimesh::Material::MapType::DIFFUSE] = findValue(images, iter->second.diffusetexture);
-                }
-                else if (!iter->second.speculartexture.empty())
-                {                  
-                    meterial.map_filepaths[trimesh::Material::MapType::SPECULAR] = findValue(images, iter->second.speculartexture);
-                }
-
-                materials.push_back(meterial);
             }
         }
     }
@@ -853,27 +868,27 @@ namespace cxbin
 		std::vector<CObject*> ObjectShapes;
 		daeDatabase* data = dae.getDatabase();
 
-        //???????��??????
+        //
         std::map<std::string, daeEffect> effects;
         getEffects(data, effects, tracer);
         
-        //???????????
+        //
         std::map<std::string, std::string> materials;
         getMaterials(data,materials,tracer);
 
-        //?????????
+        //
         std::map<std::string, std::string> images;
         getImages(data, images, tracer);
 
-        //���Ӳ��ʰ󶨽ӿ�
+        //
         std::map<std::string, std::string> visualScenes;
         getVisualScenes(data,visualScenes, tracer);
 
-        //��ȡ���㡢�桢uvs��faceuvs
-        std::vector<std::vector<std::string>> mesh2material;
+        //
+        std::vector<std::map<std::string,std::vector<int>>> mesh2material;
         getGeometry(data,out, mesh2material,tracer);
 
-        //���������Ϣ
+        //
         mergeData(data,out,mesh2material,visualScenes,images,effects,materials,tracer);
 
         std::string materialFileName = "";

@@ -118,7 +118,7 @@ namespace cxbin
 			outMesh->vertices.reserve(totalVertexSize);
 			outMesh->cornerareas.reserve(totalUVSize);
 			outMesh->faces.reserve(totalTriangleSize);
-
+			outMesh->colors.reserve(totalTriangleSize);
 			size_t startFaceIndex = outMesh->faces.size();
 			size_t startVertexIndex = outMesh->vertices.size();;
 			size_t startUVIndex = outMesh->cornerareas.size();
@@ -135,7 +135,7 @@ namespace cxbin
 						outMesh->vertices.insert(outMesh->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
 						outMesh->cornerareas.insert(outMesh->cornerareas.end(), mesh->cornerareas.begin(), mesh->cornerareas.end());
 						outMesh->faces.insert(outMesh->faces.end(), mesh->faces.begin(), mesh->faces.end());
-
+						outMesh->colors.insert(outMesh->colors.end(), mesh->colors.begin(), mesh->colors.end());
 						size_t endFaceIndex = startFaceIndex + faceNum;
 						if (startVertexIndex > 0)
 						{
