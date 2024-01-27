@@ -260,8 +260,8 @@ namespace cxbin
 
                 domTrianglesRef indexArray = triangleArray[i];
                 domListOfUInts indexArrayValue = indexArray->getP()->getValue();
-                std::string material = indexArray->getMaterial();
-                int numbers = indexArrayValue.getCount();
+                std::string material = indexArray->getAttribute("material");
+                
                 domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
                 int nums = 0;
                 int step = 0;
@@ -340,7 +340,7 @@ namespace cxbin
             for (int i = 0; i < polylistArray.getCount(); ++i)
             {
                 domPolylistRef indexArray = polylistArray[i];
-                std::string material = indexArray->getMaterial();
+                std::string material = indexArray->getAttribute("material");
                 domInputLocalOffset_Array& inputLocalOffsetArray = indexArray->getInput_array();
                 int nums = 0;
                 int step = 0;
