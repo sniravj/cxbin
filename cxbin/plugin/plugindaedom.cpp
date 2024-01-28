@@ -717,7 +717,8 @@ namespace cxbin
                             meterial.map_filepaths[trimesh::Material::MapType::SPECULAR] = findValue(images, iter->second.speculartexture);
                         }
                         //根据不同光照模型计算材质颜色
-                        color = meterial.emission + meterial.ambient + meterial.diffuse + meterial.specular;
+                        //color = meterial.emission + meterial.ambient + meterial.diffuse + meterial.specular;
+                        color = meterial.diffuse;
                         for (const auto& f : materFaces) {
                             meshMaterials[f] = meterial;
                             meshColors[f] = color;

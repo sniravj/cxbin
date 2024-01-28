@@ -135,7 +135,9 @@ namespace cxbin
         //defaultMaterial.index = currentMaterialIdx;
         //materials.push_back(defaultMaterial);
 		std::string mtlName;
-
+        std::string materialName;
+        std::vector<std::string> meterialNames;
+        std::map<std::string, trimesh::Color> meterialColors;
 		while (1) {
 			if (tracer && tracer->interrupt())
 				return false;
@@ -156,34 +158,45 @@ namespace cxbin
 				num++;
 				tracer->progress((float)num / 10.0);
 			}
-			
-			if (LINE_IS("v ") || LINE_IS("v\t")) {
+            if (LINE_IS("# Vertices: ")) {
+                int vsize;
+                if (sscanf(buf + 11, "%d", &vsize) != 1) {
+                    if (tracer)
+                        tracer->failed("sscanf failed");
+                    return false;
+                }
+                tmp_vertices.reserve(vsize);
+            } else if (LINE_IS("# Faces: ")) {
+                int fsize;
+                if (sscanf(buf + 8, "%d", &fsize) != 1) {
+                    if (tracer)
+                        tracer->failed("sscanf failed");
+                    return false;
+                }
+                indexedFaces.reserve(fsize);
+            } else if (LINE_IS("v ") || LINE_IS("v\t")) {
 				float x, y, z;
 				if (sscanf(buf + 1, "%f %f %f", &x, &y, &z) != 3) {
 					if (tracer)
 						tracer->failed("sscanf failed");
 					return false;
 				}
-                tmp_vertices.push_back(trimesh::point(x, y, z));
-			}
-			else if (LINE_IS("vn ") || LINE_IS("vn\t")) {
+                tmp_vertices.emplace_back(trimesh::point(x, y, z));
+            } else if (LINE_IS("vn ") || LINE_IS("vn\t")) {
 				float x, y, z;
 				if (sscanf(buf + 2, "%f %f %f", &x, &y, &z) != 3) {
 					if (tracer)
 						tracer->failed("sscanf failed");
 					return false;
 				}
-                tmp_normals.push_back(trimesh::vec(x, y, z));
-			}
-            else if (LINE_IS("vt") || LINE_IS("vt\t")) {
+                tmp_normals.emplace_back(trimesh::vec(x, y, z));
+            } else if (LINE_IS("vt") || LINE_IS("vt\t")) {
                 float x, y;
                 if (sscanf(buf + 2, "%f %f", &x, &y) != 2) {
                     return false;
                 }
-                tmp_UVs.push_back(trimesh::vec2(x, y));
-            }
-			else if (LINE_IS("f ") || LINE_IS("f\t")) {
-				
+                tmp_UVs.emplace_back(trimesh::vec2(x, y));
+            } else if (LINE_IS("f ") || LINE_IS("f\t")) {
                 std::string strOfFace = str.substr(2, str.length()-2);
                 const char* ptr = strOfFace.c_str();
                 int vi = 0, ti = 0, ni = 0;
@@ -193,29 +206,22 @@ namespace cxbin
                     // skip white space
                     while (*ptr == ' ') ++ptr;
 
-                    if (sscanf(ptr, "%d/%d/%d", &vi, &ti, &ni) == 3)
-                    {
+                    if (sscanf(ptr, "%d/%d/%d", &vi, &ti, &ni) == 3) {
                         ff.v.emplace_back(remapVertexIndex(vi));
                         ff.t.emplace_back(remapTexCoordIndex(ti));
                         ff.n.emplace_back(remapNormalIndex(ni));
                         ff.tInd = currentMaterialIdx;
 
-                    }
-                    else if (sscanf(ptr, "%d/%d", &vi, &ti) == 2)
-                    {
+                    } else if (sscanf(ptr, "%d/%d", &vi, &ti) == 2) {
                         ff.v.emplace_back(remapVertexIndex(vi));
                         ff.t.emplace_back(remapTexCoordIndex(ti));
                         ff.tInd = currentMaterialIdx;
 
-                    }
-                    else if (sscanf(ptr, "%d//%d", &vi, &ni) == 2)
-                    {
+                    } else if (sscanf(ptr, "%d//%d", &vi, &ni) == 2) {
                         ff.v.emplace_back(remapVertexIndex(vi));
                         ff.n.emplace_back(remapNormalIndex(ni));
                         ff.tInd = -1;
-                    }
-                    else if (sscanf(ptr, "%d", &vi) == 1)
-                    {
+                    } else if (sscanf(ptr, "%d", &vi) == 1) {
                         ff.v.emplace_back(remapVertexIndex(vi));
                         ff.tInd = -1;
                     }
@@ -224,23 +230,23 @@ namespace cxbin
                     while (*ptr != ' ' && *ptr != 0) ++ptr;
 
                 }
-                indexedFaces.push_back(ff);
+                meterialNames.emplace_back(materialName);
+                indexedFaces.emplace_back(ff);
 
-
-			} 
-            else if (LINE_IS("g ") || LINE_IS("o ")) {
+            } else if (LINE_IS("g ") || LINE_IS("o ")) {
                 //结束上一个部件
 //                if (model->faces.size() > 0) {
 //                    model = new trimesh::TriMesh();
 //                    out.push_back(model);
 //                }
-//
-//                //开始下一个部件
-//                std::string name = str.substr(2, str.length()-2);
-//                name = trimStr(name);
+
+                //开始下一个部件
+                std::string name = str.substr(2, str.length() - 2);
+                name = trimStr(name);
+
+                materialName = name;
                 
-            } 
-            else if (LINE_IS("mtllib ")) {
+            } else if (LINE_IS("mtllib ")) {
                 mtlName = str.substr(7, str.length()-7);
                 mtlName = trimStr(mtlName);
                 //mtl文件名
@@ -256,12 +262,10 @@ namespace cxbin
                 }
 #endif
                 
-            } 
-            else if (LINE_IS("usemtl ")) {
+            } else if (LINE_IS("usemtl ")) {
                 //mtllib should been readed before 
                 std::string name = str.substr(7, str.length()-7);
                 name = trimStr(name);
-                
                 if (name.empty()) {
                     continue;
                 }
@@ -275,8 +279,7 @@ namespace cxbin
                     loadMtl(materialFileName, materials);
                 }
 
-                std::string materialName= name;
-
+                materialName = name;
                 bool found = false;
                 unsigned i = 0;
                 while (!found && (i < materials.size()))
@@ -301,6 +304,7 @@ namespace cxbin
                 {
                     currentMaterialIdx = 0;
                 }
+                
             }
 
         }
@@ -314,25 +318,33 @@ namespace cxbin
 
         //if (tmp_vertices.size()*3== tmp_UVs.size()
         //    && tmp_UVs.size() == tmp_normals.size())
+        for (const auto& m : materials) {
+            meterialColors.emplace(m.name, m.diffuse);
+        }
+        
         {
             trimesh::TriMesh* modelmesh = new trimesh::TriMesh();
             modelmesh->mtlName = mtlName;
             std::swap(modelmesh->vertices, tmp_vertices);
             std::swap(modelmesh->UVs, tmp_UVs);
             std::swap(modelmesh->normals, tmp_normals);
-            for (int i = 0; i < indexedFaces.size(); i++)
-            {
+            std::vector<trimesh::Color>& modelColors = modelmesh->colors;
+            modelColors.reserve(indexedFaces.size() * 2);
+            for (int i = 0; i < indexedFaces.size(); i++) {
                 ObjIndexedFace& ff = indexedFaces[i];
-                if (ff.v.size() == 3)
-                {
-                   modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
-                   if (ff.t.size() == 3)
-                    {
+                std::string meterial = meterialNames[i];
+                trimesh::Color color;
+                auto itr = meterialColors.find(meterial);
+                if (itr != meterialColors.end()) {
+                    color = itr->second;
+                }
+                if (ff.v.size() == 3) {
+                    modelColors.emplace_back(color);
+                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
+                    if (ff.t.size() == 3) {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
                         modelmesh->textureIDs.emplace_back(ff.tInd);
-                    }
-                    else
-                    {
+                    } else {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
                         modelmesh->textureIDs.emplace_back(-1);
                     }
@@ -340,23 +352,20 @@ namespace cxbin
                     //{
                     //    modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
                     //}
-                }
-                else if (ff.v.size() == 4)
-                {
-					modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
+                } else if (ff.v.size() == 4) {
+                    modelColors.emplace_back(color);
+                    modelColors.emplace_back(color);
+                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
                     modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[2], ff.v[3]));
-					if (ff.t.size() == 4)
-					{
-						modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
+                    if (ff.t.size() == 4) {
+                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
                         modelmesh->textureIDs.emplace_back(ff.tInd);
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[2], ff.t[3]));
-						modelmesh->textureIDs.emplace_back(ff.tInd);
-					}
-					else
-					{
-						modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
-						modelmesh->textureIDs.emplace_back(-1);
-					}
+                        modelmesh->textureIDs.emplace_back(ff.tInd);
+                    } else {
+                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
+                        modelmesh->textureIDs.emplace_back(-1);
+                    }
                 }
             }
             std::swap(modelmesh->materials, materials);
