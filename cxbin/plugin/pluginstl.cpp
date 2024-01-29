@@ -88,6 +88,7 @@ namespace cxbin
 			if (!fread(tmpFace, sizeof(float), 12, f)) return false;
 			trimesh::vec3 normal(tmpFace[0], tmpFace[1], tmpFace[2]);
 			//if (std::fabs(trimesh::len(normal) - 1.0f) > 0.1f) return false;
+			trimesh::normalize(normal);
 			trimesh::vec3 v1(tmpFace[3], tmpFace[4], tmpFace[5]);
 			trimesh::vec3 v2(tmpFace[6], tmpFace[7], tmpFace[8]);
 			trimesh::vec3 v3(tmpFace[9], tmpFace[10], tmpFace[11]);
