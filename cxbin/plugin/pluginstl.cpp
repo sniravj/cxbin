@@ -82,6 +82,21 @@ namespace cxbin
 		fseek(f, 80L, SEEK_SET);
 		size_t faceCount(0);
 		fread(&faceCount, sizeof(int), 1, f);
+		if (faceCount > 0) {
+			fseek(f, 84L, SEEK_SET);
+			float tmpFace[12];
+			if (!fread(tmpFace, sizeof(float), 12, f)) return false;
+			trimesh::vec3 normal(tmpFace[0], tmpFace[1], tmpFace[2]);
+			//if (std::fabs(trimesh::len(normal) - 1.0f) > 0.1f) return false;
+			trimesh::vec3 v1(tmpFace[3], tmpFace[4], tmpFace[5]);
+			trimesh::vec3 v2(tmpFace[6], tmpFace[7], tmpFace[8]);
+			trimesh::vec3 v3(tmpFace[9], tmpFace[10], tmpFace[11]);
+			trimesh::vec3 dir = trimesh::normalized(trimesh::trinorm(v1, v2, v3));
+			if (std::fabs((normal DOT dir) - 1.0f) > 0.01f) return false;
+		} else {
+			return false;
+		}
+
 		const size_t expectedBinaryFileSize = faceCount * 50 + 84;
 
 		if (expectedBinaryFileSize == fileSize) {
