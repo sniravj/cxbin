@@ -138,6 +138,9 @@ namespace cxbin
         std::string materialName;
         std::vector<std::string> meterialNames;
         std::map<std::string, trimesh::Color> meterialColors;
+        auto removeNewlines = [](std::string& str, const char& c) {
+            str.erase(std::remove(str.begin(), str.end(), c), str.end());
+        };
 		while (1) {
 			if (tracer && tracer->interrupt())
 				return false;
@@ -149,8 +152,25 @@ namespace cxbin
             char buf[MAX_OBJ_READLINE_LEN] = { 0 };
 //            GET_LINE();
             fgets(buf, MAX_OBJ_READLINE_LEN, f);
-
 			std::string str = buf;
+            removeNewlines(str,'\r');
+            removeNewlines(str, '\n');
+            bool endsWithBackslash = (!str.empty() && str.back() == '\\');
+            // 如果字符串以跨行符号结尾，继续读取下一行
+            if (endsWithBackslash) {
+                do {
+                    fgets(buf, MAX_OBJ_READLINE_LEN, f);
+                    std::string nextLine = buf;
+                    removeNewlines(str, '\\');
+                    // 合并当前行和下一行
+                    str += nextLine;
+                    removeNewlines(str, '\r');
+                    removeNewlines(str, '\n');
+                    // 检查下一行是否以跨行符号结尾
+                    endsWithBackslash = (!str.empty() && str.back() == '\\');
+                } while (endsWithBackslash);
+            }
+            strcpy(buf, str.c_str());
 			count += str.length();
 			if (tracer && count >= calltime)
 			{
@@ -338,31 +358,16 @@ namespace cxbin
                 if (itr != meterialColors.end()) {
                     color = itr->second;
                 }
-                if (ff.v.size() == 3) {
-                    modelColors.emplace_back(color);
-                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
-                    if (ff.t.size() == 3) {
-                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
-                        modelmesh->textureIDs.emplace_back(ff.tInd);
-                    } else {
-                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
-                        modelmesh->textureIDs.emplace_back(-1);
-                    }
-                    //if (ff.n.size()==3)
-                    //{
-                    //    modelmesh->faceVns.emplace_back(trimesh::TriMesh::Face(ff.n[0], ff.n[1], ff.n[2]));
-                    //}
-                } else if (ff.v.size() == 4) {
-                    modelColors.emplace_back(color);
-                    modelColors.emplace_back(color);
-                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[1], ff.v[2]));
-                    modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[2], ff.v[3]));
-                    if (ff.t.size() == 4) {
-                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[1], ff.t[2]));
-                        modelmesh->textureIDs.emplace_back(ff.tInd);
-                        modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(ff.t[0], ff.t[2], ff.t[3]));
-                        modelmesh->textureIDs.emplace_back(ff.tInd);
-                    } else {
+                if (ff.v.size() >= 3) {
+                    int fnums = ff.v.size() - 2;
+                    if (fnums >= 1) {
+                        for (int j = 0; j < fnums; ++j) {
+                            modelColors.emplace_back(color);
+                            modelmesh->textureIDs.emplace_back(ff.tInd);
+                            modelmesh->faces.emplace_back(trimesh::TriMesh::Face(ff.v[0], ff.v[j + 1], ff.v[j + 2]));
+
+                        }
+                    }else {
                         modelmesh->faceUVs.emplace_back(trimesh::TriMesh::Face(-1.0, -1.0, -1.0));
                         modelmesh->textureIDs.emplace_back(-1);
                     }
